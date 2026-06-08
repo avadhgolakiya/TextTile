@@ -7,6 +7,8 @@ import { Suspense } from 'react';
 import type { Product } from '@/lib/types';
 import { productApi, bannerApi } from '@/lib/api-client';
 
+export const dynamic = 'force-dynamic';
+
 async function fetchFeatured(): Promise<Product[]> {
   try {
     const { products } = await productApi.fetchFeatured();
