@@ -1,6 +1,6 @@
 import type { Product, AppUser, OrderItem } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://texttile.onrender.com';
 
 async function apiFetch<T>(
   path: string,
