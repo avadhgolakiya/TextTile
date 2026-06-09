@@ -2,12 +2,16 @@
   "name": "saarika-web",
   "private": true,
   "scripts": {
+    "sync:firebase-sw": "node scripts/sync-firebase-sw.mjs",
+    "predev": "node scripts/sync-firebase-sw.mjs",
+    "prebuild": "node scripts/sync-firebase-sw.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "firebase": "^10.14.1",
     "next": "^14.2.18",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { orderApi } from '@/lib/api-client';
+import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { OrderItem } from '@/lib/types';
 import Image from 'next/image';
 import { formatInr } from '@/lib/formatting/inr';
+import { isValidImageUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -54,9 +56,11 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cream pb-24">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-2">
+    <div className="min-h-screen bg-cream pb-24 lg:bg-transparent lg:pb-0">
+      <DesktopTopBar title="Orders" subtitle="My account" />
+
+      {/* Header — mobile only */}
+      <div className="px-6 pt-6 pb-2 lg:hidden">
         <p className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
           My Account
         </p>
@@ -66,7 +70,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Filter chips */}
-      <div className="flex gap-2 px-6 py-3">
+      <div className="flex gap-2 px-6 py-3 lg:px-0 lg:pb-6">
         {(['all', 'pending'] as const).map((mode) => {
           const active = filter === mode;
           return (
@@ -86,7 +90,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders list */}
-      <div className="px-6 py-4 space-y-4">
+      <div className="px-6 py-4 space-y-4 lg:px-0 lg:py-0">
         {loading ? (
           <div className="py-20 flex justify-center">
             <LoadingSpinner label="Loading your orders…" />
@@ -104,14 +108,14 @@ export default function OrdersPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4 max-w-xl">
+          <div className="space-y-4 max-w-xl lg:max-w-none lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 xl:grid-cols-2">
             {filteredOrders.map((order) => (
               <div
                 key={order.id}
-                className="card flex gap-4 p-4 border border-divider shadow-sm hover:shadow-md transition"
+                className="card flex gap-4 p-4 border border-divider shadow-sm hover:shadow-md transition lg:p-5 lg:hover:-translate-y-0.5"
               >
                 <div className="relative w-20 h-24 rounded-xl overflow-hidden shrink-0 bg-cream-deep border border-divider">
-                  {order.thumbnailUrl ? (
+                  {isValidImageUrl(order.thumbnailUrl) ? (
                     <Image
                       src={order.thumbnailUrl}
                       alt={order.title}

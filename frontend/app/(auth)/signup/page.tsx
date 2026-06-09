@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { AuthBrandPanel } from '@/components/AuthBrandPanel';
 import { authApi } from '@/lib/api-client';
 
 /** Port of lib/features/auth/sign_up_screen.dart */
@@ -41,16 +42,19 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="font-serif text-3xl font-semibold">Create account</h1>
-          <p className="mt-2 text-sm text-text-secondary">
+    <div className="flex min-h-screen lg:bg-cream">
+      <AuthBrandPanel />
+
+      <div className="flex w-full items-center justify-center px-4 py-10 lg:w-1/2 lg:px-16">
+        <div className="w-full max-w-md space-y-6 lg:max-w-lg lg:space-y-8">
+        <div className="text-center lg:text-left">
+          <h1 className="font-serif text-3xl font-semibold lg:text-4xl">Create account</h1>
+          <p className="mt-2 text-sm text-text-secondary lg:text-base">
             Register as a wholesale buyer
           </p>
         </div>
 
-        <form onSubmit={onSubmit} className="card space-y-4 p-6">
+        <form onSubmit={onSubmit} className="card space-y-4 p-6 lg:p-8">
           <input
             className="input-field"
             placeholder="Business name"
@@ -88,12 +92,13 @@ export default function SignUpPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-text-secondary">
+        <p className="text-center text-sm text-text-secondary lg:text-left lg:text-base">
           Already registered?{' '}
-          <Link href="/login" className="font-semibold text-maroon">
+          <Link href="/login" className="font-semibold text-maroon hover:text-maroon-dark">
             Sign in
           </Link>
         </p>
+        </div>
       </div>
     </div>
   );

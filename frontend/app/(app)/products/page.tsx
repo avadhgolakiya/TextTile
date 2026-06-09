@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { productApi } from '@/lib/api-client';
+import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { ProductCard } from '@/components/ProductCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
@@ -35,9 +36,11 @@ function ProductsContent() {
     : 'All Products';
 
   return (
-    <div className="min-h-screen bg-cream pb-12">
-      {/* Header */}
-      <header className="flex items-center gap-4 px-6 py-4 bg-white/80 backdrop-blur sticky top-0 z-10 border-b border-divider">
+    <div className="min-h-screen bg-cream pb-12 lg:bg-transparent lg:pb-0">
+      <DesktopTopBar title={displayTitle} subtitle="Category catalog" />
+
+      {/* Header — mobile only */}
+      <header className="flex items-center gap-4 px-6 py-4 bg-white/80 backdrop-blur sticky top-0 z-10 border-b border-divider lg:hidden">
         <button
           onClick={() => router.back()}
           className="text-text-primary hover:text-maroon transition p-1 font-semibold"
@@ -50,7 +53,7 @@ function ProductsContent() {
       </header>
 
       {/* Grid of products */}
-      <div className="px-6 py-6">
+      <div className="px-6 py-6 lg:px-0 lg:py-0">
         {loading ? (
           <div className="py-20 flex justify-center">
             <LoadingSpinner label="Loading products…" />
@@ -60,7 +63,7 @@ function ProductsContent() {
             <p className="text-lg font-serif">No products found in this category</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
             {products.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}

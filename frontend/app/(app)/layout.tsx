@@ -1,7 +1,9 @@
 import { cookies } from 'next/headers';
 import { authApi } from '@/lib/api-client';
 import { AppBottomNav } from '@/components/AppBottomNav';
+import { AppSidebar } from '@/components/AppSidebar';
 import { CartFab } from '@/components/CartFab';
+import { NotificationSetup } from '@/components/NotificationSetup';
 
 export default async function AppLayout({
   children,
@@ -22,9 +24,15 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen pb-20">
-      <CartFab />
-      {children}
+    <div className="min-h-screen bg-cream pb-20 lg:pb-0">
+      <AppSidebar isAdmin={isAdmin} />
+      <div className="lg:pl-64">
+        <main className="lg:mx-auto lg:max-w-7xl lg:px-10 lg:py-8">
+          <CartFab />
+          <NotificationSetup />
+          {children}
+        </main>
+      </div>
       <AppBottomNav isAdmin={isAdmin} />
     </div>
   );

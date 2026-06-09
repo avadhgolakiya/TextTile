@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { isValidImageUrl } from '@/lib/image';
+import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { useCartStore } from '@/lib/cart-store';
 import { orderSummary } from '@/lib/constants/sample-data';
 import { formatInr } from '@/lib/formatting/inr';
@@ -76,8 +78,9 @@ export default function CartPage() {
 
   if (!lines.length) {
     return (
-      <div className="px-4 py-16 text-center">
-        <h1 className="font-serif text-2xl font-semibold">Your cart is empty</h1>
+      <div className="px-4 py-16 text-center lg:px-0">
+        <DesktopTopBar title="Cart" />
+        <h1 className="font-serif text-2xl font-semibold lg:text-3xl">Your cart is empty</h1>
         <Link href="/home" className="btn-primary mt-6 inline-flex">
           Browse sarees
         </Link>
@@ -86,94 +89,100 @@ export default function CartPage() {
   }
 
   return (
-    <div className="space-y-6 px-4 py-6">
-      <h1 className="font-serif text-2xl font-semibold">Cart</h1>
+    <div className="space-y-6 px-4 py-6 lg:space-y-0 lg:px-0 lg:py-0">
+      <DesktopTopBar title="Cart" subtitle={`${lines.length} item${lines.length === 1 ? '' : 's'}`} />
 
-      <ul className="space-y-4">
-        {lines.map((line) => (
-          <li key={line.product.id} className="card flex gap-3 p-3">
-            <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-cream-deep">
-              {line.product.imageUrl ? (
-                <Image
-                  src={line.product.imageUrl}
-                  alt={line.product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : null}
-            </div>
-            <div className="flex flex-1 flex-col gap-2">
-              <p className="font-semibold">{line.product.name}</p>
-              <p className="text-sm text-maroon">{formatInr(line.product.price)}</p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="rounded-full border px-3 py-1"
-                  onClick={() => setQuantity(line.product.id, line.quantity - 1)}
-                >
-                  −
-                </button>
-                <span>{line.quantity}</span>
-                <button
-                  type="button"
-                  className="rounded-full border px-3 py-1"
-                  onClick={() => setQuantity(line.product.id, line.quantity + 1)}
-                >
-                  +
-                </button>
-                <button
-                  type="button"
-                  className="ml-auto text-xs text-text-secondary"
-                  onClick={() => remove(line.product.id)}
-                >
-                  Remove
-                </button>
+      <h1 className="font-serif text-2xl font-semibold lg:hidden">Cart</h1>
+
+      <div className="desktop-two-col">
+        <ul className="space-y-4 lg:space-y-5">
+          {lines.map((line) => (
+            <li key={line.product.id} className="card flex gap-3 p-3 lg:gap-5 lg:p-5">
+              <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-cream-deep lg:h-32 lg:w-28">
+                {isValidImageUrl(line.product.imageUrl) ? (
+                  <Image
+                    src={line.product.imageUrl}
+                    alt={line.product.name}
+                    fill
+                    className="object-cover"
+                  />
+                ) : null}
               </div>
+              <div className="flex flex-1 flex-col gap-2 lg:gap-3">
+                <p className="font-semibold lg:text-lg">{line.product.name}</p>
+                <p className="text-sm text-maroon lg:text-base">{formatInr(line.product.price)}</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-full border px-3 py-1 transition hover:border-maroon hover:bg-cream-deep lg:cursor-pointer lg:px-4 lg:py-1.5"
+                    onClick={() => setQuantity(line.product.id, line.quantity - 1)}
+                  >
+                    −
+                  </button>
+                  <span className="lg:text-base">{line.quantity}</span>
+                  <button
+                    type="button"
+                    className="rounded-full border px-3 py-1 transition hover:border-maroon hover:bg-cream-deep lg:cursor-pointer lg:px-4 lg:py-1.5"
+                    onClick={() => setQuantity(line.product.id, line.quantity + 1)}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    className="ml-auto text-xs text-text-secondary transition hover:text-maroon lg:cursor-pointer lg:text-sm"
+                    onClick={() => remove(line.product.id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="space-y-4 lg:sticky lg:top-8">
+          <div className="card space-y-2 p-4 text-sm lg:p-6 lg:text-base">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span>{formatInr(summary.subtotal)}</span>
             </div>
-          </li>
-        ))}
-      </ul>
+            <div className="flex justify-between text-green-800">
+              <span>{summary.discountPercent}% wholesale discount</span>
+              <span>−{formatInr(summary.discountAmount)}</span>
+            </div>
+            <div className="flex justify-between font-bold lg:text-lg">
+              <span>Total</span>
+              <span>{formatInr(summary.total)}</span>
+            </div>
+          </div>
 
-      <div className="card space-y-2 p-4 text-sm">
-        <div className="flex justify-between">
-          <span>Subtotal</span>
-          <span>{formatInr(summary.subtotal)}</span>
-        </div>
-        <div className="flex justify-between text-green-800">
-          <span>{summary.discountPercent}% wholesale discount</span>
-          <span>−{formatInr(summary.discountAmount)}</span>
-        </div>
-        <div className="flex justify-between font-bold">
-          <span>Total</span>
-          <span>{formatInr(summary.total)}</span>
+          <div className="card space-y-4 p-4 lg:p-6">
+            <h3 className="font-serif text-lg font-semibold lg:text-xl">Buyer details</h3>
+            <input
+              className="input-field"
+              placeholder="Business name"
+              value={buyerName}
+              onChange={(e) => setBuyerName(e.target.value)}
+              required
+            />
+            <input
+              className="input-field"
+              placeholder="Phone number"
+              value={buyerPhone}
+              onChange={(e) => setBuyerPhone(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="button"
+            className="btn-primary w-full"
+            disabled={submitting}
+            onClick={placeOrder}
+          >
+            {submitting ? 'Placing order…' : 'Order via WhatsApp'}
+          </button>
         </div>
       </div>
-
-      <div className="card space-y-4 p-4">
-        <h3 className="font-serif text-lg font-semibold">Buyer details</h3>
-        <input
-          className="input-field"
-          placeholder="Business name"
-          value={buyerName}
-          onChange={(e) => setBuyerName(e.target.value)}
-          required
-        />
-        <input
-          className="input-field"
-          placeholder="Phone number"
-          value={buyerPhone}
-          onChange={(e) => setBuyerPhone(e.target.value)}
-        />
-      </div>
-
-      <button
-        type="button"
-        className="btn-primary w-full"
-        disabled={submitting}
-        onClick={placeOrder}
-      >
-        {submitting ? 'Placing order…' : 'Order via WhatsApp'}
-      </button>
     </div>
   );
 }

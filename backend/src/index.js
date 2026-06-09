@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import orderRoutes from './routes/orders.js';
 import bannerRoutes from './routes/banners.js';
+import notificationRoutes from './routes/notifications.js';
 
 const PORT = Number(process.env.PORT || 3333);
 
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 connectDB()
   .then(() => {

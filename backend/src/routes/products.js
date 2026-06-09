@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getCollection } from '../db.js';
 import { authMiddleware, mapProduct } from '../lib/auth.js';
+import { notifyNewProduct } from '../lib/notifications.js';
 
 const router = Router();
 
@@ -69,7 +70,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const productsColl = getCollection('products');
-    await productsColl.updateOne(
+    const result = await productsColl.updateOne(
       { _id: p.id },
       {
         $set: {
@@ -92,7 +93,14 @@ router.post('/', authMiddleware, async (req, res) => {
       { upsert: true },
     );
 
-    return res.json({ ok: true });
+    const isNewProduct = result.upsertedCount > 0;
+    if (isNewProduct && (p.isVisible ?? true)) {
+      notifyNewProduct(p).catch((err) =>
+        console.error('[FCM] notifyNewProduct failed:', err),
+      );
+    }
+
+    return res.json({ ok: true, isNew: isNewProduct });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error' });

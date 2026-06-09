@@ -57,6 +57,7 @@ coverage/
 # Node API
 backend/node_modules/
 backend/.env
+**/firebase-service-account.json
 
 # Frontend Web App
 frontend/node_modules/

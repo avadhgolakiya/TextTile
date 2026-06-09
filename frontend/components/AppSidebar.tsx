@@ -1,0 +1,80 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useCartStore } from '@/lib/cart-store';
+
+const navItems = [
+  { href: '/home', label: "Today's Drop", icon: '✦' },
+  { href: '/collection', label: 'Collection', icon: '🧵' },
+  { href: '/search', label: 'Search', icon: '🔍' },
+  { href: '/orders', label: 'Orders', icon: '📦' },
+  { href: '/profile', label: 'Profile', icon: '👤' },
+] as const;
+
+type Props = { isAdmin?: boolean };
+
+/** Desktop-only left sidebar navigation (hidden below lg). */
+export function AppSidebar({ isAdmin = false }: Props) {
+  const pathname = usePathname();
+  const totalQuantity = useCartStore((s) => s.totalQuantity());
+  const items = isAdmin
+    ? [...navItems, { href: '/admin', label: 'Admin', icon: '🛡️' } as const]
+    : navItems;
+
+  return (
+    <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-divider bg-white lg:flex">
+      <div className="border-b border-divider px-6 py-7">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
+          Wholesale
+        </p>
+        <h1 className="mt-1 font-serif text-2xl font-bold text-text-primary">
+          Swastik Fashion
+        </h1>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-4 py-6">
+        <ul className="space-y-1">
+          {items.map((item) => {
+            const active =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition duration-200 ${
+                    active
+                      ? 'bg-maroon text-white shadow-sm'
+                      : 'text-text-secondary hover:bg-cream-deep hover:text-maroon'
+                  }`}
+                >
+                  <span className="text-base" aria-hidden>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      <div className="border-t border-divider p-4">
+        <Link
+          href="/cart"
+          className="flex items-center justify-between rounded-2xl bg-maroon px-4 py-3.5 text-sm font-bold text-white transition duration-200 hover:bg-maroon-dark"
+        >
+          <span className="flex items-center gap-2">
+            <span aria-hidden>🛒</span>
+            View cart
+          </span>
+          {totalQuantity > 0 ? (
+            <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs">
+              {totalQuantity}
+            </span>
+          ) : null}
+        </Link>
+      </div>
+    </aside>
+  );
+}

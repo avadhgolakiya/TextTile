@@ -114,6 +114,15 @@ export const authApi = {
     ),
 };
 
+export const notificationApi = {
+  registerToken: (token: string) =>
+    apiFetch<{ ok: true }>('/api/notifications/register-token', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
+  status: () => apiFetch<{ configured: boolean }>('/api/notifications/status'),
+};
+
 export const bannerApi = {
   fetchUrls: () => apiFetch<{ urls: string[] }>('/api/banners'),
 

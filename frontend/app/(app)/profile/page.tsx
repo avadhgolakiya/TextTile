@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi, orderApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
+import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { AppUser } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
@@ -71,9 +72,11 @@ export default function ProfilePage() {
     .toUpperCase() || '?';
 
   return (
-    <div className="min-h-screen bg-cream pb-24">
+    <div className="min-h-screen bg-cream pb-24 lg:bg-transparent lg:pb-0">
+      <DesktopTopBar title="Profile" subtitle="Wholesale buyer account" />
+
       {/* Profile Header Hero */}
-      <div className="bg-gradient-to-br from-maroon-dark via-maroon to-[#8B1A2A] text-white px-6 pt-10 pb-16 shadow-md rounded-b-[36px]">
+      <div className="bg-gradient-to-br from-maroon-dark via-maroon to-[#8B1A2A] text-white px-6 pt-10 pb-16 shadow-md rounded-b-[36px] lg:mt-0 lg:rounded-card lg:px-10 lg:pt-8 lg:pb-10">
         <p className="text-xs uppercase tracking-[2.5px] text-gold font-semibold">
           Wholesale Buyer
         </p>
@@ -114,8 +117,8 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Menu options */}
-      <div className="px-6 -mt-6">
-        <div className="card border border-divider shadow-md divide-y divide-divider overflow-hidden">
+      <div className="px-6 -mt-6 lg:mt-8 lg:px-0 lg:grid lg:grid-cols-12 lg:gap-8">
+        <div className="card border border-divider shadow-md divide-y divide-divider overflow-hidden lg:col-span-7">
           {[
             { title: 'Saved Products', subtitle: '12 items', icon: '🔖' },
             { title: 'Shipping Address', subtitle: 'Surat, Gujarat', icon: '📍' },
@@ -137,16 +140,41 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="w-full h-14 bg-white hover:bg-red-50 text-maroon hover:text-red-800 border border-divider hover:border-red-200 rounded-2xl font-semibold shadow-sm hover:shadow transition duration-200 mt-6 flex items-center justify-center gap-2"
-        >
-          <span>🚪</span> Logout
-        </button>
+        <div className="lg:col-span-5 lg:space-y-6">
+          <div className="card hidden border border-divider p-6 lg:block">
+            <h3 className="font-serif text-xl font-bold">Account summary</h3>
+            <p className="mt-2 text-sm text-text-secondary leading-relaxed">
+              Manage your wholesale profile, saved items, and order history from one place.
+            </p>
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
+                <div className="text-lg font-bold text-maroon">{orderCount}</div>
+                <div className="text-[10px] uppercase tracking-wider text-text-secondary">Orders</div>
+              </div>
+              <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
+                <div className="text-lg font-bold text-maroon">12</div>
+                <div className="text-[10px] uppercase tracking-wider text-text-secondary">Saved</div>
+              </div>
+              <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
+                <div className="text-lg font-bold text-maroon">
+                  {totalSpent >= 100000 ? `₹${(totalSpent / 100000).toFixed(1)}L` : formatInr(totalSpent)}
+                </div>
+                <div className="text-[10px] uppercase tracking-wider text-text-secondary">Spent</div>
+              </div>
+            </div>
+          </div>
 
-        <div className="text-center text-[10px] tracking-[2px] text-text-hint mt-8 uppercase font-medium">
-          ✦ Swastik Fashion · V1.0 ✦
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full h-14 bg-white hover:bg-red-50 text-maroon hover:text-red-800 border border-divider hover:border-red-200 rounded-2xl font-semibold shadow-sm hover:shadow transition duration-200 mt-6 flex items-center justify-center gap-2 lg:mt-0 lg:cursor-pointer"
+          >
+            <span>🚪</span> Logout
+          </button>
+
+          <div className="text-center text-[10px] tracking-[2px] text-text-hint mt-8 uppercase font-medium lg:mt-0">
+            ✦ Swastik Fashion · V1.0 ✦
+          </div>
         </div>
       </div>
     </div>

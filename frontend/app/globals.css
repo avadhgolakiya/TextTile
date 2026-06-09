@@ -29,3 +29,40 @@ body {
     @apply rounded-card bg-white shadow-sm;
   }
 }
+
+/* Desktop-only enhancements (≥1024px) — mobile styles untouched */
+@media (min-width: 1024px) {
+  .btn-primary {
+    @apply cursor-pointer px-8 py-4 text-base shadow-sm hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  .btn-outline {
+    @apply cursor-pointer hover:bg-peach;
+  }
+
+  .input-field {
+    @apply px-6 py-4 text-base hover:border-gold/60;
+  }
+
+  .card {
+    @apply transition duration-200 hover:shadow-md;
+  }
+
+  .desktop-page {
+    @apply max-w-none;
+  }
+
+  .desktop-split {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .desktop-two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+}

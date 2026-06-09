@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { productApi, orderApi, authApi, bannerApi } from '@/lib/api-client';
+import { DesktopTopBar } from '@/components/DesktopTopBar';
+import { toast } from '@/lib/toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product, OrderItem } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import Image from 'next/image';
+import { isValidImageUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -56,7 +59,7 @@ export default function AdminPage() {
     authApi.me(token)
       .then(({ user }) => {
         if (!user.isAdmin) {
-          alert('Access denied: Admin only');
+          toast.error('Access denied: Admin only');
           router.replace('/home');
           return;
         }
@@ -116,13 +119,17 @@ export default function AdminPage() {
   }
 
   async function deleteProduct(p: Product) {
-    if (!confirm(`Are you sure you want to permanently delete "${p.name}"?`)) return;
+    const ok = await toast.confirm(
+      `Are you sure you want to permanently delete "${p.name}"?`,
+    );
+    if (!ok) return;
     const token = getToken();
     try {
       await productApi.delete(token, p.id);
       setProducts(products.filter((x) => x.id !== p.id));
+      toast.success(`"${p.name}" deleted`);
     } catch (err) {
-      alert(`Delete failed: ${err}`);
+      toast.error(`Delete failed: ${err}`);
     }
   }
 
@@ -164,6 +171,10 @@ export default function AdminPage() {
   async function saveProductForm(e: React.FormEvent) {
     e.preventDefault();
     const token = getToken();
+    if (formProduct.imageUrl && !isValidImageUrl(formProduct.imageUrl)) {
+      toast.error('Image URL must start with http://, https://, or /');
+      return;
+    }
     try {
       const payload = {
         ...formProduct,
@@ -174,8 +185,9 @@ export default function AdminPage() {
       await productApi.upsert(token, payload, isFeatured);
       setIsFormOpen(false);
       loadTabData('products');
+      toast.success('Product saved successfully');
     } catch (err) {
-      alert(`Failed to save product: ${err}`);
+      toast.error(`Failed to save product: ${err}`);
     }
   }
 
@@ -198,7 +210,10 @@ export default function AdminPage() {
 
   async function addBanner(e: React.FormEvent) {
     e.preventDefault();
-    if (!newBannerUrl.trim()) return;
+    if (newBannerUrl.trim() && !isValidImageUrl(newBannerUrl.trim())) {
+      toast.error('Banner Image URL must start with http://, https://, or /');
+      return;
+    }
     const token = getToken();
     try {
       await bannerApi.add(token, newBannerUrl.trim(), Number(newBannerOrder));
@@ -206,26 +221,38 @@ export default function AdminPage() {
       setNewBannerUrl('');
       setNewBannerOrder(0);
       loadTabData('banners');
+      toast.success('Banner added');
     } catch (err) {
-      alert(`Failed to add banner: ${err}`);
+      toast.error(`Failed to add banner: ${err}`);
     }
   }
 
   async function deleteBanner(id: string) {
-    if (!confirm('Remove this banner?')) return;
+    const ok = await toast.confirm('Remove this banner?');
+    if (!ok) return;
     const token = getToken();
     try {
       await bannerApi.delete(token, id);
       setBanners(banners.filter((b) => b.id !== id));
+      toast.success('Banner removed');
     } catch (err) {
-      alert(`Failed to delete banner: ${err}`);
+      toast.error(`Failed to delete banner: ${err}`);
     }
   }
 
+  const tabs = [
+    { id: 'products', label: 'Products' },
+    { id: 'orders', label: 'Orders' },
+    { id: 'buyers', label: 'Buyers' },
+    { id: 'banners', label: 'Banners' },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-cream pb-24 font-sans text-text-primary">
-      {/* Admin header */}
-      <div className="bg-gradient-to-br from-maroon-dark via-maroon to-[#8B1A2A] text-white px-6 pt-8 pb-4 shadow-md">
+    <div className="min-h-screen bg-cream pb-24 font-sans text-text-primary lg:bg-transparent lg:pb-0">
+      <DesktopTopBar title="Admin Panel" subtitle="Swastik Fashion management" />
+
+      {/* Admin header — mobile only */}
+      <div className="bg-gradient-to-br from-maroon-dark via-maroon to-[#8B1A2A] text-white px-6 pt-8 pb-4 shadow-md lg:hidden">
         <div className="flex items-center gap-3">
           <span className="text-xl">🛡️</span>
           <span className="text-xs uppercase tracking-[1.5px] font-semibold text-white/80">
@@ -234,14 +261,8 @@ export default function AdminPage() {
         </div>
         <h1 className="font-serif text-3xl font-bold mt-2">Swastik Fashion</h1>
 
-        {/* Tab Selection */}
         <div className="flex gap-4 overflow-x-auto mt-6 border-b border-white/20 scrollbar-none">
-          {[
-            { id: 'products', label: 'Products' },
-            { id: 'orders', label: 'Orders' },
-            { id: 'buyers', label: 'Buyers' },
-            { id: 'banners', label: 'Banners' },
-          ].map((tab) => {
+          {tabs.map((tab) => {
             const active = activeTab === tab.id;
             return (
               <button
@@ -258,8 +279,31 @@ export default function AdminPage() {
         </div>
       </div>
 
+      <div className="desktop-split lg:max-w-none">
+        {/* Desktop tab sidebar */}
+        <aside className="hidden lg:block lg:sticky lg:top-8">
+          <div className="card border border-divider p-3">
+            {tabs.map((tab) => {
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id as any)}
+                  className={`mb-1 w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+                    active
+                      ? 'bg-maroon text-white'
+                      : 'text-text-secondary hover:bg-cream-deep hover:text-maroon'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
       {/* Main Container */}
-      <div className="max-w-4xl mx-auto px-6 py-6">
+      <div className="max-w-4xl mx-auto px-6 py-6 lg:max-w-none lg:px-0 lg:py-0">
         {loading ? (
           <div className="py-20 flex justify-center">
             <LoadingSpinner label={`Loading ${activeTab}…`} />
@@ -276,17 +320,17 @@ export default function AdminPage() {
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-2">
                   {products.map((p) => (
                     <div
                       key={p.id}
-                      className={`card flex items-center justify-between p-4 border border-divider shadow-sm transition ${
+                      className={`card flex items-center justify-between p-4 border border-divider shadow-sm transition lg:hover:shadow-md ${
                         !p.isVisible ? 'bg-gray-100 opacity-75' : ''
                       }`}
                     >
                       <div className="flex items-center gap-4 min-w-0 flex-1">
                         <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-cream-deep shrink-0 border border-divider">
-                          {p.imageUrl ? (
+                          {isValidImageUrl(p.imageUrl) ? (
                             <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-text-secondary">
@@ -342,7 +386,7 @@ export default function AdminPage() {
               <div className="space-y-4">
                 <h3 className="font-serif text-xl font-bold">Manage Orders</h3>
 
-                <div className="space-y-4">
+                <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0">
                   {orders.map((o) => (
                     <div
                       key={o.id}
@@ -350,7 +394,7 @@ export default function AdminPage() {
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-bold text-sm">Order ID: {o.id.slice(0, 8).toUpperCase()}</h4>
+                          <h4 className="font-bold text-sm">Order ID: {(o.id || '').slice(0, 8).toUpperCase()}</h4>
                           <p className="text-xs text-text-secondary mt-0.5">
                             {o.title} · {o.dateLabel}
                           </p>
@@ -396,10 +440,10 @@ export default function AdminPage() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-11 h-11 rounded-full bg-maroon text-white font-bold flex items-center justify-center text-sm font-serif">
-                          {b.name.charAt(0).toUpperCase()}
+                          {(b.name || 'B').charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm">{b.name}</h4>
+                          <h4 className="font-semibold text-sm">{b.name || 'Buyer'}</h4>
                           <p className="text-xs text-text-secondary mt-0.5">{b.phone}</p>
                         </div>
                       </div>
@@ -430,7 +474,13 @@ export default function AdminPage() {
                     >
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className="relative w-28 h-16 rounded-lg overflow-hidden bg-cream-deep shrink-0 border border-divider">
-                          <Image src={b.image_url} alt="Banner" fill className="object-cover" />
+                          {isValidImageUrl(b.image_url) ? (
+                            <Image src={b.image_url} alt="Banner" fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-text-secondary">
+                              🖼️
+                            </div>
+                          )}
                         </div>
                         <p className="text-xs text-text-secondary truncate flex-1 leading-relaxed">
                           {b.image_url}
@@ -450,6 +500,7 @@ export default function AdminPage() {
             )}
           </div>
         )}
+      </div>
       </div>
 
       {/* --- ADD/EDIT PRODUCT MODAL FORM --- */}

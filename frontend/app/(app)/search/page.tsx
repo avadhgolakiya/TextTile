@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { productApi } from '@/lib/api-client';
+import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
+import { isValidImageUrl } from '@/lib/image';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -31,19 +33,21 @@ export default function SearchPage() {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
-      p.name.toLowerCase().includes(q) ||
-      p.id.toLowerCase().includes(q) ||
-      p.subtitle.toLowerCase().includes(q)
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.id || '').toLowerCase().includes(q) ||
+      (p.subtitle || '').toLowerCase().includes(q)
     );
   });
 
   return (
-    <div className="min-h-screen bg-cream pb-12">
-      {/* Search Bar Header */}
-      <header className="flex items-center gap-4 px-6 py-4 bg-white/90 backdrop-blur sticky top-0 z-10 border-b border-divider">
+    <div className="min-h-screen bg-cream pb-12 lg:bg-transparent lg:pb-0">
+      <DesktopTopBar title="Search" subtitle="Find sarees by name or code" />
+
+      {/* Search Bar Header — mobile sticky */}
+      <header className="flex items-center gap-4 px-6 py-4 bg-white/90 backdrop-blur sticky top-0 z-10 border-b border-divider lg:static lg:mb-6 lg:rounded-card lg:border lg:bg-white lg:px-6 lg:py-5 lg:shadow-sm">
         <button
           onClick={() => router.back()}
-          className="text-text-primary hover:text-maroon transition p-1 font-semibold"
+          className="text-text-primary hover:text-maroon transition p-1 font-semibold lg:hidden"
         >
           ← Back
         </button>
@@ -53,12 +57,12 @@ export default function SearchPage() {
           placeholder="Search sarees, fabric, code…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 bg-transparent text-base font-sans text-text-primary outline-none placeholder:text-text-secondary"
+          className="flex-1 bg-transparent text-base font-sans text-text-primary outline-none placeholder:text-text-secondary lg:text-lg lg:py-1"
         />
       </header>
 
       {/* Content */}
-      <div className="px-6 py-4 space-y-4 max-w-xl mx-auto">
+      <div className="px-6 py-4 space-y-4 max-w-xl mx-auto lg:max-w-none lg:px-0 lg:py-0">
         {loading ? (
           <div className="py-20 flex justify-center">
             <LoadingSpinner label="Loading products…" />
@@ -72,15 +76,15 @@ export default function SearchPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 xl:grid-cols-3">
             {results.map((product) => (
               <Link
                 key={product.id}
                 href={`/products/${product.id}`}
-                className="card flex gap-4 p-3 border border-divider hover:shadow transition duration-200"
+                className="card flex gap-4 p-3 border border-divider hover:shadow transition duration-200 lg:p-4 lg:hover:-translate-y-0.5 lg:hover:shadow-md"
               >
                 <div className="relative w-20 h-28 rounded-lg overflow-hidden shrink-0 bg-cream-deep border border-divider">
-                  {product.imageUrl ? (
+                  {isValidImageUrl(product.imageUrl) ? (
                     <Image
                       src={product.imageUrl}
                       alt={product.name}

@@ -20,7 +20,7 @@ export function AppBottomNav({ isAdmin = false }: Props) {
     : tabs;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-divider bg-white/95 backdrop-blur">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-divider bg-white/95 backdrop-blur lg:hidden">
       <ul className="mx-auto flex max-w-lg justify-around px-2 py-2">
         {items.map((tab) => {
           const active =

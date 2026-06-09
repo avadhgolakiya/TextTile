@@ -6,9 +6,12 @@ import { productApi, authApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
 import { formatInr } from '@/lib/formatting/inr';
 import { openWhatsAppSingleOrder } from '@/lib/whatsapp';
+import { DesktopTopBar } from '@/components/DesktopTopBar';
+import { toast } from '@/lib/toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
 import Image from 'next/image';
+import { isValidImageUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -57,7 +60,7 @@ export default function ProductDetailPage() {
   function handleAddToCart() {
     if (!product) return;
     addToCart(product, quantity);
-    alert(`Added ${quantity} × ${product.name} to cart!`);
+    toast.success(`Added ${quantity} × ${product.name} to cart!`);
   }
 
   if (loading) {
@@ -79,20 +82,23 @@ export default function ProductDetailPage() {
     );
   }
 
-  const images = product.imageUrls && product.imageUrls.length > 0
+  const images = (product.imageUrls && product.imageUrls.length > 0
     ? product.imageUrls
     : product.imageUrl
       ? [product.imageUrl]
-      : [];
+      : []
+  ).filter(isValidImageUrl);
 
   const discountPercent = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
   return (
-    <div className="min-h-screen bg-cream pb-24">
-      {/* Header */}
-      <header className="flex items-center gap-4 px-6 py-4 bg-white/80 backdrop-blur sticky top-0 z-10 border-b border-divider">
+    <div className="min-h-screen bg-cream pb-24 lg:bg-transparent lg:pb-0">
+      <DesktopTopBar title={product.name} subtitle={`Code: ${product.id}`} />
+
+      {/* Header — mobile only */}
+      <header className="flex items-center gap-4 px-6 py-4 bg-white/80 backdrop-blur sticky top-0 z-10 border-b border-divider lg:hidden">
         <button
           onClick={() => router.back()}
           className="text-text-primary hover:text-maroon transition p-1 font-semibold"
@@ -105,7 +111,7 @@ export default function ProductDetailPage() {
       </header>
 
       {/* Main product wrapper */}
-      <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-8 lg:max-w-none lg:px-0 lg:py-0 lg:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Left Column: Image Gallery */}
         <div className="space-y-4">
           <div className="relative aspect-[3/4] bg-white rounded-card overflow-hidden shadow-sm border border-divider">
@@ -148,12 +154,12 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Right Column: Info & Actions */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-8 lg:self-start">
           <div className="space-y-2">
             <span className="text-xs uppercase tracking-wider text-text-secondary">
               Code: {product.id}
             </span>
-            <h2 className="font-serif text-3xl font-bold text-text-primary leading-tight">
+            <h2 className="font-serif text-3xl font-bold text-text-primary leading-tight lg:text-4xl">
               {product.name}
             </h2>
             {product.subtitle && (
