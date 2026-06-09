@@ -1,5 +1,10 @@
 import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let initialized = false;
 let initFailed = false;
@@ -11,12 +16,25 @@ export function getFirebaseAdmin() {
 
   const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (credPath) {
-    const serviceAccount = JSON.parse(readFileSync(credPath, 'utf8'));
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    initialized = true;
-    return admin;
+    try {
+      let resolvedPath = path.resolve(process.cwd(), credPath);
+      if (!existsSync(resolvedPath)) {
+        // Fallback: resolve relative to backend root directory
+        const backendRoot = path.join(__dirname, '..', '..');
+        resolvedPath = path.resolve(backendRoot, credPath);
+      }
+
+      const serviceAccount = JSON.parse(readFileSync(resolvedPath, 'utf8'));
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      initialized = true;
+      return admin;
+    } catch (err) {
+      console.error('[FCM] Failed to initialize Firebase Admin from GOOGLE_APPLICATION_CREDENTIALS:', err);
+      initFailed = true;
+      return null;
+    }
   }
 
   const projectId = process.env.FIREBASE_PROJECT_ID;

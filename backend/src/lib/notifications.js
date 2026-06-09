@@ -46,6 +46,7 @@ export async function notifyNewProduct(product) {
       type: 'new_product',
       productId: String(product.id),
       productName: String(product.name),
+      link: `/products/${product.id}`,
     },
     webpush: {
       fcmOptions: {

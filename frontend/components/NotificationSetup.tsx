@@ -17,6 +17,24 @@ export function NotificationSetup() {
     if (!isFirebaseConfigured()) return;
 
     onForegroundMessage((title, body) => {
+      // Show real system notification in the notification bar
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready
+            .then((registration) => {
+              registration.showNotification(title, {
+                body,
+                icon: '/assets/icon/app_icon.jpeg',
+              });
+            })
+            .catch(() => {
+              new Notification(title, { body });
+            });
+        } else {
+          new Notification(title, { body });
+        }
+      }
+      // Show in-app toast as well
       toast.info(`${title}: ${body}`);
     });
 
