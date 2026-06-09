@@ -143,3 +143,24 @@ export const bannerApi = {
       token,
     }),
 };
+
+export const uploadApi = {
+  upload: (token: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://texttile.onrender.com';
+    return fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Upload failed (${res.status})`);
+      }
+      return res.json() as Promise<{ imageUrl: string }>;
+    });
+  },
+};

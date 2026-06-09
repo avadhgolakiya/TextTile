@@ -8,6 +8,7 @@ import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { AppUser } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
+import { toast } from '@/lib/toast';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -20,7 +21,41 @@ export default function ProfilePage() {
   const [orderCount, setOrderCount] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const clearCart = useCartStore((s) => s.clear);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  async function requestNotificationPermission() {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      toast.error('Notifications not supported in this browser.');
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === 'granted') {
+        const { setupPushNotifications } = await import('@/lib/firebase-messaging');
+        const { notificationApi } = await import('@/lib/api-client');
+        const fcmToken = await setupPushNotifications(async (t) => {
+          await notificationApi.registerToken(t);
+        });
+        if (fcmToken) {
+          toast.success('Notifications enabled successfully!');
+        } else {
+          toast.success('Notifications enabled, token generated.');
+        }
+      } else if (permission === 'denied') {
+        toast.error('Notification permission denied. Please enable them in browser settings.');
+      }
+    } catch (err) {
+      toast.error(`Failed to enable notifications: ${err}`);
+    }
+  }
 
   useEffect(() => {
     const token = getToken();
@@ -161,6 +196,38 @@ export default function ProfilePage() {
                 </div>
                 <div className="text-[10px] uppercase tracking-wider text-text-secondary">Spent</div>
               </div>
+            </div>
+          </div>
+
+          {/* Notifications Card */}
+          <div className="card border border-divider p-6 mt-6 lg:mt-0 space-y-4">
+            <div>
+              <h3 className="font-serif text-lg font-bold flex items-center gap-2">
+                <span>🔔</span> Push Notifications
+              </h3>
+              <p className="mt-1 text-xs text-text-secondary leading-relaxed">
+                Get instant updates when new sarees are added to the wholesale catalog.
+              </p>
+            </div>
+            <div className="flex items-center justify-between border-t border-divider pt-3.5">
+              <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
+                Status: 
+                {notificationPermission === 'granted' ? (
+                  <span className="text-green-800 bg-green-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold">Enabled</span>
+                ) : notificationPermission === 'denied' ? (
+                  <span className="text-red-800 bg-red-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold">Blocked</span>
+                ) : (
+                  <span className="text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold">Not Enabled</span>
+                )}
+              </span>
+              {notificationPermission !== 'granted' && (
+                <button
+                  onClick={requestNotificationPermission}
+                  className="btn-primary py-2 px-5 text-xs font-bold shadow-sm"
+                >
+                  Enable
+                </button>
+              )}
             </div>
           </div>
 

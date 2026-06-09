@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { productApi, orderApi, authApi, bannerApi } from '@/lib/api-client';
+import { productApi, orderApi, authApi, bannerApi, uploadApi } from '@/lib/api-client';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { toast } from '@/lib/toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -47,6 +47,9 @@ export default function AdminPage() {
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [newBannerUrl, setNewBannerUrl] = useState('');
   const [newBannerOrder, setNewBannerOrder] = useState(0);
+
+  const [uploadingProductImage, setUploadingProductImage] = useState(false);
+  const [uploadingBannerImage, setUploadingBannerImage] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -166,6 +169,38 @@ export default function AdminPage() {
     });
     setIsFeatured(false);
     setIsFormOpen(true);
+  }
+
+  async function handleProductImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingProductImage(true);
+    const token = getToken();
+    try {
+      const { imageUrl } = await uploadApi.upload(token, file);
+      setFormProduct((prev) => ({ ...prev, imageUrl }));
+      toast.success('Image uploaded successfully');
+    } catch (err) {
+      toast.error(`Upload failed: ${err}`);
+    } finally {
+      setUploadingProductImage(false);
+    }
+  }
+
+  async function handleBannerImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBannerImage(true);
+    const token = getToken();
+    try {
+      const { imageUrl } = await uploadApi.upload(token, file);
+      setNewBannerUrl(imageUrl);
+      toast.success('Banner image uploaded successfully');
+    } catch (err) {
+      toast.error(`Upload failed: ${err}`);
+    } finally {
+      setUploadingBannerImage(false);
+    }
   }
 
   async function saveProductForm(e: React.FormEvent) {
@@ -594,14 +629,46 @@ export default function AdminPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-text-secondary uppercase">Image Network URL</label>
-                <input
-                  type="text"
-                  placeholder="Paste Unsplash or other web image URL"
-                  className="input-field"
-                  value={formProduct.imageUrl || ''}
-                  onChange={(e) => setFormProduct({ ...formProduct, imageUrl: e.target.value })}
-                />
+                <label className="text-xs font-bold text-text-secondary uppercase">Product Image</label>
+                <div className="flex gap-4 items-center">
+                  <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-cream-deep border border-divider shrink-0 flex items-center justify-center">
+                    {isValidImageUrl(formProduct.imageUrl) ? (
+                      <Image src={formProduct.imageUrl || ''} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <span className="text-2xl text-text-secondary">🧵</span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-2">
+                      <label className="btn-outline py-2 px-4 text-xs cursor-pointer inline-block">
+                        {uploadingProductImage ? 'Uploading...' : 'Choose File'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleProductImageUpload}
+                          disabled={uploadingProductImage}
+                        />
+                      </label>
+                      {formProduct.imageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setFormProduct((prev) => ({ ...prev, imageUrl: '' }))}
+                          className="text-red-600 hover:text-red-800 text-xs font-semibold py-2 px-2 transition"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Or paste network image URL"
+                      className="input-field py-2.5 text-xs"
+                      value={formProduct.imageUrl || ''}
+                      onChange={(e) => setFormProduct({ ...formProduct, imageUrl: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -658,15 +725,47 @@ export default function AdminPage() {
 
             <form onSubmit={addBanner} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-text-secondary uppercase">Image URL</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Paste banner image URL"
-                  className="input-field"
-                  value={newBannerUrl}
-                  onChange={(e) => setNewBannerUrl(e.target.value)}
-                />
+                <label className="text-xs font-bold text-text-secondary uppercase">Banner Image</label>
+                <div className="flex gap-4 items-center">
+                  <div className="relative w-24 h-14 rounded-lg overflow-hidden bg-cream-deep border border-divider shrink-0 flex items-center justify-center">
+                    {isValidImageUrl(newBannerUrl) ? (
+                      <Image src={newBannerUrl} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <span className="text-2xl text-text-secondary">🖼️</span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-2">
+                      <label className="btn-outline py-2 px-4 text-xs cursor-pointer inline-block">
+                        {uploadingBannerImage ? 'Uploading...' : 'Choose File'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleBannerImageUpload}
+                          disabled={uploadingBannerImage}
+                        />
+                      </label>
+                      {newBannerUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setNewBannerUrl('')}
+                          className="text-red-600 hover:text-red-800 text-xs font-semibold py-2 px-2 transition"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Or paste network image URL"
+                      className="input-field py-2.5 text-xs"
+                      value={newBannerUrl}
+                      onChange={(e) => setNewBannerUrl(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-1">
