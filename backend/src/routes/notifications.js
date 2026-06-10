@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { subscribeToNewProducts } from '../lib/notifications.js';
-import { isFirebaseConfigured } from '../lib/firebase.js';
+import { isFirebaseConfigured, getFirebaseDiagnostics } from '../lib/firebase.js';
 
 const router = Router();
 
@@ -30,7 +30,7 @@ router.post('/register-token', async (req, res) => {
 });
 
 router.get('/status', (_req, res) => {
-  res.json({ configured: isFirebaseConfigured() });
+  res.json(getFirebaseDiagnostics());
 });
 
 export default router;
