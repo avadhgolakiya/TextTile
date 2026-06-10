@@ -29,6 +29,133 @@ export default function ProductDetailPage() {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const addToCart = useCartStore((s) => s.add);
 
+  // Lightbox & zoom states (declared unconditionally at the top)
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // Safe images extraction at the top (before early returns)
+  const images = (product?.imageUrls && product.imageUrls.length > 0
+    ? product.imageUrls
+    : product?.imageUrl
+      ? [product.imageUrl]
+      : []
+  ).filter(isValidImageUrl);
+
+  // Reset zoom/drag when changing active image
+  const handleNextImage = () => {
+    setZoomScale(1);
+    setDragOffset({ x: 0, y: 0 });
+    setActiveImageIdx((prev) => (prev + 1) % images.length);
+  };
+
+  const handlePrevImage = () => {
+    setZoomScale(1);
+    setDragOffset({ x: 0, y: 0 });
+    setActiveImageIdx((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const toggleZoom = () => {
+    if (zoomScale > 1) {
+      setZoomScale(1);
+      setDragOffset({ x: 0, y: 0 });
+    } else {
+      setZoomScale(2.2);
+    }
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (zoomScale === 1) return;
+    setIsDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragStart({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    setDragOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsDragging(false);
+  };
+
+  async function downloadCurrentImage() {
+    const imageUrl = images[activeImageIdx];
+    if (!imageUrl) return;
+    try {
+      const res = await fetch(imageUrl);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${product?.id || 'saree'}-${activeImageIdx + 1}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success('Photo downloaded successfully!');
+    } catch (err) {
+      console.error(err);
+      // Fallback to opening in new tab if CORS or other block
+      window.open(imageUrl, '_blank');
+      toast.success('Opened image in a new tab for saving.');
+    }
+  }
+
+  async function shareProduct() {
+    if (!product) return;
+    const shareText = `🧵 *${product.name}*\n${product.subtitle ? `${product.subtitle}\n` : ''}💰 Price: ${formatInr(product.price)}${product.originalPrice ? ` (was ${formatInr(product.originalPrice)})` : ''}\n\n📦 Product ID: ${product.id}\n🔗 Link: ${window.location.href}\n\nOrder via Swastik Fashion 🛍️`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: shareText,
+          url: window.location.href,
+        });
+        toast.success('Shared successfully!');
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          copyToClipboard(shareText);
+        }
+      }
+    } else {
+      copyToClipboard(shareText);
+    }
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+      .then(() => toast.success('Product details copied to clipboard!'))
+      .catch(() => toast.error('Failed to copy details.'));
+  }
+
+  // Keyboard navigation for lightbox (declared unconditionally at the top)
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsLightboxOpen(false);
+        setZoomScale(1);
+        setDragOffset({ x: 0, y: 0 });
+      } else if (e.key === 'ArrowRight') {
+        handleNextImage();
+      } else if (e.key === 'ArrowLeft') {
+        handlePrevImage();
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, images.length]);
+
   useEffect(() => {
     productApi
       .fetchById(id)
@@ -82,13 +209,6 @@ export default function ProductDetailPage() {
     );
   }
 
-  const images = (product.imageUrls && product.imageUrls.length > 0
-    ? product.imageUrls
-    : product.imageUrl
-      ? [product.imageUrl]
-      : []
-  ).filter(isValidImageUrl);
-
   const discountPercent = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -114,22 +234,90 @@ export default function ProductDetailPage() {
       <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-8 lg:max-w-none lg:px-0 lg:py-0 lg:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Left Column: Image Gallery */}
         <div className="space-y-4">
-          <div className="relative aspect-[3/4] bg-white rounded-card overflow-hidden shadow-sm border border-divider">
+          <div className="relative aspect-[3/4] bg-white rounded-card overflow-hidden shadow-sm border border-divider group/image">
             {images.length > 0 ? (
-              <Image
-                src={images[activeImageIdx]}
-                alt={product.name}
-                fill
-                className="object-cover"
-                priority
-              />
+              <>
+                <Image
+                  src={images[activeImageIdx]}
+                  alt={product.name}
+                  fill
+                  className="object-cover cursor-zoom-in hover:scale-[1.01] transition-transform duration-500"
+                  priority
+                  onClick={() => setIsLightboxOpen(true)}
+                />
+
+                {/* Floating Share & Download buttons */}
+                <div className="absolute right-4 top-4 flex gap-2 z-10">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      shareProduct();
+                    }}
+                    className="p-2.5 bg-black/45 hover:bg-black/65 text-white rounded-full transition backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
+                    title="Share product details"
+                  >
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadCurrentImage();
+                    }}
+                    className="p-2.5 bg-black/45 hover:bg-black/65 text-white rounded-full transition backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
+                    title="Download photo"
+                  >
+                    <svg className="w-5 h-5 fill-none stroke-current" strokeWidth="2.2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                  </button>
+                </div>
+                
+                {images.length > 1 && (
+                  <>
+                    {/* Previous Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePrevImage();
+                      }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2.5 transition opacity-90 lg:opacity-0 lg:group-hover/image:opacity-100 cursor-pointer backdrop-blur-sm"
+                      aria-label="Previous image"
+                    >
+                      <svg className="w-5 h-5 stroke-current" fill="none" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                      </svg>
+                    </button>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNextImage();
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2.5 transition opacity-90 lg:opacity-0 lg:group-hover/image:opacity-100 cursor-pointer backdrop-blur-sm"
+                      aria-label="Next image"
+                    >
+                      <svg className="w-5 h-5 stroke-current" fill="none" strokeWidth="3" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </button>
+                    
+                    {/* Image indicator count badge overlay */}
+                    <span className="absolute right-4 bottom-4 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full font-semibold select-none">
+                      {activeImageIdx + 1} / {images.length}
+                    </span>
+                  </>
+                )}
+              </>
             ) : (
               <div className="w-full h-full bg-cream-deep flex items-center justify-center text-text-secondary">
                 No Image Available
               </div>
             )}
             {product.badge && (
-              <span className="absolute left-4 top-4 rounded-full bg-gradient-to-r from-gold to-[#D4AE55] text-white px-3 py-1 text-xs font-bold shadow-sm">
+              <span className="absolute left-4 top-4 rounded-full bg-gradient-to-r from-gold to-[#D4AE55] text-white px-3 py-1 text-xs font-bold shadow-sm z-10">
                 {product.badge.toUpperCase()}
               </span>
             )}
@@ -141,9 +329,13 @@ export default function ProductDetailPage() {
               {images.map((img, i) => (
                 <button
                   key={i}
-                  onClick={() => setActiveImageIdx(i)}
-                  className={`relative w-16 h-20 rounded-md overflow-hidden shrink-0 border-2 transition duration-200 ${
-                    i === activeImageIdx ? 'border-maroon scale-95 shadow' : 'border-divider'
+                  onClick={() => {
+                    setZoomScale(1);
+                    setDragOffset({ x: 0, y: 0 });
+                    setActiveImageIdx(i);
+                  }}
+                  className={`relative w-16 h-20 rounded-md overflow-hidden shrink-0 border-2 transition duration-200 hover:border-maroon/50 hover:scale-98 ${
+                    i === activeImageIdx ? 'border-maroon scale-95 shadow ring-2 ring-gold/30' : 'border-divider'
                   }`}
                 >
                   <Image src={img} alt={`Thumbnail ${i}`} fill className="object-cover" />
@@ -248,6 +440,127 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox zoomable modal overlay */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col justify-between select-none backdrop-blur-sm">
+          {/* Lightbox Header */}
+          <div className="flex items-center justify-between p-4 md:p-6 text-white z-10 bg-gradient-to-b from-black/50 to-transparent">
+            <div className="font-mono text-sm text-white/80">
+              {activeImageIdx + 1} / {images.length}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  shareProduct();
+                }}
+                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition text-white/90 hover:text-white cursor-pointer flex items-center justify-center"
+                title="Share details"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                </svg>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  downloadCurrentImage();
+                }}
+                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition text-white/90 hover:text-white cursor-pointer flex items-center justify-center"
+                title="Download photo"
+              >
+                <svg className="w-5 h-5 fill-none stroke-current" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              </button>
+              <button
+                onClick={() => {
+                  setIsLightboxOpen(false);
+                  setZoomScale(1);
+                  setDragOffset({ x: 0, y: 0 });
+                }}
+                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition text-white/90 hover:text-white cursor-pointer flex items-center justify-center"
+                aria-label="Close lightbox"
+              >
+                <svg className="w-6 h-6 stroke-current" fill="none" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Lightbox Main Container */}
+          <div className="relative flex-1 flex items-center justify-center overflow-hidden px-4">
+            {/* Prev Button */}
+            {images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevImage();
+                }}
+                className="absolute left-4 md:left-8 p-3 bg-black/40 hover:bg-black/70 border border-white/10 text-white rounded-full transition z-10 cursor-pointer"
+                aria-label="Previous image"
+              >
+                <svg className="w-6 h-6 stroke-current" fill="none" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
+
+            {/* Image Wrapper */}
+            <div
+              className={`relative max-w-full max-h-[80vh] aspect-[3/4] flex items-center justify-center overflow-hidden transition-all ${
+                zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'
+              }`}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleZoom();
+              }}
+            >
+              <div
+                style={{
+                  transform: `scale(${zoomScale}) translate(${dragOffset.x / zoomScale}px, ${dragOffset.y / zoomScale}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                }}
+                className="relative w-full h-full flex items-center justify-center"
+              >
+                <Image
+                  src={images[activeImageIdx]}
+                  alt={`${product.name} large view`}
+                  fill
+                  className="object-contain pointer-events-none select-none"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Next Button */}
+            {images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextImage();
+                }}
+                className="absolute right-4 md:right-8 p-3 bg-black/40 hover:bg-black/70 border border-white/10 text-white rounded-full transition z-10 cursor-pointer"
+                aria-label="Next image"
+              >
+                <svg className="w-6 h-6 stroke-current" fill="none" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Lightbox Footer Info */}
+          <div className="p-4 md:p-6 text-center text-xs text-white/50 bg-gradient-to-t from-black/50 to-transparent">
+            {zoomScale > 1 ? 'Drag to pan. Click again to zoom out.' : 'Click / tap on image to zoom.'}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -50,6 +50,7 @@ export default function AdminPage() {
 
   const [uploadingProductImage, setUploadingProductImage] = useState(false);
   const [uploadingBannerImage, setUploadingBannerImage] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   useEffect(() => {
     const token = getToken();
@@ -144,7 +145,7 @@ export default function AdminPage() {
       price: p.price,
       originalPrice: p.originalPrice,
       imageUrl: p.imageUrl,
-      imageUrls: p.imageUrls,
+      imageUrls: p.imageUrls || (p.imageUrl ? [p.imageUrl] : []),
       badge: p.badge,
       categoryKey: p.categoryKey || 'banarasi',
       isVisible: p.isVisible,
@@ -171,20 +172,64 @@ export default function AdminPage() {
     setIsFormOpen(true);
   }
 
-  async function handleProductImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handleProductImageUploadMultiple(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setUploadingProductImage(true);
     const token = getToken();
     try {
-      const { imageUrl } = await uploadApi.upload(token, file);
-      setFormProduct((prev) => ({ ...prev, imageUrl }));
-      toast.success('Image uploaded successfully');
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const { imageUrl } = await uploadApi.upload(token, file);
+        newUrls.push(imageUrl);
+      }
+      setFormProduct((prev) => {
+        const currentUrls = prev.imageUrls || [];
+        const updatedUrls = [...currentUrls, ...newUrls];
+        return {
+          ...prev,
+          imageUrls: updatedUrls,
+          imageUrl: prev.imageUrl || updatedUrls[0] || '',
+        };
+      });
+      toast.success(`Uploaded ${files.length} photo(s)`);
     } catch (err) {
       toast.error(`Upload failed: ${err}`);
     } finally {
       setUploadingProductImage(false);
     }
+  }
+
+  function handleAddImageUrl() {
+    if (!newImageUrl.trim()) return;
+    if (!isValidImageUrl(newImageUrl.trim())) {
+      toast.error('Image URL must start with http://, https://, or /');
+      return;
+    }
+    setFormProduct((prev) => {
+      const currentUrls = prev.imageUrls || [];
+      const updatedUrls = [...currentUrls, newImageUrl.trim()];
+      return {
+        ...prev,
+        imageUrls: updatedUrls,
+        imageUrl: prev.imageUrl || updatedUrls[0] || '',
+      };
+    });
+    setNewImageUrl('');
+    toast.success('Image URL added');
+  }
+
+  function handleRemoveImage(index: number) {
+    setFormProduct((prev) => {
+      const currentUrls = prev.imageUrls || [];
+      const updatedUrls = currentUrls.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        imageUrls: updatedUrls,
+        imageUrl: updatedUrls[0] || '',
+      };
+    });
   }
 
   async function handleBannerImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -206,16 +251,24 @@ export default function AdminPage() {
   async function saveProductForm(e: React.FormEvent) {
     e.preventDefault();
     const token = getToken();
-    if (formProduct.imageUrl && !isValidImageUrl(formProduct.imageUrl)) {
-      toast.error('Image URL must start with http://, https://, or /');
-      return;
-    }
+    const currentUrls = formProduct.imageUrls || [];
+    
+    // Fallback if imageUrls is empty but primary imageUrl exists
+    const finalUrls = currentUrls.length > 0 
+      ? currentUrls 
+      : formProduct.imageUrl 
+        ? [formProduct.imageUrl] 
+        : [];
+
+    const finalPrimaryUrl = finalUrls[0] || formProduct.imageUrl || '';
+
     try {
       const payload = {
         ...formProduct,
         price: Number(formProduct.price),
         originalPrice: formProduct.originalPrice ? Number(formProduct.originalPrice) : null,
-        imageUrls: formProduct.imageUrl ? [formProduct.imageUrl] : [],
+        imageUrl: finalPrimaryUrl,
+        imageUrls: finalUrls,
       };
       await productApi.upsert(token, payload, isFeatured);
       setIsFormOpen(false);
@@ -628,47 +681,76 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-text-secondary uppercase">Product Image</label>
-                <div className="flex gap-4 items-center">
-                  <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-cream-deep border border-divider shrink-0 flex items-center justify-center">
-                    {isValidImageUrl(formProduct.imageUrl) ? (
-                      <Image src={formProduct.imageUrl || ''} alt="Preview" fill className="object-cover" />
-                    ) : (
-                      <span className="text-2xl text-text-secondary">🧵</span>
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex gap-2">
-                      <label className="btn-outline py-2 px-4 text-xs cursor-pointer inline-block">
-                        {uploadingProductImage ? 'Uploading...' : 'Choose File'}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleProductImageUpload}
-                          disabled={uploadingProductImage}
-                        />
-                      </label>
-                      {formProduct.imageUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setFormProduct((prev) => ({ ...prev, imageUrl: '' }))}
-                          className="text-red-600 hover:text-red-800 text-xs font-semibold py-2 px-2 transition"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Or paste network image URL"
-                      className="input-field py-2.5 text-xs"
-                      value={formProduct.imageUrl || ''}
-                      onChange={(e) => setFormProduct({ ...formProduct, imageUrl: e.target.value })}
-                    />
-                  </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-text-secondary uppercase">Product Images ({(formProduct.imageUrls || []).length})</label>
+                  {uploadingProductImage && (
+                    <span className="text-xs font-semibold text-maroon animate-pulse">Uploading photos…</span>
+                  )}
                 </div>
+                
+                {/* Thumbnails grid */}
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                  {(formProduct.imageUrls || []).map((img, i) => (
+                    <div key={i} className="relative w-16 h-20 rounded-md overflow-hidden shrink-0 border border-divider">
+                      <Image src={img} alt={`Preview ${i}`} fill className="object-cover" />
+                      
+                      {/* Badge for Main/Cover image */}
+                      {i === 0 && (
+                        <span className="absolute left-1 bottom-1 bg-maroon text-white text-[8px] px-1 py-0.5 rounded font-bold uppercase tracking-wider z-10">
+                          Main
+                        </span>
+                      )}
+                      
+                      {/* Delete button */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(i)}
+                        className="absolute right-1 top-1 bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 w-4 h-4 flex items-center justify-center transition z-10"
+                        title="Remove image"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Add Slot */}
+                  <label className={`w-16 h-20 rounded-md border-2 border-dashed border-maroon/30 hover:border-maroon transition flex flex-col items-center justify-center shrink-0 cursor-pointer ${
+                    uploadingProductImage ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}>
+                    <span className="text-xl text-maroon font-bold leading-none">+</span>
+                    <span className="text-[9px] font-semibold text-maroon">Add File</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleProductImageUploadMultiple}
+                      disabled={uploadingProductImage}
+                    />
+                  </label>
+                </div>
+                
+                {/* Add by URL input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Or paste network image URL"
+                    className="input-field py-2.5 text-xs flex-1"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddImageUrl}
+                    className="btn-outline py-2 px-4 text-xs font-bold"
+                  >
+                    Add URL
+                  </button>
+                </div>
+                <p className="text-[10px] text-text-secondary leading-relaxed">
+                  First image will be the primary cover image. You can upload multiple files or paste URLs.
+                </p>
               </div>
 
               <div className="space-y-1">
