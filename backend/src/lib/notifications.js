@@ -48,7 +48,13 @@ export async function notifyNewProduct(product) {
       productName: String(product.name),
       link: `/products/${product.id}`,
     },
+    android: {
+      priority: 'high',
+    },
     webpush: {
+      headers: {
+        Urgency: 'high',
+      },
       fcmOptions: {
         link: `/products/${product.id}`,
       },
