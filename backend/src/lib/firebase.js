@@ -24,16 +24,18 @@ export function getFirebaseAdmin() {
         resolvedPath = path.resolve(backendRoot, credPath);
       }
 
-      const serviceAccount = JSON.parse(readFileSync(resolvedPath, 'utf8'));
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      initialized = true;
-      return admin;
+      if (existsSync(resolvedPath)) {
+        const serviceAccount = JSON.parse(readFileSync(resolvedPath, 'utf8'));
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+        initialized = true;
+        return admin;
+      } else {
+        console.warn(`[FCM] GOOGLE_APPLICATION_CREDENTIALS file not found at: ${resolvedPath}. Attempting individual env fallback.`);
+      }
     } catch (err) {
-      console.error('[FCM] Failed to initialize Firebase Admin from GOOGLE_APPLICATION_CREDENTIALS:', err);
-      initFailed = true;
-      return null;
+      console.error('[FCM] Failed to initialize Firebase Admin from file, attempting individual env fallback:', err);
     }
   }
 
@@ -42,11 +44,15 @@ export function getFirebaseAdmin() {
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
   if (projectId && clientEmail && privateKey) {
-    admin.initializeApp({
-      credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
-    });
-    initialized = true;
-    return admin;
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+      });
+      initialized = true;
+      return admin;
+    } catch (err) {
+      console.error('[FCM] Failed to initialize Firebase Admin from individual env variables:', err);
+    }
   }
 
   initFailed = true;
