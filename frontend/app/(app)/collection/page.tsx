@@ -13,6 +13,7 @@ export default function CollectionPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     productApi
@@ -28,11 +29,34 @@ export default function CollectionPage() {
   }, []);
 
   const filteredProducts = products.filter((p) => {
-    if (selected === 'All') return true;
-    return (
-      (p.name || '').toLowerCase().includes(selected.toLowerCase()) ||
-      (p.subtitle || '').toLowerCase().includes(selected.toLowerCase())
-    );
+    // 1. Category Chip filter
+    let matchesCategory = true;
+    if (selected !== 'All') {
+      const term = selected.toLowerCase();
+      // Normalize plurals (e.g., "Sarees" -> "saree", "Suits" -> "suit")
+      const singularTerm = term.endsWith('s') ? term.slice(0, -1) : term;
+
+      const nameLower = (p.name || '').toLowerCase();
+      const subtitleLower = (p.subtitle || '').toLowerCase();
+
+      matchesCategory =
+        nameLower.includes(singularTerm) ||
+        nameLower.includes(term) ||
+        subtitleLower.includes(singularTerm) ||
+        subtitleLower.includes(term);
+    }
+
+    // 2. Text Search Query filter
+    let matchesSearch = true;
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase().trim();
+      matchesSearch =
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.id || '').toLowerCase().includes(q) ||
+        (p.subtitle || '').toLowerCase().includes(q);
+    }
+
+    return matchesCategory && matchesSearch;
   });
 
   return (
@@ -83,6 +107,29 @@ export default function CollectionPage() {
 
         {/* Grid of products */}
         <div className="px-6 lg:px-0">
+          {/* Quick Search Bar */}
+          <div className="mb-6">
+            <div className="relative flex items-center rounded-2xl border border-divider bg-white px-4 py-3 shadow-sm focus-within:border-gold focus-within:ring-1 focus-within:ring-gold transition duration-200">
+              <span className="text-text-secondary mr-2 select-none text-base">🔍</span>
+              <input
+                type="text"
+                placeholder={`Search in ${selected === 'All' ? 'collection' : selected.toLowerCase()}...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-sm font-sans text-text-primary outline-none placeholder:text-text-secondary"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-text-secondary hover:text-maroon text-xs font-bold px-2 py-1 transition"
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
           {loading ? (
             <div className="py-20 flex justify-center">
               <LoadingSpinner label="Loading collection…" />
