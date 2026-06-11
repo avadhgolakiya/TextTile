@@ -32,8 +32,22 @@ export function buildCartMessage(options: {
       `   Qty: ${line.quantity} × ${formatInr(line.product.price)}`,
     );
     parts.push(`   Subtotal: ${formatInr(lineTotal)}`);
-    if (line.product.imageUrl) {
-      parts.push(`   📷 Photo: ${line.product.imageUrl}`);
+    
+    // Support sending all product images if multiple exist
+    const images = (line.product.imageUrls && line.product.imageUrls.length > 0)
+      ? line.product.imageUrls
+      : line.product.imageUrl
+        ? [line.product.imageUrl]
+        : [];
+    if (images.length > 0) {
+      if (images.length === 1) {
+        parts.push(`   📷 Photo: ${images[0]}`);
+      } else {
+        parts.push(`   📷 Photos:`);
+        images.forEach((img, idx) => {
+          parts.push(`     - View ${idx + 1}: ${img}`);
+        });
+      }
     }
     parts.push('');
   });
@@ -88,8 +102,21 @@ export function openWhatsAppSingleOrder(options: {
   if (note?.trim()) {
     parts.push(`Note: ${note.trim()}`);
   }
-  if (product.imageUrl) {
-    parts.push(`📷 Photo: ${product.imageUrl}`);
+  // Support sending all product images if multiple exist
+  const images = (product.imageUrls && product.imageUrls.length > 0)
+    ? product.imageUrls
+    : product.imageUrl
+      ? [product.imageUrl]
+      : [];
+  if (images.length > 0) {
+    if (images.length === 1) {
+      parts.push(`📷 Photo: ${images[0]}`);
+    } else {
+      parts.push(`📷 Photos:`);
+      images.forEach((img, idx) => {
+        parts.push(`- View ${idx + 1}: ${img}`);
+      });
+    }
   }
   parts.push('━━━━━━━━━━━━━━━━━━━', `🛒 *Total: ${formatInr(product.price * quantity)}*`);
   parts.push('', 'Please confirm my order. I will visit your shop for pickup.');
