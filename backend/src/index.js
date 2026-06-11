@@ -1,4 +1,4 @@
-// v1.2.0 – google-login debug logs + issuer/expiry validation + facebook-login
+// v1.2.0 – google-login debug logs + issuer/expiry validation
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';

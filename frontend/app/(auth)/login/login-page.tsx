@@ -6,8 +6,6 @@ import { FormEvent, useState, useEffect } from 'react';
 import { AuthBrandPanel } from '@/components/AuthBrandPanel';
 import { authApi } from '@/lib/api-client';
 
-const FB_APP_ID = '2064272007513102';
-
 /** Port of lib/features/auth/login_screen.dart */
 export default function LoginPage() {
   const router = useRouter();
@@ -17,7 +15,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [fbReady, setFbReady] = useState(false);
 
   // ── Google Identity Services ──────────────────────────────────────────────
   useEffect(() => {
@@ -68,63 +65,6 @@ export default function LoginPage() {
       initGoogle();
     }
   }, [router, next]);
-
-  // ── Facebook SDK ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    if ((window as any).FB) {
-      // SDK already loaded (e.g. hot-reload), just init
-      (window as any).FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: 'v20.0' });
-      setFbReady(true);
-      return;
-    }
-
-    // MUST set fbAsyncInit BEFORE injecting the script tag so Facebook
-    // SDK calls it immediately after it finishes loading.
-    (window as any).fbAsyncInit = function () {
-      (window as any).FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: 'v20.0' });
-      setFbReady(true);
-    };
-
-    const script = document.createElement('script');
-    script.src = 'https://connect.facebook.net/en_US/sdk.js';
-    script.async = true;
-    script.defer = true;
-    // Enable button even if the SDK fails to load (e.g. ad-blocker)
-    // – handleFacebookLogin will show a readable error in that case.
-    script.onerror = () => setFbReady(true);
-    document.body.appendChild(script);
-  }, []);
-
-  async function handleFacebookLogin() {
-    const FB = (window as any).FB;
-    if (!FB) {
-      setError('Facebook is not available. Please disable any ad-blocker and refresh the page.');
-      return;
-    }
-    setError(null);
-    setLoading(true);
-
-    FB.login(
-      async (response: any) => {
-        if (!response || response.status !== 'connected' || !response.authResponse?.accessToken) {
-          // User cancelled or popup was blocked
-          setError('Facebook login was cancelled. Make sure pop-ups are allowed for this site.');
-          setLoading(false);
-          return;
-        }
-        try {
-          const res = await authApi.facebookLogin(response.authResponse.accessToken);
-          document.cookie = `token=${res.accessToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
-          router.replace(next);
-          router.refresh();
-        } catch (err: any) {
-          setError(err.message || 'Facebook authentication failed.');
-          setLoading(false);
-        }
-      },
-      { scope: 'public_profile,email' }
-    );
-  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -186,30 +126,13 @@ export default function LoginPage() {
                 <div className="w-full border-t border-divider"></div>
               </div>
               <span className="relative bg-white px-4 text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                or continue with
+                or
               </span>
             </div>
 
-            {/* Social login buttons */}
-            <div className="flex flex-col gap-3">
-              {/* Google */}
-              <div className="flex justify-center w-full min-h-[44px]">
-                <div id="google-signin-btn" className="w-full flex justify-center"></div>
-              </div>
-
-              {/* Facebook */}
-              <button
-                type="button"
-                onClick={handleFacebookLogin}
-                disabled={!fbReady || loading}
-                className="w-full flex items-center justify-center gap-3 rounded-xl border border-[#1877F2] bg-[#1877F2] py-3 px-4 text-sm font-semibold text-white transition hover:bg-[#166fe5] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {/* Facebook icon */}
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                Continue with Facebook
-              </button>
+            {/* Google sign-in */}
+            <div className="flex justify-center w-full min-h-[44px]">
+              <div id="google-signin-btn" className="w-full flex justify-center"></div>
             </div>
           </div>
 
