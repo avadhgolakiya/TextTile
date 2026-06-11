@@ -144,12 +144,19 @@ export default function LoginPage() {
                 Create account
               </Link>
             </p>
-            <p className="text-xs text-text-secondary">
-              By signing in, you agree to our{' '}
-              <Link href="/privacy" className="font-semibold text-maroon hover:underline">
-                Privacy Policy
-              </Link>
-            </p>
+            <div className="flex items-center justify-center gap-3 lg:justify-start">
+              <p className="text-xs text-text-secondary">
+                <Link href="/privacy" className="font-semibold text-maroon hover:underline">
+                  Privacy Policy
+                </Link>
+              </p>
+              <span className="text-xs text-text-secondary">·</span>
+              <p className="text-xs text-text-secondary">
+                <Link href="/data-deletion" className="font-semibold text-red-600 hover:underline">
+                  🗑️ Delete My Data
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
