@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { productApi, authApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
+import { useSavedStore } from '@/lib/saved-store';
 import { formatInr } from '@/lib/formatting/inr';
 import { openWhatsAppSingleOrder } from '@/lib/whatsapp';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
@@ -28,6 +29,8 @@ export default function ProductDetailPage() {
   const [note, setNote] = useState('');
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const addToCart = useCartStore((s) => s.add);
+  const toggleSaved = useSavedStore((s) => s.toggle);
+  const isSaved = useSavedStore((s) => s.isSaved(id));
 
   // Lightbox & zoom states (declared unconditionally at the top)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -251,6 +254,20 @@ export default function ProductDetailPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (product) toggleSaved(product);
+                    }}
+                    className={`p-2.5 rounded-full transition backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center ${
+                      isSaved ? 'bg-maroon text-white shadow-maroon/30' : 'bg-black/45 hover:bg-black/65 text-white'
+                    }`}
+                    title={isSaved ? 'Remove from saved' : 'Save product'}
+                  >
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
                       shareProduct();
                     }}
                     className="p-2.5 bg-black/45 hover:bg-black/65 text-white rounded-full transition backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
@@ -450,6 +467,20 @@ export default function ProductDetailPage() {
               {activeImageIdx + 1} / {images.length}
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (product) toggleSaved(product);
+                }}
+                className={`p-2.5 rounded-full transition cursor-pointer flex items-center justify-center ${
+                  isSaved ? 'bg-maroon text-white' : 'bg-white/10 hover:bg-white/20 text-white/90 hover:text-white'
+                }`}
+                title={isSaved ? 'Remove from saved' : 'Save product'}
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

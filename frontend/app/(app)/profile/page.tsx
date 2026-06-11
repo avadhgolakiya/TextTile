@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { authApi, orderApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
+import { useSavedStore } from '@/lib/saved-store';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { AppUser } from '@/lib/types';
@@ -23,6 +25,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const clearCart = useCartStore((s) => s.clear);
+  const savedCount = useSavedStore((s) => s.items().length);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -138,10 +141,10 @@ export default function ProfilePage() {
             <div className="text-lg font-bold text-gold">{orderCount}</div>
             <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Orders</div>
           </div>
-          <div className="flex-1 bg-white/10 border border-white/10 rounded-2xl py-3 px-4 text-center">
-            <div className="text-lg font-bold text-gold">12</div>
+          <Link href="/profile/saved" className="flex-1 bg-white/10 border border-white/10 rounded-2xl py-3 px-4 text-center hover:bg-white/15 transition cursor-pointer">
+            <div className="text-lg font-bold text-gold">{savedCount}</div>
             <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Saved</div>
-          </div>
+          </Link>
           <div className="flex-1 bg-white/10 border border-white/10 rounded-2xl py-3 px-4 text-center">
             <div className="text-lg font-bold text-gold">
               {totalSpent >= 100000 ? `₹${(totalSpent / 100000).toFixed(1)}L` : formatInr(totalSpent)}
@@ -155,24 +158,29 @@ export default function ProfilePage() {
       <div className="px-6 -mt-6 lg:mt-8 lg:px-0 lg:grid lg:grid-cols-12 lg:gap-8">
         <div className="card border border-divider shadow-md divide-y divide-divider overflow-hidden lg:col-span-7">
           {[
-            { title: 'Saved Products', subtitle: '12 items', icon: '🔖' },
-            { title: 'Shipping Address', subtitle: 'Surat, Gujarat', icon: '📍' },
-            { title: 'Payment Methods', subtitle: 'UPI • Bank', icon: '💳' },
-            { title: 'Preferences', subtitle: 'Notifications, language', icon: '⚙️' },
-            { title: 'Help & Support', subtitle: 'WhatsApp, FAQ', icon: '❓' },
-          ].map((item, i) => (
-            <button
-              key={i}
-              className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-cream-deep transition duration-150"
-            >
-              <span className="text-2xl">{item.icon}</span>
-              <div className="flex-1">
-                <h4 className="font-semibold text-text-primary text-sm">{item.title}</h4>
-                <p className="text-xs text-text-secondary mt-0.5">{item.subtitle}</p>
-              </div>
-              <span className="text-text-secondary text-sm">→</span>
-            </button>
-          ))}
+            { title: 'Saved Products', subtitle: `${savedCount} items`, icon: '🔖', href: '/profile/saved' },
+            { title: 'Shipping Address', subtitle: 'Surat, Gujarat', icon: '📍', href: '#' },
+            { title: 'Payment Methods', subtitle: 'UPI • Bank', icon: '💳', href: '#' },
+            { title: 'Preferences', subtitle: 'Notifications, language', icon: '⚙️', href: '#' },
+            { title: 'Help & Support', subtitle: 'WhatsApp, FAQ', icon: '❓', href: '#' },
+          ].map((item, i) => {
+            const isClickable = item.href !== '#';
+            const Component = isClickable ? Link : 'button';
+            return (
+              <Component
+                key={i}
+                href={isClickable ? item.href : undefined}
+                className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-cream-deep transition duration-150 cursor-pointer"
+              >
+                <span className="text-2xl">{item.icon}</span>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-text-primary text-sm">{item.title}</h4>
+                  <p className="text-xs text-text-secondary mt-0.5">{item.subtitle}</p>
+                </div>
+                <span className="text-text-secondary text-sm">→</span>
+              </Component>
+            );
+          })}
         </div>
 
         <div className="lg:col-span-5 lg:space-y-6">
@@ -186,10 +194,10 @@ export default function ProfilePage() {
                 <div className="text-lg font-bold text-maroon">{orderCount}</div>
                 <div className="text-[10px] uppercase tracking-wider text-text-secondary">Orders</div>
               </div>
-              <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
-                <div className="text-lg font-bold text-maroon">12</div>
+              <Link href="/profile/saved" className="rounded-2xl bg-cream-deep px-4 py-3 text-center hover:bg-cream transition cursor-pointer">
+                <div className="text-lg font-bold text-maroon">{savedCount}</div>
                 <div className="text-[10px] uppercase tracking-wider text-text-secondary">Saved</div>
-              </div>
+              </Link>
               <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
                 <div className="text-lg font-bold text-maroon">
                   {totalSpent >= 100000 ? `₹${(totalSpent / 100000).toFixed(1)}L` : formatInr(totalSpent)}

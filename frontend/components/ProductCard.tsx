@@ -2,11 +2,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
-
+import { useSavedStore } from '@/lib/saved-store';
 import { isValidImageUrl } from '@/lib/image';
 
 /** Port of lib/widgets/product_card.dart */
 export function ProductCard({ product }: { product: Product }) {
+  const toggleSaved = useSavedStore((s) => s.toggle);
+  const isSaved = useSavedStore((s) => s.isSaved(product.id));
+
   const images = (product.imageUrls && product.imageUrls.length > 0
     ? product.imageUrls
     : product.imageUrl
@@ -52,6 +55,32 @@ export function ProductCard({ product }: { product: Product }) {
             {product.badge}
           </span>
         ) : null}
+        
+        {/* Floating Heart bookmark button */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSaved(product);
+          }}
+          className="absolute right-3 top-3 z-20 rounded-full bg-white/75 p-2 text-text-primary hover:text-maroon shadow-md transition backdrop-blur-sm active:scale-90 flex items-center justify-center cursor-pointer"
+          title={isSaved ? 'Remove from saved' : 'Save product'}
+        >
+          <svg
+            className={`h-4.5 w-4.5 transition-colors duration-200 ${
+              isSaved ? 'fill-maroon text-maroon' : 'fill-none text-text-secondary hover:text-maroon'
+            }`}
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+        </button>
       </div>
       <div className="space-y-1 p-4 lg:p-5">
         <h3 className="font-serif text-base font-semibold leading-snug lg:text-lg">
