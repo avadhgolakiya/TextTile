@@ -163,6 +163,7 @@ export default function ProfilePage() {
             { title: 'Payment Methods', subtitle: 'UPI • Bank', icon: '💳', href: '#' },
             { title: 'Preferences', subtitle: 'Notifications, language', icon: '⚙️', href: '#' },
             { title: 'Privacy Policy', subtitle: 'Data usage & details', icon: '🛡️', href: '/privacy' },
+            { title: 'Delete My Data', subtitle: 'Request account deletion', icon: '🗑️', href: '/data-deletion' },
             { title: 'Help & Support', subtitle: 'WhatsApp, FAQ', icon: '❓', href: '#' },
           ].map((item, i) => {
             const isClickable = item.href !== '#';

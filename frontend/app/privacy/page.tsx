@@ -136,6 +136,14 @@ export default function PrivacyPolicyPage() {
               </a>{' '}
               or message our administrator directly.
             </p>
+            <div className="pt-2">
+              <Link
+                href="/data-deletion"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-red-200 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-700 transition hover:bg-red-100 hover:border-red-300"
+              >
+                🗑️ Request Data Deletion
+              </Link>
+            </div>
           </section>
         </div>
 
