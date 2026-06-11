@@ -220,7 +220,14 @@ export default function ProfilePage() {
                   <span className="text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold">Not Enabled</span>
                 )}
               </span>
-              {notificationPermission !== 'granted' && (
+              {notificationPermission === 'granted' ? (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('show-pwa-notification-guide'))}
+                  className="text-xs font-bold text-maroon hover:text-maroon-dark transition underline decoration-gold/50 hover:decoration-maroon"
+                >
+                  🔒 Lock Screen Guide
+                </button>
+              ) : (
                 <button
                   onClick={requestNotificationPermission}
                   className="btn-primary py-2 px-5 text-xs font-bold shadow-sm"

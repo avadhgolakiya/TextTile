@@ -41,6 +41,7 @@ export async function notifyNewProduct(product) {
     notification: {
       title: '🧵 New saree added — Swastik Fashion',
       body,
+      imageUrl: product.imageUrl || undefined,
     },
     data: {
       type: 'new_product',
@@ -58,7 +59,11 @@ export async function notifyNewProduct(product) {
       fcmOptions: {
         link: `/products/${product.id}`,
       },
-      notification: {},
+      notification: {
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        image: product.imageUrl || undefined,
+      },
     },
   });
 

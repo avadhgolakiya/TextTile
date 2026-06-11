@@ -51,8 +51,15 @@ messaging.onBackgroundMessage((payload) => {
   const body = payload.notification?.body ?? 'New update available';
   const link = payload.fcmOptions?.link ?? payload.data?.link ?? '/home';
 
+  // Retrieve logo icon and product image dynamically from payload
+  const icon = payload.notification?.icon || '/icon-192.png';
+  const image = payload.notification?.image || payload.notification?.imageUrl || undefined;
+
   self.registration.showNotification(title, {
     body,
+    icon,
+    badge: '/icon-192.png',
+    image,
     data: { link },
   });
 });
