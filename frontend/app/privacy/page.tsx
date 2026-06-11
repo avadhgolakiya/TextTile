@@ -108,6 +108,9 @@ export default function PrivacyPolicyPage() {
                 <strong>Google Identity Services:</strong> We verify your authentication token directly with Google APIs to validate your credentials.
               </li>
               <li>
+                <strong>Facebook Login:</strong> When signing in with Facebook, your access token is verified with the Facebook Graph API to authenticate your identity.
+              </li>
+              <li>
                 <strong>Firebase Cloud Messaging:</strong> Push notification tokens are registered with Google Firebase servers to dispatch device alerts.
               </li>
             </ul>

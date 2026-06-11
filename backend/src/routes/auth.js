@@ -116,6 +116,75 @@ router.post('/google-login', async (req, res) => {
   }
 });
 
+router.post('/facebook-login', async (req, res) => {
+  try {
+    const { accessToken: fbAccessToken } = req.body || {};
+    if (!fbAccessToken) {
+      return res.status(400).json({ error: 'accessToken is required' });
+    }
+
+    const fbAppId = '2064272007513102';
+    const fbAppSecret = '82603e1d406dc05ca64579d5d7305dbc';
+
+    // Step 1: Verify the token is valid and belongs to our app
+    const appTokenRes = await fetch(
+      `https://graph.facebook.com/oauth/access_token?client_id=${fbAppId}&client_secret=${fbAppSecret}&grant_type=client_credentials`
+    );
+    const appTokenData = await appTokenRes.json();
+    if (!appTokenData.access_token) {
+      return res.status(500).json({ error: 'Could not obtain Facebook app token' });
+    }
+
+    const debugRes = await fetch(
+      `https://graph.facebook.com/debug_token?input_token=${encodeURIComponent(fbAccessToken)}&access_token=${encodeURIComponent(appTokenData.access_token)}`
+    );
+    const debugData = await debugRes.json();
+    if (!debugData.data || !debugData.data.is_valid || debugData.data.app_id !== fbAppId) {
+      return res.status(401).json({ error: 'Invalid Facebook access token' });
+    }
+
+    // Step 2: Fetch user email and name from Graph API
+    const meRes = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${encodeURIComponent(fbAccessToken)}`
+    );
+    const meData = await meRes.json();
+    if (!meData.id) {
+      return res.status(401).json({ error: 'Could not fetch Facebook user profile' });
+    }
+
+    const email = meData.email
+      ? String(meData.email).trim().toLowerCase()
+      : `fb_${meData.id}@facebook.noreply`;
+    const name = meData.name || email.split('@')[0];
+
+    const usersColl = getCollection('users');
+    let userDoc = await usersColl.findOne({ $or: [{ email }, { facebookId: meData.id }] });
+
+    if (!userDoc) {
+      const doc = {
+        email,
+        businessName: name,
+        phone: null,
+        isAdmin: false,
+        createdAt: new Date(),
+        passwordHash: '',
+        facebookId: meData.id,
+      };
+      const result = await usersColl.insertOne(doc);
+      userDoc = { ...doc, _id: result.insertedId };
+    } else if (!userDoc.facebookId) {
+      // Link Facebook ID to existing account
+      await usersColl.updateOne({ _id: userDoc._id }, { $set: { facebookId: meData.id } });
+    }
+
+    const token = signToken(userDoc._id.toString());
+    return res.json({ accessToken: token, user: mapUser(userDoc) });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error during Facebook auth' });
+  }
+});
+
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const usersColl = getCollection('users');

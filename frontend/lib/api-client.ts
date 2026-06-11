@@ -98,6 +98,11 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ idToken }),
     }),
+  facebookLogin: (accessToken: string) =>
+    apiFetch<{ accessToken: string; user: AppUser }>('/api/auth/facebook-login', {
+      method: 'POST',
+      body: JSON.stringify({ accessToken }),
+    }),
   register: (payload: {
     businessName: string;
     email: string;
