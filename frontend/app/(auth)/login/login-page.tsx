@@ -71,35 +71,44 @@ export default function LoginPage() {
 
   // ── Facebook SDK ──────────────────────────────────────────────────────────
   useEffect(() => {
-    const initFB = () => {
-      const FB = (window as any).FB;
-      if (!FB) return;
-      FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: 'v20.0' });
+    if ((window as any).FB) {
+      // SDK already loaded (e.g. hot-reload), just init
+      (window as any).FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: 'v20.0' });
+      setFbReady(true);
+      return;
+    }
+
+    // MUST set fbAsyncInit BEFORE injecting the script tag so Facebook
+    // SDK calls it immediately after it finishes loading.
+    (window as any).fbAsyncInit = function () {
+      (window as any).FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: 'v20.0' });
       setFbReady(true);
     };
 
-    if ((window as any).FB) {
-      initFB();
-    } else {
-      (window as any).fbAsyncInit = initFB;
-      const script = document.createElement('script');
-      script.src = 'https://connect.facebook.net/en_US/sdk.js';
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
-    }
+    const script = document.createElement('script');
+    script.src = 'https://connect.facebook.net/en_US/sdk.js';
+    script.async = true;
+    script.defer = true;
+    // Enable button even if the SDK fails to load (e.g. ad-blocker)
+    // – handleFacebookLogin will show a readable error in that case.
+    script.onerror = () => setFbReady(true);
+    document.body.appendChild(script);
   }, []);
 
   async function handleFacebookLogin() {
     const FB = (window as any).FB;
-    if (!FB) return;
+    if (!FB) {
+      setError('Facebook is not available. Please disable any ad-blocker and refresh the page.');
+      return;
+    }
     setError(null);
     setLoading(true);
 
     FB.login(
       async (response: any) => {
         if (!response || response.status !== 'connected' || !response.authResponse?.accessToken) {
-          setError('Facebook login was cancelled or failed.');
+          // User cancelled or popup was blocked
+          setError('Facebook login was cancelled. Make sure pop-ups are allowed for this site.');
           setLoading(false);
           return;
         }
