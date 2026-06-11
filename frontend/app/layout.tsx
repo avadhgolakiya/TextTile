@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Playfair_Display, Poppins } from 'next/font/google';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/Toaster';
+import { PwaInstaller } from '@/components/PwaInstaller';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -18,6 +19,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'Swastik Fashion — Wholesale Sarees',
   description: 'Wholesale buyer app for Swastik Fashion',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Swastik Fashion',
+  },
 };
 
 export default function RootLayout({
@@ -29,6 +35,7 @@ export default function RootLayout({
         <ErrorBoundary>
           {children}
           <Toaster />
+          <PwaInstaller />
         </ErrorBoundary>
       </body>
     </html>
