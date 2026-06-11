@@ -14,21 +14,9 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title ?? 'Swastik Fashion';
-  const body = payload.notification?.body ?? 'New update available';
-  const link = payload.fcmOptions?.link ?? payload.data?.link ?? '/home';
-
-  // Retrieve logo icon and product image dynamically from payload
-  const icon = payload.notification?.icon || '/icon-192.png';
-  const image = payload.notification?.image || payload.notification?.imageUrl || undefined;
-
-  self.registration.showNotification(title, {
-    body,
-    icon,
-    badge: '/icon-192.png',
-    image,
-    data: { link },
-  });
+  console.log('[FCM] Received background message:', payload);
+  // Manual showNotification call is removed to prevent duplicate background alerts.
+  // The Firebase compat SDK automatically displays the notification using the payload's notification block.
 });
 
 self.addEventListener('notificationclick', (event) => {
