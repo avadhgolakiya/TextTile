@@ -92,12 +92,20 @@ export default function SignUpPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-text-secondary lg:text-left lg:text-base">
-          Already registered?{' '}
-          <Link href="/login" className="font-semibold text-maroon hover:text-maroon-dark">
-            Sign in
-          </Link>
-        </p>
+        <div className="flex flex-col space-y-2 text-center lg:text-left">
+          <p className="text-sm text-text-secondary lg:text-base">
+            Already registered?{' '}
+            <Link href="/login" className="font-semibold text-maroon hover:text-maroon-dark">
+              Sign in
+            </Link>
+          </p>
+          <p className="text-xs text-text-secondary">
+            By registering, you agree to our{' '}
+            <Link href="/privacy" className="font-semibold text-maroon hover:underline">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
         </div>
       </div>
     </div>

@@ -137,12 +137,20 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="text-center text-sm text-text-secondary lg:text-left lg:text-base">
-            New buyer?{' '}
-            <Link href="/signup" className="font-semibold text-maroon hover:text-maroon-dark">
-              Create account
-            </Link>
-          </p>
+          <div className="flex flex-col space-y-2 text-center lg:text-left">
+            <p className="text-sm text-text-secondary lg:text-base">
+              New buyer?{' '}
+              <Link href="/signup" className="font-semibold text-maroon hover:text-maroon-dark">
+                Create account
+              </Link>
+            </p>
+            <p className="text-xs text-text-secondary">
+              By signing in, you agree to our{' '}
+              <Link href="/privacy" className="font-semibold text-maroon hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

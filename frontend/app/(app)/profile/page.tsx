@@ -162,6 +162,7 @@ export default function ProfilePage() {
             { title: 'Shipping Address', subtitle: 'Surat, Gujarat', icon: '📍', href: '#' },
             { title: 'Payment Methods', subtitle: 'UPI • Bank', icon: '💳', href: '#' },
             { title: 'Preferences', subtitle: 'Notifications, language', icon: '⚙️', href: '#' },
+            { title: 'Privacy Policy', subtitle: 'Data usage & details', icon: '🛡️', href: '/privacy' },
             { title: 'Help & Support', subtitle: 'WhatsApp, FAQ', icon: '❓', href: '#' },
           ].map((item, i) => {
             const isClickable = item.href !== '#';
@@ -254,8 +255,13 @@ export default function ProfilePage() {
             <span>🚪</span> Logout
           </button>
 
-          <div className="text-center text-[10px] tracking-[2px] text-text-hint mt-8 uppercase font-medium lg:mt-0">
-            ✦ Swastik Fashion · V1.0 ✦
+          <div className="text-center mt-8 space-y-2 lg:mt-0">
+            <Link href="/privacy" className="text-[11px] font-bold text-maroon hover:underline uppercase tracking-[1px] cursor-pointer">
+              Privacy Policy
+            </Link>
+            <div className="text-[10px] tracking-[2px] text-text-secondary uppercase font-medium">
+              ✦ Swastik Fashion · V1.0 ✦
+            </div>
           </div>
         </div>
       </div>
