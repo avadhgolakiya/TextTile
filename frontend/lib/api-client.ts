@@ -93,6 +93,11 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
+  googleLogin: (idToken: string) =>
+    apiFetch<{ accessToken: string; user: AppUser }>('/api/auth/google-login', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    }),
   register: (payload: {
     businessName: string;
     email: string;

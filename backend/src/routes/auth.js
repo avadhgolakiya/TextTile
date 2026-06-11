@@ -67,6 +67,55 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/google-login', async (req, res) => {
+  try {
+    const { idToken } = req.body || {};
+    if (!idToken) {
+      return res.status(400).json({ error: 'idToken is required' });
+    }
+
+    // Verify token with Google's API via fetch (avoids extra dependency)
+    const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+    if (!googleRes.ok) {
+      return res.status(401).json({ error: 'Invalid Google token' });
+    }
+
+    const payload = await googleRes.json();
+    const googleClientId = '1069466589231-stup0l4vshllutbjudvjq9fogokdpg7s.apps.googleusercontent.com';
+    
+    // Verify client ID audience matches
+    if (payload.aud !== googleClientId) {
+      return res.status(401).json({ error: 'Invalid token audience (Client ID mismatch)' });
+    }
+
+    const email = String(payload.email).trim().toLowerCase();
+    const name = payload.name || email.split('@')[0];
+
+    const usersColl = getCollection('users');
+    let userDoc = await usersColl.findOne({ email });
+
+    if (!userDoc) {
+      // Create account automatically if it doesn't exist
+      const doc = {
+        email,
+        businessName: name, // Default business name to Google name
+        phone: null,
+        isAdmin: false,
+        createdAt: new Date(),
+        passwordHash: '', 
+      };
+      const result = await usersColl.insertOne(doc);
+      userDoc = { ...doc, _id: result.insertedId };
+    }
+
+    const accessToken = signToken(userDoc._id.toString());
+    return res.json({ accessToken, user: mapUser(userDoc) });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error during Google auth' });
+  }
+});
+
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const usersColl = getCollection('users');
