@@ -70,48 +70,83 @@ router.post('/login', async (req, res) => {
 router.post('/google-login', async (req, res) => {
   try {
     const { idToken } = req.body || {};
+
+    // ── DEBUG LOGS ────────────────────────────────────────────────────────
+    console.log('[google-login] received request');
+    console.log('[google-login] idToken length:', idToken ? idToken.length : 0);
+    // ─────────────────────────────────────────────────────────────────────
+
     if (!idToken) {
       return res.status(400).json({ error: 'idToken is required' });
     }
 
-    // Verify token with Google's API via fetch (avoids extra dependency)
-    const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+    const googleClientId = '1069466589231-stup0l4vshllutbjudvjq9fogokdpg7s.apps.googleusercontent.com';
+    console.log('[google-login] using clientId:', googleClientId);
+
+    // Verify token with Google's tokeninfo endpoint (no extra dependency needed)
+    const googleRes = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
+    );
+    const payload = await googleRes.json();
+
+    console.log('[google-login] tokeninfo status:', googleRes.status);
+    console.log('[google-login] token aud:', payload.aud);
+    console.log('[google-login] token iss:', payload.iss);
+    console.log('[google-login] token exp:', payload.exp, '| now:', Math.floor(Date.now()/1000));
+    console.log('[google-login] token email:', payload.email);
+
     if (!googleRes.ok) {
+      console.log('[google-login] FAIL: Google rejected token:', payload);
       return res.status(401).json({ error: 'Invalid Google token' });
     }
 
-    const payload = await googleRes.json();
-    const googleClientId = '1069466589231-stup0l4vshllutbjudvjq9fogokdpg7s.apps.googleusercontent.com';
-    
     // Verify client ID audience matches
     if (payload.aud !== googleClientId) {
+      console.log('[google-login] FAIL: aud mismatch. got:', payload.aud, 'expected:', googleClientId);
       return res.status(401).json({ error: 'Invalid token audience (Client ID mismatch)' });
+    }
+
+    // Verify issuer is Google
+    if (!['accounts.google.com', 'https://accounts.google.com'].includes(payload.iss)) {
+      console.log('[google-login] FAIL: invalid issuer:', payload.iss);
+      return res.status(401).json({ error: 'Invalid token issuer' });
+    }
+
+    // Verify token is not expired
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (payload.exp && Number(payload.exp) < nowSec) {
+      console.log('[google-login] FAIL: token expired at', payload.exp, 'now is', nowSec);
+      return res.status(401).json({ error: 'Google token has expired' });
     }
 
     const email = String(payload.email).trim().toLowerCase();
     const name = payload.name || email.split('@')[0];
+    console.log('[google-login] verified user email:', email, '| name:', name);
 
     const usersColl = getCollection('users');
     let userDoc = await usersColl.findOne({ email });
+    console.log('[google-login] DB lookup result:', userDoc ? `found (id: ${userDoc._id})` : 'not found – will create');
 
     if (!userDoc) {
-      // Create account automatically if it doesn't exist
       const doc = {
         email,
-        businessName: name, // Default business name to Google name
+        businessName: name,
         phone: null,
         isAdmin: false,
         createdAt: new Date(),
-        passwordHash: '', 
+        passwordHash: '',
       };
       const result = await usersColl.insertOne(doc);
       userDoc = { ...doc, _id: result.insertedId };
+      console.log('[google-login] new user created, id:', userDoc._id);
     }
 
     const accessToken = signToken(userDoc._id.toString());
+    console.log('[google-login] JWT generated, length:', accessToken.length);
+
     return res.json({ accessToken, user: mapUser(userDoc) });
   } catch (e) {
-    console.error(e);
+    console.error('[google-login] EXCEPTION:', e);
     return res.status(500).json({ error: 'Server error during Google auth' });
   }
 });
