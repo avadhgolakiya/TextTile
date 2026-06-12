@@ -9,7 +9,7 @@
 }
 
 body {
-  @apply bg-cream text-text-primary font-sans antialiased;
+  @apply bg-cream text-text-primary font-sans antialiased overflow-x-hidden;
 }
 
 @layer components {
