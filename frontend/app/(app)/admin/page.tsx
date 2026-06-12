@@ -59,6 +59,13 @@ export default function AdminPage() {
       return;
     }
 
+    const searchTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+    const initialTab = (searchTab && ['products', 'orders', 'buyers', 'banners'].includes(searchTab))
+      ? (searchTab as any)
+      : 'products';
+
+    setActiveTab(initialTab);
+
     // Verify if user is admin
     authApi.me(token)
       .then(({ user }) => {
@@ -67,15 +74,14 @@ export default function AdminPage() {
           router.replace('/home');
           return;
         }
-        // Load default tab data
-        loadTabData('products');
+        // Load active tab data
+        loadTabData(initialTab);
       })
       .catch((err) => {
         console.error(err);
         router.replace('/login');
       });
   }, []);
-
   async function loadTabData(tab: typeof activeTab) {
     setLoading(true);
     const token = getToken();

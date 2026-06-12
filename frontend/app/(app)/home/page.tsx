@@ -7,7 +7,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Suspense } from 'react';
 import type { Product } from '@/lib/types';
-import { productApi, bannerApi } from '@/lib/api-client';
+import { productApi, bannerApi, authApi } from '@/lib/api-client';
+import { BannerSlider } from '@/components/BannerSlider';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +34,19 @@ async function fetchBanners(): Promise<string[]> {
 }
 
 async function HomeContent() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+
+  let isAdmin = false;
+  if (token) {
+    try {
+      const { user } = await authApi.me(token);
+      isAdmin = user.isAdmin ?? false;
+    } catch (err) {
+      console.error('Failed to fetch user profile in HomeContent:', err);
+    }
+  }
+
   const [products, banners] = await Promise.all([
     fetchFeatured(),
     fetchBanners(),
@@ -55,15 +70,7 @@ async function HomeContent() {
       </header>
 
       <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-        <div className="relative aspect-[16/7] overflow-hidden rounded-card lg:col-span-8 lg:aspect-[21/9]">
-          <Image
-            src={isValidImageUrl(banners[0]) ? banners[0] : FALLBACK_BANNER}
-            alt="Promo banner"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
+        <BannerSlider banners={banners} isAdmin={isAdmin} />
 
         <section className="mt-8 lg:col-span-4 lg:mt-0">
           <h2 className="mb-3 font-serif text-xl font-semibold lg:mb-4 lg:text-2xl">
