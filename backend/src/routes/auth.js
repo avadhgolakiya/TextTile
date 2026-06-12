@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { getCollection } from '../db.js';
 import { authMiddleware, mapUser, signToken } from '../lib/auth.js';
 import { ObjectId } from 'mongodb';
+import { sendWelcomeEmail } from '../lib/mail.js';
 
 const router = Router();
 
@@ -35,6 +36,9 @@ router.post('/register', async (req, res) => {
     const result = await usersColl.insertOne(doc);
     const userDoc = { ...doc, _id: result.insertedId };
     
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(em, doc.businessName);
+
     const accessToken = signToken(userDoc._id.toString());
     return res.status(201).json({ accessToken, user: mapUser(userDoc) });
   } catch (e) {
@@ -139,6 +143,8 @@ router.post('/google-login', async (req, res) => {
       const result = await usersColl.insertOne(doc);
       userDoc = { ...doc, _id: result.insertedId };
       console.log('[google-login] new user created, id:', userDoc._id);
+      // Send welcome email for new Google sign-up users (non-blocking)
+      sendWelcomeEmail(email, name);
     }
 
     const accessToken = signToken(userDoc._id.toString());
