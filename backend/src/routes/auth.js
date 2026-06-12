@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { getCollection } from '../db.js';
 import { authMiddleware, mapUser, signToken } from '../lib/auth.js';
 import { ObjectId } from 'mongodb';
-import { sendWelcomeEmail } from '../lib/mail.js';
+import { sendWelcomeEmail, sendLoginAlertEmail } from '../lib/mail.js';
 
 const router = Router();
 
@@ -63,6 +63,12 @@ router.post('/login', async (req, res) => {
     if (!ok) {
       return res.status(401).json({ error: 'Incorrect password.' });
     }
+    // Send login alert (non-blocking)
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'] || '';
+    sendLoginAlertEmail(userDoc.email, userDoc.businessName, {
+      ip, userAgent, loginTime: new Date(), method: 'email',
+    });
     const accessToken = signToken(userDoc._id.toString());
     return res.json({ accessToken, user: mapUser(userDoc) });
   } catch (e) {
@@ -147,9 +153,16 @@ router.post('/google-login', async (req, res) => {
       sendWelcomeEmail(email, name);
     }
 
+    // Send login alert for every Google login (new & existing)
+    const gIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const gUa = req.headers['user-agent'] || '';
+    sendLoginAlertEmail(email, userDoc.businessName || name, {
+      ip: gIp, userAgent: gUa, loginTime: new Date(), method: 'google',
+    });
+
+
     const accessToken = signToken(userDoc._id.toString());
     console.log('[google-login] JWT generated, length:', accessToken.length);
-
     return res.json({ accessToken, user: mapUser(userDoc) });
   } catch (e) {
     console.error('[google-login] EXCEPTION:', e);
