@@ -57,7 +57,7 @@ export default function SearchPage() {
           placeholder="Search sarees, fabric, code…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 bg-transparent text-base font-sans text-text-primary outline-none placeholder:text-text-secondary lg:text-lg lg:py-1"
+          className="flex-1 w-full min-w-0 bg-transparent text-base font-sans text-text-primary outline-none placeholder:text-text-secondary lg:text-lg lg:py-1"
         />
       </header>
 
@@ -97,7 +97,7 @@ export default function SearchPage() {
                     </div>
                   )}
                 </div>
-                <div className="flex-1 flex flex-col justify-between py-1">
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">
                       Code: {product.id}

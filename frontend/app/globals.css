@@ -8,8 +8,13 @@
   --gold: #bf9b45;
 }
 
+html,
 body {
-  @apply bg-cream text-text-primary font-sans antialiased overflow-x-hidden;
+  overflow-x: hidden;
+}
+
+body {
+  @apply bg-cream text-text-primary font-sans antialiased;
 }
 
 @layer components {
