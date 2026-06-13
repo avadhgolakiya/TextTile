@@ -7,7 +7,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { OrderItem } from '@/lib/types';
 import Image from 'next/image';
 import { formatInr } from '@/lib/formatting/inr';
-import { isValidImageUrl } from '@/lib/image';
+import { useTranslation } from '@/lib/language-store';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -15,6 +15,7 @@ function getToken() {
 }
 
 export default function OrdersPage() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending'>('all');
@@ -57,15 +58,15 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-cream pb-24 lg:bg-transparent lg:pb-0">
-      <DesktopTopBar title="Orders" subtitle="My account" />
+      <DesktopTopBar title={t('navOrders')} subtitle={t('wholesaleBuyer')} />
 
       {/* Header — mobile only */}
       <div className="px-6 pt-6 pb-2 lg:hidden">
         <p className="text-xs uppercase tracking-wider text-text-secondary font-semibold">
-          My Account
+          {t('wholesaleBuyer')}
         </p>
         <h1 className="font-serif text-3xl font-bold text-text-primary mt-1">
-          Orders
+          {t('navOrders')}
         </h1>
       </div>
 
@@ -83,7 +84,7 @@ export default function OrdersPage() {
                   : 'bg-peach text-text-primary hover:bg-cream-deep'
               }`}
             >
-              {mode === 'all' ? 'All Orders' : 'Pending'}
+              {mode === 'all' ? t('allOrders') : t('pendingOrders')}
             </button>
           );
         })}
@@ -93,7 +94,7 @@ export default function OrdersPage() {
       <div className="px-6 py-4 space-y-4 lg:px-0 lg:py-0">
         {loading ? (
           <div className="py-20 flex justify-center">
-            <LoadingSpinner label="Loading your orders…" />
+            <LoadingSpinner label={t('loadingOrders')} />
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="py-20 text-center space-y-4 max-w-sm mx-auto">
@@ -101,10 +102,10 @@ export default function OrdersPage() {
               📄
             </div>
             <h2 className="font-serif text-xl font-bold text-text-primary">
-              {filter === 'pending' ? 'No pending orders' : 'No orders yet'}
+              {filter === 'pending' ? t('noPendingOrders') : t('noOrdersYet')}
             </h2>
             <p className="text-sm text-text-secondary leading-relaxed">
-              Add sarees to your cart and order via WhatsApp.
+              {t('ordersEmptyDesc')}
             </p>
           </div>
         ) : (
@@ -115,7 +116,7 @@ export default function OrdersPage() {
                 className="card flex gap-4 p-4 border border-divider shadow-sm hover:shadow-md transition lg:p-5 lg:hover:-translate-y-0.5"
               >
                 <div className="relative w-20 h-24 rounded-xl overflow-hidden shrink-0 bg-cream-deep border border-divider">
-                  {isValidImageUrl(order.thumbnailUrl) ? (
+                  {order.thumbnailUrl ? (
                     <Image
                       src={order.thumbnailUrl}
                       alt={order.title}

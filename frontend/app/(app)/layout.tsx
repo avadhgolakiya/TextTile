@@ -24,7 +24,7 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-cream pb-20 lg:pb-0 overflow-x-hidden">
+    <div className="min-h-screen bg-cream pb-20 lg:pb-0">
       <AppSidebar isAdmin={isAdmin} />
       <div className="lg:pl-64">
         <main className="lg:mx-auto lg:max-w-7xl lg:px-10 lg:py-8">

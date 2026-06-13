@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { authApi, orderApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
-import { useSavedStore } from '@/lib/saved-store';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { AppUser } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
-import { toast } from '@/lib/toast';
+import { useTranslation } from '@/lib/language-store';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -19,46 +17,13 @@ function getToken() {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { t, language, setLanguage } = useTranslation();
   const [user, setUser] = useState<AppUser | null>(null);
   const [orderCount, setOrderCount] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [langModalOpen, setLangModalOpen] = useState(false);
   const clearCart = useCartStore((s) => s.clear);
-  const savedCount = useSavedStore((s) => s.items().length);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
-  }, []);
-
-  async function requestNotificationPermission() {
-    if (typeof window === 'undefined' || !('Notification' in window)) {
-      toast.error('Notifications not supported in this browser.');
-      return;
-    }
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-      if (permission === 'granted') {
-        const { setupPushNotifications } = await import('@/lib/firebase-messaging');
-        const { notificationApi } = await import('@/lib/api-client');
-        const fcmToken = await setupPushNotifications(async (t) => {
-          await notificationApi.registerToken(t);
-        });
-        if (fcmToken) {
-          toast.success('Notifications enabled successfully!');
-        } else {
-          toast.success('Notifications enabled, token generated.');
-        }
-      } else if (permission === 'denied') {
-        toast.error('Notification permission denied. Please enable them in browser settings.');
-      }
-    } catch (err) {
-      toast.error(`Failed to enable notifications: ${err}`);
-    }
-  }
 
   useEffect(() => {
     const token = getToken();
@@ -109,14 +74,32 @@ export default function ProfilePage() {
     .join('')
     .toUpperCase() || '?';
 
+  const currentLangLabel = 
+    language === 'en' ? 'English' : 
+    language === 'hi' ? 'हिन्दी' : 
+    language === 'gu' ? 'ગુજરાતી' : 'English';
+
+  const menuItems = [
+    { title: t('savedProducts'), subtitle: t('savedProductsSubtitle'), icon: '🔖', action: () => router.push('/collection') },
+    { title: t('shippingAddress'), subtitle: t('shippingAddressSubtitle'), icon: '📍' },
+    { title: t('paymentMethods'), subtitle: t('paymentMethodsSubtitle'), icon: '💳' },
+    { 
+      title: t('preferences'), 
+      subtitle: `${t('preferencesSubtitle')} (${currentLangLabel})`, 
+      icon: '⚙️', 
+      action: () => setLangModalOpen(true) 
+    },
+    { title: t('helpSupport'), subtitle: t('helpSupportSubtitle'), icon: '❓' },
+  ];
+
   return (
     <div className="min-h-screen bg-cream pb-24 lg:bg-transparent lg:pb-0">
-      <DesktopTopBar title="Profile" subtitle="Wholesale buyer account" />
+      <DesktopTopBar title={t('navProfile')} subtitle={t('wholesaleBuyer')} />
 
       {/* Profile Header Hero */}
       <div className="bg-gradient-to-br from-maroon-dark via-maroon to-[#8B1A2A] text-white px-6 pt-10 pb-16 shadow-md rounded-b-[36px] lg:mt-0 lg:rounded-card lg:px-10 lg:pt-8 lg:pb-10">
         <p className="text-xs uppercase tracking-[2.5px] text-gold font-semibold">
-          Wholesale Buyer
+          {t('wholesaleBuyer')}
         </p>
 
         <div className="flex items-center gap-4 mt-6">
@@ -139,17 +122,17 @@ export default function ProfilePage() {
         <div className="flex gap-3 mt-8">
           <div className="flex-1 bg-white/10 border border-white/10 rounded-2xl py-3 px-4 text-center">
             <div className="text-lg font-bold text-gold">{orderCount}</div>
-            <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Orders</div>
+            <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">{t('profileOrders')}</div>
           </div>
-          <Link href="/profile/saved" className="flex-1 bg-white/10 border border-white/10 rounded-2xl py-3 px-4 text-center hover:bg-white/15 transition cursor-pointer">
-            <div className="text-lg font-bold text-gold">{savedCount}</div>
-            <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Saved</div>
-          </Link>
+          <div className="flex-1 bg-white/10 border border-white/10 rounded-2xl py-3 px-4 text-center">
+            <div className="text-lg font-bold text-gold">12</div>
+            <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">{t('profileSaved')}</div>
+          </div>
           <div className="flex-1 bg-white/10 border border-white/10 rounded-2xl py-3 px-4 text-center">
             <div className="text-lg font-bold text-gold">
               {totalSpent >= 100000 ? `₹${(totalSpent / 100000).toFixed(1)}L` : formatInr(totalSpent)}
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Spent</div>
+            <div className="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">{t('profileSpent')}</div>
           </div>
         </div>
       </div>
@@ -157,94 +140,43 @@ export default function ProfilePage() {
       {/* Profile Menu options */}
       <div className="px-6 -mt-6 lg:mt-8 lg:px-0 lg:grid lg:grid-cols-12 lg:gap-8">
         <div className="card border border-divider shadow-md divide-y divide-divider overflow-hidden lg:col-span-7">
-          {[
-            { title: 'Saved Products', subtitle: `${savedCount} items`, icon: '🔖', href: '/profile/saved' },
-            { title: 'Shipping Address', subtitle: 'Surat, Gujarat', icon: '📍', href: '#' },
-            { title: 'Payment Methods', subtitle: 'UPI • Bank', icon: '💳', href: '#' },
-            { title: 'Preferences', subtitle: 'Notifications, language', icon: '⚙️', href: '#' },
-            { title: 'Privacy Policy', subtitle: 'Data usage & details', icon: '🛡️', href: '/privacy' },
-            { title: 'Delete My Data', subtitle: 'Request account deletion', icon: '🗑️', href: '/data-deletion' },
-            { title: 'Help & Support', subtitle: 'WhatsApp, FAQ', icon: '❓', href: '#' },
-          ].map((item, i) => {
-            const isClickable = item.href !== '#';
-            const Component = isClickable ? Link : 'button';
-            return (
-              <Component
-                key={i}
-                href={isClickable ? item.href : undefined}
-                className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-cream-deep transition duration-150 cursor-pointer"
-              >
-                <span className="text-2xl">{item.icon}</span>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-text-primary text-sm">{item.title}</h4>
-                  <p className="text-xs text-text-secondary mt-0.5">{item.subtitle}</p>
-                </div>
-                <span className="text-text-secondary text-sm">→</span>
-              </Component>
-            );
-          })}
+          {menuItems.map((item, i) => (
+            <button
+              key={i}
+              onClick={item.action}
+              className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-cream-deep transition duration-150"
+            >
+              <span className="text-2xl">{item.icon}</span>
+              <div className="flex-1">
+                <h4 className="font-semibold text-text-primary text-sm">{item.title}</h4>
+                <p className="text-xs text-text-secondary mt-0.5">{item.subtitle}</p>
+              </div>
+              <span className="text-text-secondary text-sm">→</span>
+            </button>
+          ))}
         </div>
 
         <div className="lg:col-span-5 lg:space-y-6">
           <div className="card hidden border border-divider p-6 lg:block">
-            <h3 className="font-serif text-xl font-bold">Account summary</h3>
+            <h3 className="font-serif text-xl font-bold">{t('accountSummary')}</h3>
             <p className="mt-2 text-sm text-text-secondary leading-relaxed">
-              Manage your wholesale profile, saved items, and order history from one place.
+              {t('accountSummaryDesc')}
             </p>
             <div className="mt-6 grid grid-cols-3 gap-3">
               <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
                 <div className="text-lg font-bold text-maroon">{orderCount}</div>
-                <div className="text-[10px] uppercase tracking-wider text-text-secondary">Orders</div>
+                <div className="text-[10px] uppercase tracking-wider text-text-secondary">{t('profileOrders')}</div>
               </div>
-              <Link href="/profile/saved" className="rounded-2xl bg-cream-deep px-4 py-3 text-center hover:bg-cream transition cursor-pointer">
-                <div className="text-lg font-bold text-maroon">{savedCount}</div>
-                <div className="text-[10px] uppercase tracking-wider text-text-secondary">Saved</div>
-              </Link>
+              <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
+                <div className="text-lg font-bold text-maroon">12</div>
+                <div className="text-[10px] uppercase tracking-wider text-text-secondary">{t('profileSaved')}</div>
+              </div>
               <div className="rounded-2xl bg-cream-deep px-4 py-3 text-center">
                 <div className="text-lg font-bold text-maroon">
                   {totalSpent >= 100000 ? `₹${(totalSpent / 100000).toFixed(1)}L` : formatInr(totalSpent)}
                 </div>
-                <div className="text-[10px] uppercase tracking-wider text-text-secondary">Spent</div>
+                <div className="text-[10px] uppercase tracking-wider text-text-secondary">{t('profileSpent')}</div>
               </div>
-            </div>
-          </div>
-
-          {/* Notifications Card */}
-          <div className="card border border-divider p-6 mt-6 lg:mt-0 space-y-4">
-            <div>
-              <h3 className="font-serif text-lg font-bold flex items-center gap-2">
-                <span>🔔</span> Push Notifications
-              </h3>
-              <p className="mt-1 text-xs text-text-secondary leading-relaxed">
-                Get instant updates when new sarees are added to the wholesale catalog.
-              </p>
-            </div>
-            <div className="flex items-center justify-between border-t border-divider pt-3.5">
-              <span className="text-xs font-semibold text-text-secondary flex items-center gap-1.5">
-                Status: 
-                {notificationPermission === 'granted' ? (
-                  <span className="text-green-800 bg-green-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold">Enabled</span>
-                ) : notificationPermission === 'denied' ? (
-                  <span className="text-red-800 bg-red-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold">Blocked</span>
-                ) : (
-                  <span className="text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold">Not Enabled</span>
-                )}
-              </span>
-              {notificationPermission === 'granted' ? (
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent('show-pwa-notification-guide'))}
-                  className="text-xs font-bold text-maroon hover:text-maroon-dark transition underline decoration-gold/50 hover:decoration-maroon"
-                >
-                  🔒 Lock Screen Guide
-                </button>
-              ) : (
-                <button
-                  onClick={requestNotificationPermission}
-                  className="btn-primary py-2 px-5 text-xs font-bold shadow-sm"
-                >
-                  Enable
-                </button>
-              )}
             </div>
           </div>
 
@@ -253,19 +185,63 @@ export default function ProfilePage() {
             onClick={handleLogout}
             className="w-full h-14 bg-white hover:bg-red-50 text-maroon hover:text-red-800 border border-divider hover:border-red-200 rounded-2xl font-semibold shadow-sm hover:shadow transition duration-200 mt-6 flex items-center justify-center gap-2 lg:mt-0 lg:cursor-pointer"
           >
-            <span>🚪</span> Logout
+            <span>🚪</span> {t('logout')}
           </button>
 
-          <div className="text-center mt-8 space-y-2 lg:mt-0">
-            <Link href="/privacy" className="text-[11px] font-bold text-maroon hover:underline uppercase tracking-[1px] cursor-pointer">
-              Privacy Policy
-            </Link>
-            <div className="text-[10px] tracking-[2px] text-text-secondary uppercase font-medium">
-              ✦ Swastik Fashion · V1.0 ✦
-            </div>
+          <div className="text-center text-[10px] tracking-[2px] text-text-hint mt-8 uppercase font-medium lg:mt-0">
+            ✦ Swastik Fashion · V1.0 ✦
           </div>
         </div>
       </div>
+
+      {/* Language Selection Modal */}
+      {langModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+            <div className="flex justify-between items-center">
+              <h3 className="font-serif text-xl font-bold text-text-primary">
+                {t('chooseLanguage')}
+              </h3>
+              <button
+                onClick={() => setLangModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-cream-deep hover:bg-divider transition text-text-secondary font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-2.5">
+              {[
+                { code: 'en', label: 'English', sub: 'English' },
+                { code: 'hi', label: 'हिन्दी', sub: 'Hindi' },
+                { code: 'gu', label: 'ગુજરાતી', sub: 'Gujarati' },
+              ].map((langOpt) => {
+                const active = language === langOpt.code;
+                return (
+                  <button
+                    key={langOpt.code}
+                    onClick={() => {
+                      setLanguage(langOpt.code as any);
+                      setLangModalOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition duration-200 ${
+                      active
+                        ? 'border-maroon bg-peach/50 text-maroon font-bold'
+                        : 'border-divider bg-white hover:bg-cream-deep text-text-primary'
+                    }`}
+                  >
+                    <div className="text-left">
+                      <div className="text-sm font-semibold">{langOpt.label}</div>
+                      <div className="text-[10px] text-text-secondary mt-0.5">{langOpt.sub}</div>
+                    </div>
+                    {active && <span className="text-maroon font-bold">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

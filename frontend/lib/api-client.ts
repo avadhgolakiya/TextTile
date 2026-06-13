@@ -56,6 +56,23 @@ export const productApi = {
       token,
       body: JSON.stringify({ isFeatured: featured }),
     }),
+  uploadImage: (token: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    }).then(async res => {
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Upload failed (${res.status})`);
+      }
+      return res.json() as Promise<{ imageUrl: string }>;
+    });
+  },
 };
 
 export const orderApi = {
@@ -93,20 +110,29 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  googleLogin: (idToken: string) =>
-    apiFetch<{ accessToken: string; user: AppUser }>('/api/auth/google-login', {
-      method: 'POST',
-      body: JSON.stringify({ idToken }),
-    }),
   register: (payload: {
-    businessName: string;
+    name: string;
     email: string;
     password: string;
-    phone?: string;
+    mobile: string;
+    gstin: string;
+    businessName: string;
+    address: string;
   }) =>
     apiFetch<{ accessToken: string; user: AppUser }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
+    }),
+  verifyGst: (gstin: string) =>
+    apiFetch<{
+      valid: boolean;
+      businessName?: string;
+      tradeName?: string;
+      status?: string;
+      message?: string;
+    }>('/api/verify-gst', {
+      method: 'POST',
+      body: JSON.stringify({ gstin }),
     }),
   me: (token: string) =>
     apiFetch<{ user: AppUser }>('/api/auth/me', { token }),
@@ -147,25 +173,4 @@ export const bannerApi = {
       method: 'DELETE',
       token,
     }),
-};
-
-export const uploadApi = {
-  upload: (token: string, file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://texttile.onrender.com';
-    return fetch(`${API_BASE}/api/upload`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    }).then(async (res) => {
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `Upload failed (${res.status})`);
-      }
-      return res.json() as Promise<{ imageUrl: string }>;
-    });
-  },
 };

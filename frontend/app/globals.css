@@ -8,11 +8,6 @@
   --gold: #bf9b45;
 }
 
-html,
-body {
-  overflow-x: hidden;
-}
-
 body {
   @apply bg-cream text-text-primary font-sans antialiased;
 }
@@ -70,19 +65,4 @@ body {
     gap: 2.5rem;
     align-items: start;
   }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(24px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-up {
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

@@ -38,9 +38,10 @@ export function PwaInstaller() {
 
     if (isStandalone) return;
 
-    // Detect iOS
+    // Detect iOS/iPadOS (including iPadOS reporting as MacIntel)
     const ua = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || 
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     setIsIOSDevice(isIOS);
 
     // Check if dismissed in this session
@@ -109,7 +110,7 @@ export function PwaInstaller() {
           </h3>
           <p className="mt-1 text-xs leading-relaxed text-text-secondary">
             {isIOSDevice
-              ? 'Tap the Share icon in Safari (⎋) and select "Add to Home Screen" to install.'
+              ? 'Tap the Safari Share button (the square icon with an upward arrow at the bottom of the screen) and select "Add to Home Screen" to install.'
               : 'Add Swastik Fashion to your home screen for quick access to wholesale sarees.'}
           </p>
 

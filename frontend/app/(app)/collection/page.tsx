@@ -6,14 +6,15 @@ import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { ProductCard } from '@/components/ProductCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
+import { useTranslation } from '@/lib/language-store';
 
 const filters = ['All', 'Sarees', 'Suits', 'Lehenga', 'Fabric', 'Dupatta'];
 
 export default function CollectionPage() {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     productApi
@@ -29,41 +30,18 @@ export default function CollectionPage() {
   }, []);
 
   const filteredProducts = products.filter((p) => {
-    // 1. Category Chip filter
-    let matchesCategory = true;
-    if (selected !== 'All') {
-      const term = selected.toLowerCase();
-      // Normalize plurals (e.g., "Sarees" -> "saree", "Suits" -> "suit")
-      const singularTerm = term.endsWith('s') ? term.slice(0, -1) : term;
-
-      const nameLower = (p.name || '').toLowerCase();
-      const subtitleLower = (p.subtitle || '').toLowerCase();
-
-      matchesCategory =
-        nameLower.includes(singularTerm) ||
-        nameLower.includes(term) ||
-        subtitleLower.includes(singularTerm) ||
-        subtitleLower.includes(term);
-    }
-
-    // 2. Text Search Query filter
-    let matchesSearch = true;
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase().trim();
-      matchesSearch =
-        (p.name || '').toLowerCase().includes(q) ||
-        (p.id || '').toLowerCase().includes(q) ||
-        (p.subtitle || '').toLowerCase().includes(q);
-    }
-
-    return matchesCategory && matchesSearch;
+    if (selected === 'All') return true;
+    return (
+      p.name.toLowerCase().includes(selected.toLowerCase()) ||
+      p.subtitle.toLowerCase().includes(selected.toLowerCase())
+    );
   });
 
   return (
     <div className="min-h-screen bg-cream pb-12 lg:bg-transparent lg:pb-0">
       <DesktopTopBar
-        title="Collection"
-        subtitle={`${products.length} products available`}
+        title={t('navCollection')}
+        subtitle={`${products.length} ${t('itemsCount')}`}
       />
 
       {/* Hero Header — mobile only */}
@@ -72,18 +50,18 @@ export default function CollectionPage() {
           Swastik Fashion
         </p>
         <h1 className="font-serif text-4xl font-bold mt-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gold">
-          Collection
+          {t('navCollection')}
         </h1>
         <p className="text-sm text-white/60 mt-1">
-          {products.length} products
+          {products.length} {t('itemsCount')}
         </p>
       </div>
 
-      <div className="desktop-split">
+      <div className="lg:desktop-split">
         {/* Filter chips — horizontal on mobile, vertical sidebar on desktop */}
         <aside className="px-6 py-4 lg:sticky lg:top-8 lg:px-0 lg:py-0">
           <h3 className="mb-3 hidden font-serif text-lg font-bold text-text-primary lg:block">
-            Filter by type
+            {t('filterByType')}
           </h3>
           <div className="flex gap-2 overflow-x-auto scrollbar-none lg:flex-col lg:overflow-visible lg:gap-2">
             {filters.map((f) => {
@@ -107,37 +85,14 @@ export default function CollectionPage() {
 
         {/* Grid of products */}
         <div className="px-6 lg:px-0">
-          {/* Quick Search Bar */}
-          <div className="mb-6">
-            <div className="relative flex items-center rounded-2xl border border-divider bg-white px-4 py-3 shadow-sm focus-within:border-gold focus-within:ring-1 focus-within:ring-gold transition duration-200">
-              <span className="text-text-secondary mr-2 select-none text-base">🔍</span>
-              <input
-                type="text"
-                placeholder={`Search in ${selected === 'All' ? 'collection' : selected.toLowerCase()}...`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent text-sm font-sans text-text-primary outline-none placeholder:text-text-secondary"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="text-text-secondary hover:text-maroon text-xs font-bold px-2 py-1 transition"
-                  title="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-
           {loading ? (
             <div className="py-20 flex justify-center">
               <LoadingSpinner label="Loading collection…" />
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="py-20 text-center text-text-secondary">
-              <p className="text-lg font-serif">No products found</p>
-              <p className="text-sm mt-1">Try selecting another category.</p>
+              <p className="text-lg font-serif">{t('noProducts')}</p>
+              <p className="text-sm mt-1">{t('tryAnotherCategory')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">

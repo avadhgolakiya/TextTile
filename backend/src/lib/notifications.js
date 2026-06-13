@@ -41,29 +41,18 @@ export async function notifyNewProduct(product) {
     notification: {
       title: '🧵 New saree added — Swastik Fashion',
       body,
-      imageUrl: product.imageUrl || undefined,
     },
     data: {
       type: 'new_product',
-      productId: String(product.id),
-      productName: String(product.name),
-      link: `/products/${product.id}`,
-    },
-    android: {
-      priority: 'high',
+      productId: String(product.id || product._id || ''),
+      productName: String(product.name || ''),
+      link: `/products/${product.id || product._id || ''}`,
     },
     webpush: {
-      headers: {
-        Urgency: 'high',
-      },
       fcmOptions: {
-        link: `/products/${product.id}`,
+        link: `/products/${product.id || product._id || ''}`,
       },
-      notification: {
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        image: product.imageUrl || undefined,
-      },
+      notification: {},
     },
   });
 

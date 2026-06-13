@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { productApi, authApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
-import { useSavedStore } from '@/lib/saved-store';
 import { formatInr } from '@/lib/formatting/inr';
 import { openWhatsAppSingleOrder } from '@/lib/whatsapp';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
@@ -12,7 +11,7 @@ import { toast } from '@/lib/toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
 import Image from 'next/image';
-import { isValidImageUrl } from '@/lib/image';
+import { useTranslation } from '@/lib/language-store';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -22,6 +21,7 @@ function getToken() {
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useTranslation();
   const id = params.id as string;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,135 +29,6 @@ export default function ProductDetailPage() {
   const [note, setNote] = useState('');
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const addToCart = useCartStore((s) => s.add);
-  const toggleSaved = useSavedStore((s) => s.toggle);
-  const isSaved = useSavedStore((s) => s.isSaved(id));
-
-  // Lightbox & zoom states (declared unconditionally at the top)
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [zoomScale, setZoomScale] = useState(1);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
-  // Safe images extraction at the top (before early returns)
-  const images = (product?.imageUrls && product.imageUrls.length > 0
-    ? product.imageUrls
-    : product?.imageUrl
-      ? [product.imageUrl]
-      : []
-  ).filter(isValidImageUrl);
-
-  // Reset zoom/drag when changing active image
-  const handleNextImage = () => {
-    setZoomScale(1);
-    setDragOffset({ x: 0, y: 0 });
-    setActiveImageIdx((prev) => (prev + 1) % images.length);
-  };
-
-  const handlePrevImage = () => {
-    setZoomScale(1);
-    setDragOffset({ x: 0, y: 0 });
-    setActiveImageIdx((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  const toggleZoom = () => {
-    if (zoomScale > 1) {
-      setZoomScale(1);
-      setDragOffset({ x: 0, y: 0 });
-    } else {
-      setZoomScale(2.2);
-    }
-  };
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (zoomScale === 1) return;
-    setIsDragging(true);
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setDragStart({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    setDragOffset({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
-    });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    setIsDragging(false);
-  };
-
-  async function downloadCurrentImage() {
-    const imageUrl = images[activeImageIdx];
-    if (!imageUrl) return;
-    try {
-      const res = await fetch(imageUrl);
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${product?.id || 'saree'}-${activeImageIdx + 1}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      toast.success('Photo downloaded successfully!');
-    } catch (err) {
-      console.error(err);
-      // Fallback to opening in new tab if CORS or other block
-      window.open(imageUrl, '_blank');
-      toast.success('Opened image in a new tab for saving.');
-    }
-  }
-
-  async function shareProduct() {
-    if (!product) return;
-    const shareText = `🧵 *${product.name}*\n${product.subtitle ? `${product.subtitle}\n` : ''}💰 Price: ${formatInr(product.price)}${product.originalPrice ? ` (was ${formatInr(product.originalPrice)})` : ''}\n\n📦 Product ID: ${product.id}\n🔗 Link: ${window.location.href}\n\nOrder via Swastik Fashion 🛍️`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product.name,
-          text: shareText,
-          url: window.location.href,
-        });
-        toast.success('Shared successfully!');
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          copyToClipboard(shareText);
-        }
-      }
-    } else {
-      copyToClipboard(shareText);
-    }
-  }
-
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text)
-      .then(() => toast.success('Product details copied to clipboard!'))
-      .catch(() => toast.error('Failed to copy details.'));
-  }
-
-  // Keyboard navigation for lightbox (declared unconditionally at the top)
-  useEffect(() => {
-    if (!isLightboxOpen) return;
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setIsLightboxOpen(false);
-        setZoomScale(1);
-        setDragOffset({ x: 0, y: 0 });
-      } else if (e.key === 'ArrowRight') {
-        handleNextImage();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrevImage();
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLightboxOpen, images.length]);
 
   useEffect(() => {
     productApi
@@ -204,13 +75,19 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-6">
-        <h2 className="font-serif text-2xl font-semibold">Product not found</h2>
+        <h2 className="font-serif text-2xl font-semibold">{t('productNotFound')}</h2>
         <button onClick={() => router.back()} className="btn-primary mt-6">
-          Go back
+          {t('goBack')}
         </button>
       </div>
     );
   }
+
+  const images = product.imageUrls && product.imageUrls.length > 0
+    ? product.imageUrls
+    : product.imageUrl
+      ? [product.imageUrl]
+      : [];
 
   const discountPercent = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -218,7 +95,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-cream pb-24 lg:bg-transparent lg:pb-0">
-      <DesktopTopBar title={product.name} subtitle={`Code: ${product.id}`} />
+      <DesktopTopBar title={product.name} subtitle={`${t('codeLabel')}: ${product.id}`} />
 
       {/* Header — mobile only */}
       <header className="flex items-center gap-4 px-6 py-4 bg-white/80 backdrop-blur sticky top-0 z-10 border-b border-divider lg:hidden">
@@ -226,7 +103,7 @@ export default function ProductDetailPage() {
           onClick={() => router.back()}
           className="text-text-primary hover:text-maroon transition p-1 font-semibold"
         >
-          ← Back
+          ← {t('goBack')}
         </button>
         <h1 className="font-serif text-xl font-semibold text-text-primary truncate">
           {product.name}
@@ -237,104 +114,22 @@ export default function ProductDetailPage() {
       <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-8 lg:max-w-none lg:px-0 lg:py-0 lg:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Left Column: Image Gallery */}
         <div className="space-y-4">
-          <div className="relative aspect-[3/4] bg-white rounded-card overflow-hidden shadow-sm border border-divider group/image">
+          <div className="relative aspect-[3/4] bg-white rounded-card overflow-hidden shadow-sm border border-divider">
             {images.length > 0 ? (
-              <>
-                <Image
-                  src={images[activeImageIdx]}
-                  alt={product.name}
-                  fill
-                  className="object-cover cursor-zoom-in hover:scale-[1.01] transition-transform duration-500"
-                  priority
-                  onClick={() => setIsLightboxOpen(true)}
-                />
-
-                {/* Floating Share & Download buttons */}
-                <div className="absolute right-4 top-4 flex gap-2 z-10">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (product) toggleSaved(product);
-                    }}
-                    className={`p-2.5 rounded-full transition backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center ${
-                      isSaved ? 'bg-maroon text-white shadow-maroon/30' : 'bg-black/45 hover:bg-black/65 text-white'
-                    }`}
-                    title={isSaved ? 'Remove from saved' : 'Save product'}
-                  >
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      shareProduct();
-                    }}
-                    className="p-2.5 bg-black/45 hover:bg-black/65 text-white rounded-full transition backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
-                    title="Share product details"
-                  >
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      downloadCurrentImage();
-                    }}
-                    className="p-2.5 bg-black/45 hover:bg-black/65 text-white rounded-full transition backdrop-blur-sm shadow-md hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center"
-                    title="Download photo"
-                  >
-                    <svg className="w-5 h-5 fill-none stroke-current" strokeWidth="2.2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                    </svg>
-                  </button>
-                </div>
-                
-                {images.length > 1 && (
-                  <>
-                    {/* Previous Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePrevImage();
-                      }}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2.5 transition opacity-90 lg:opacity-0 lg:group-hover/image:opacity-100 cursor-pointer backdrop-blur-sm"
-                      aria-label="Previous image"
-                    >
-                      <svg className="w-5 h-5 stroke-current" fill="none" strokeWidth="3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                      </svg>
-                    </button>
-
-                    {/* Next Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleNextImage();
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2.5 transition opacity-90 lg:opacity-0 lg:group-hover/image:opacity-100 cursor-pointer backdrop-blur-sm"
-                      aria-label="Next image"
-                    >
-                      <svg className="w-5 h-5 stroke-current" fill="none" strokeWidth="3" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                      </svg>
-                    </button>
-                    
-                    {/* Image indicator count badge overlay */}
-                    <span className="absolute right-4 bottom-4 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full font-semibold select-none">
-                      {activeImageIdx + 1} / {images.length}
-                    </span>
-                  </>
-                )}
-              </>
+              <Image
+                src={images[activeImageIdx]}
+                alt={product.name}
+                fill
+                className="object-cover"
+                priority
+              />
             ) : (
               <div className="w-full h-full bg-cream-deep flex items-center justify-center text-text-secondary">
                 No Image Available
               </div>
             )}
             {product.badge && (
-              <span className="absolute left-4 top-4 rounded-full bg-gradient-to-r from-gold to-[#D4AE55] text-white px-3 py-1 text-xs font-bold shadow-sm z-10">
+              <span className="absolute left-4 top-4 rounded-full bg-gradient-to-r from-gold to-[#D4AE55] text-white px-3 py-1 text-xs font-bold shadow-sm">
                 {product.badge.toUpperCase()}
               </span>
             )}
@@ -346,13 +141,9 @@ export default function ProductDetailPage() {
               {images.map((img, i) => (
                 <button
                   key={i}
-                  onClick={() => {
-                    setZoomScale(1);
-                    setDragOffset({ x: 0, y: 0 });
-                    setActiveImageIdx(i);
-                  }}
-                  className={`relative w-16 h-20 rounded-md overflow-hidden shrink-0 border-2 transition duration-200 hover:border-maroon/50 hover:scale-98 ${
-                    i === activeImageIdx ? 'border-maroon scale-95 shadow ring-2 ring-gold/30' : 'border-divider'
+                  onClick={() => setActiveImageIdx(i)}
+                  className={`relative w-16 h-20 rounded-md overflow-hidden shrink-0 border-2 transition duration-200 ${
+                    i === activeImageIdx ? 'border-maroon scale-95 shadow' : 'border-divider'
                   }`}
                 >
                   <Image src={img} alt={`Thumbnail ${i}`} fill className="object-cover" />
@@ -366,7 +157,7 @@ export default function ProductDetailPage() {
         <div className="space-y-6 lg:sticky lg:top-8 lg:self-start">
           <div className="space-y-2">
             <span className="text-xs uppercase tracking-wider text-text-secondary">
-              Code: {product.id}
+              {t('codeLabel')}: {product.id}
             </span>
             <h2 className="font-serif text-3xl font-bold text-text-primary leading-tight lg:text-4xl">
               {product.name}
@@ -390,13 +181,13 @@ export default function ProductDetailPage() {
                     {formatInr(product.originalPrice)}
                   </span>
                   <span className="bg-peach border border-maroon/20 text-maroon text-xs px-2.5 py-1 rounded-full font-bold">
-                    {discountPercent}% off
+                    {discountPercent}% {t('discountOff')}
                   </span>
                 </>
               )}
             </div>
             <p className="text-xs text-text-secondary">
-              Estimated for {quantity} pc: {formatInr(product.price * quantity)}
+              {t('estimatedFor')} {quantity} {t('pcLabel')}: {formatInr(product.price * quantity)}
             </p>
           </div>
 
@@ -404,7 +195,7 @@ export default function ProductDetailPage() {
 
           {/* Quantity Selector */}
           <div className="space-y-2">
-            <span className="text-sm font-bold text-text-primary">Quantity</span>
+            <span className="text-sm font-bold text-text-primary">{t('quantity')}</span>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
@@ -424,7 +215,7 @@ export default function ProductDetailPage() {
 
           {/* Note to shop */}
           <div className="space-y-2">
-            <span className="text-sm font-bold text-text-primary">Note to shop (optional)</span>
+            <span className="text-sm font-bold text-text-primary">{t('noteToShop')}</span>
             <textarea
               className="w-full rounded-input border border-divider bg-white px-4 py-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold resize-none"
               rows={3}
@@ -444,7 +235,7 @@ export default function ProductDetailPage() {
               <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                 <path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.758.459 3.407 1.264 4.849L2 22l5.313-1.393c1.405.766 3.003 1.205 4.699 1.205 5.506 0 9.988-4.482 9.988-9.988 0-5.506-4.482-9.988-9.988-9.988zm6.541 14.248c-.287.808-1.42 1.484-1.966 1.55-.472.057-1.093.086-1.768-.13a10.05 10.05 0 0 1-4.053-2.482 9.878 9.878 0 0 1-2.482-4.053c-.314-.805-.282-1.39-.053-1.768.125-.205.287-.417.43-.585.161-.186.214-.287.319-.489.105-.205.053-.385-.027-.551-.08-.166-.719-1.734-.985-2.382-.258-.632-.524-.543-.719-.553-.186-.01-.4-.01-.611-.01-.212 0-.557.08-.849.4-.293.319-1.117 1.093-1.117 2.662 0 1.569 1.143 3.087 1.303 3.3.161.212 2.25 3.434 5.451 4.819.76.329 1.353.526 1.815.672.763.243 1.458.209 2.008.127.611-.09 1.868-.763 2.133-1.465.266-.702.266-1.303.186-1.43-.08-.127-.293-.205-.611-.365s-1.868-.921-2.155-1.026c-.287-.105-.497-.161-.708.161-.212.319-.82 1.026-1.006 1.237-.186.212-.373.238-.691.08-.319-.16-1.344-.495-2.56-1.58-1.002-.892-1.68-1.996-1.876-2.332-.196-.336-.021-.518.139-.677.144-.143.319-.373.48-.558.16-.186.214-.319.319-.53.106-.212.053-.399-.027-.558-.08-.16-.719-1.734-.985-2.382z" />
               </svg>
-              Place order on WhatsApp
+              {t('whatsappOrder')}
             </button>
 
             {/* Add to Cart CTA */}
@@ -452,146 +243,11 @@ export default function ProductDetailPage() {
               onClick={handleAddToCart}
               className="w-full h-14 border-2 border-maroon text-maroon hover:bg-peach transition rounded-[18px] font-bold text-base"
             >
-              Add to cart instead
+              {t('addToCart')}
             </button>
           </div>
         </div>
       </div>
-
-      {/* Lightbox zoomable modal overlay */}
-      {isLightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col justify-between select-none backdrop-blur-sm">
-          {/* Lightbox Header */}
-          <div className="flex items-center justify-between p-4 md:p-6 text-white z-10 bg-gradient-to-b from-black/50 to-transparent">
-            <div className="font-mono text-sm text-white/80">
-              {activeImageIdx + 1} / {images.length}
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (product) toggleSaved(product);
-                }}
-                className={`p-2.5 rounded-full transition cursor-pointer flex items-center justify-center ${
-                  isSaved ? 'bg-maroon text-white' : 'bg-white/10 hover:bg-white/20 text-white/90 hover:text-white'
-                }`}
-                title={isSaved ? 'Remove from saved' : 'Save product'}
-              >
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                </svg>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  shareProduct();
-                }}
-                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition text-white/90 hover:text-white cursor-pointer flex items-center justify-center"
-                title="Share details"
-              >
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
-                </svg>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  downloadCurrentImage();
-                }}
-                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition text-white/90 hover:text-white cursor-pointer flex items-center justify-center"
-                title="Download photo"
-              >
-                <svg className="w-5 h-5 fill-none stroke-current" strokeWidth="2.2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-              </button>
-              <button
-                onClick={() => {
-                  setIsLightboxOpen(false);
-                  setZoomScale(1);
-                  setDragOffset({ x: 0, y: 0 });
-                }}
-                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition text-white/90 hover:text-white cursor-pointer flex items-center justify-center"
-                aria-label="Close lightbox"
-              >
-                <svg className="w-6 h-6 stroke-current" fill="none" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Lightbox Main Container */}
-          <div className="relative flex-1 flex items-center justify-center overflow-hidden px-4">
-            {/* Prev Button */}
-            {images.length > 1 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevImage();
-                }}
-                className="absolute left-4 md:left-8 p-3 bg-black/40 hover:bg-black/70 border border-white/10 text-white rounded-full transition z-10 cursor-pointer"
-                aria-label="Previous image"
-              >
-                <svg className="w-6 h-6 stroke-current" fill="none" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-              </button>
-            )}
-
-            {/* Image Wrapper */}
-            <div
-              className={`relative max-w-full max-h-[80vh] aspect-[3/4] flex items-center justify-center overflow-hidden transition-all ${
-                zoomScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'
-              }`}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleZoom();
-              }}
-            >
-              <div
-                style={{
-                  transform: `scale(${zoomScale}) translate(${dragOffset.x / zoomScale}px, ${dragOffset.y / zoomScale}px)`,
-                  transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                }}
-                className="relative w-full h-full flex items-center justify-center"
-              >
-                <Image
-                  src={images[activeImageIdx]}
-                  alt={`${product.name} large view`}
-                  fill
-                  className="object-contain pointer-events-none select-none"
-                  priority
-                />
-              </div>
-            </div>
-
-            {/* Next Button */}
-            {images.length > 1 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextImage();
-                }}
-                className="absolute right-4 md:right-8 p-3 bg-black/40 hover:bg-black/70 border border-white/10 text-white rounded-full transition z-10 cursor-pointer"
-                aria-label="Next image"
-              >
-                <svg className="w-6 h-6 stroke-current" fill="none" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Lightbox Footer Info */}
-          <div className="p-4 md:p-6 text-center text-xs text-white/50 bg-gradient-to-t from-black/50 to-transparent">
-            {zoomScale > 1 ? 'Drag to pan. Click again to zoom out.' : 'Click / tap on image to zoom.'}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

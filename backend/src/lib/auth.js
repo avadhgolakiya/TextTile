@@ -30,8 +30,11 @@ export function mapUser(doc) {
   return {
     id: doc._id.toString(),
     email: doc.email,
+    name: doc.name || null,
     businessName: doc.businessName,
     phone: doc.phone || null,
+    gstin: doc.gstin || null,
+    address: doc.address || null,
     isAdmin: doc.isAdmin ?? false,
   };
 }

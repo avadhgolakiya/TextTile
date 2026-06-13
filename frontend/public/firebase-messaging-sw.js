@@ -14,26 +14,19 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  console.log('[FCM] Received background message:', payload);
-  // Manual showNotification call is removed to prevent duplicate background alerts.
-  // The Firebase compat SDK automatically displays the notification using the payload's notification block.
+  const title = payload.notification?.title ?? 'Swastik Fashion';
+  const body = payload.notification?.body ?? 'New update available';
+  const link = payload.fcmOptions?.link ?? payload.data?.link ?? '/home';
+
+  self.registration.showNotification(title, {
+    body,
+    data: { link },
+  });
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const link = event.notification.data?.link ?? '/home';
-  event.waitUntil(clients.openWindow(link));
-});
-
-// PWA lifecycle listeners to enable instant activation and pass installation checks
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
-});
-
-self.addEventListener('fetch', (event) => {
-  // Pass-through fetch handler satisfies Chrome PWA installability criteria
+  const absoluteUrl = new URL(link, self.location.origin).href;
+  event.waitUntil(clients.openWindow(absoluteUrl));
 });

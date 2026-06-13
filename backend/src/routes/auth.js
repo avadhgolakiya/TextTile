@@ -3,17 +3,16 @@ import bcrypt from 'bcryptjs';
 import { getCollection } from '../db.js';
 import { authMiddleware, mapUser, signToken } from '../lib/auth.js';
 import { ObjectId } from 'mongodb';
-import { sendWelcomeEmail, sendLoginAlertEmail } from '../lib/mail.js';
 
 const router = Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { businessName, email, password, phone } = req.body || {};
-    if (!businessName || !email || !password) {
+    const { name, email, password, mobile, gstin, businessName, address } = req.body || {};
+    if (!name || !email || !password || !mobile || !gstin || !businessName || !address) {
       return res
         .status(400)
-        .json({ error: 'businessName, email, and password are required' });
+        .json({ error: 'name, email, password, mobile, gstin, businessName, and address are required' });
     }
     const em = String(email).trim().toLowerCase();
     const hash = await bcrypt.hash(String(password), 10);
@@ -25,10 +24,13 @@ router.post('/register', async (req, res) => {
     }
 
     const doc = {
+      name: String(name).trim(),
       email: em,
       passwordHash: hash,
+      phone: String(mobile).trim(),
+      gstin: String(gstin).trim().toUpperCase(),
       businessName: String(businessName).trim(),
-      phone: phone ? String(phone).trim() : null,
+      address: String(address).trim(),
       isAdmin: false,
       createdAt: new Date(),
     };
@@ -36,9 +38,6 @@ router.post('/register', async (req, res) => {
     const result = await usersColl.insertOne(doc);
     const userDoc = { ...doc, _id: result.insertedId };
     
-    // Send welcome email (non-blocking)
-    sendWelcomeEmail(em, doc.businessName);
-
     const accessToken = signToken(userDoc._id.toString());
     return res.status(201).json({ accessToken, user: mapUser(userDoc) });
   } catch (e) {
@@ -63,110 +62,11 @@ router.post('/login', async (req, res) => {
     if (!ok) {
       return res.status(401).json({ error: 'Incorrect password.' });
     }
-    // Send login alert (non-blocking)
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
-    const userAgent = req.headers['user-agent'] || '';
-    sendLoginAlertEmail(userDoc.email, userDoc.businessName, {
-      ip, userAgent, loginTime: new Date(), method: 'email',
-    });
     const accessToken = signToken(userDoc._id.toString());
     return res.json({ accessToken, user: mapUser(userDoc) });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error' });
-  }
-});
-
-router.post('/google-login', async (req, res) => {
-  try {
-    const { idToken } = req.body || {};
-
-    // ── DEBUG LOGS ────────────────────────────────────────────────────────
-    console.log('[google-login] received request');
-    console.log('[google-login] idToken length:', idToken ? idToken.length : 0);
-    // ─────────────────────────────────────────────────────────────────────
-
-    if (!idToken) {
-      return res.status(400).json({ error: 'idToken is required' });
-    }
-
-    const googleClientId = '1069466589231-stup0l4vshllutbjudvjq9fogokdpg7s.apps.googleusercontent.com';
-    console.log('[google-login] using clientId:', googleClientId);
-
-    // Verify token with Google's tokeninfo endpoint (no extra dependency needed)
-    const googleRes = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
-    );
-    const payload = await googleRes.json();
-
-    console.log('[google-login] tokeninfo status:', googleRes.status);
-    console.log('[google-login] token aud:', payload.aud);
-    console.log('[google-login] token iss:', payload.iss);
-    console.log('[google-login] token exp:', payload.exp, '| now:', Math.floor(Date.now()/1000));
-    console.log('[google-login] token email:', payload.email);
-
-    if (!googleRes.ok) {
-      console.log('[google-login] FAIL: Google rejected token:', payload);
-      return res.status(401).json({ error: 'Invalid Google token' });
-    }
-
-    // Verify client ID audience matches
-    if (payload.aud !== googleClientId) {
-      console.log('[google-login] FAIL: aud mismatch. got:', payload.aud, 'expected:', googleClientId);
-      return res.status(401).json({ error: 'Invalid token audience (Client ID mismatch)' });
-    }
-
-    // Verify issuer is Google
-    if (!['accounts.google.com', 'https://accounts.google.com'].includes(payload.iss)) {
-      console.log('[google-login] FAIL: invalid issuer:', payload.iss);
-      return res.status(401).json({ error: 'Invalid token issuer' });
-    }
-
-    // Verify token is not expired
-    const nowSec = Math.floor(Date.now() / 1000);
-    if (payload.exp && Number(payload.exp) < nowSec) {
-      console.log('[google-login] FAIL: token expired at', payload.exp, 'now is', nowSec);
-      return res.status(401).json({ error: 'Google token has expired' });
-    }
-
-    const email = String(payload.email).trim().toLowerCase();
-    const name = payload.name || email.split('@')[0];
-    console.log('[google-login] verified user email:', email, '| name:', name);
-
-    const usersColl = getCollection('users');
-    let userDoc = await usersColl.findOne({ email });
-    console.log('[google-login] DB lookup result:', userDoc ? `found (id: ${userDoc._id})` : 'not found – will create');
-
-    if (!userDoc) {
-      const doc = {
-        email,
-        businessName: name,
-        phone: null,
-        isAdmin: false,
-        createdAt: new Date(),
-        passwordHash: '',
-      };
-      const result = await usersColl.insertOne(doc);
-      userDoc = { ...doc, _id: result.insertedId };
-      console.log('[google-login] new user created, id:', userDoc._id);
-      // Send welcome email for new Google sign-up users (non-blocking)
-      sendWelcomeEmail(email, name);
-    }
-
-    // Send login alert for every Google login (new & existing)
-    const gIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
-    const gUa = req.headers['user-agent'] || '';
-    sendLoginAlertEmail(email, userDoc.businessName || name, {
-      ip: gIp, userAgent: gUa, loginTime: new Date(), method: 'google',
-    });
-
-
-    const accessToken = signToken(userDoc._id.toString());
-    console.log('[google-login] JWT generated, length:', accessToken.length);
-    return res.json({ accessToken, user: mapUser(userDoc) });
-  } catch (e) {
-    console.error('[google-login] EXCEPTION:', e);
-    return res.status(500).json({ error: 'Server error during Google auth' });
   }
 });
 

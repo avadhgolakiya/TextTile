@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { isValidImageUrl } from '@/lib/image';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { useCartStore } from '@/lib/cart-store';
 import { orderSummary } from '@/lib/constants/sample-data';
@@ -11,6 +10,7 @@ import { openWhatsAppCart } from '@/lib/whatsapp';
 import { authApi, orderApi } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslation } from '@/lib/language-store';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -20,6 +20,7 @@ function getToken() {
 /** Port of lib/features/cart/cart_screen.dart */
 export default function CartPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const lines = useCartStore((s) => s.lines());
   const setQuantity = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
@@ -79,10 +80,10 @@ export default function CartPage() {
   if (!lines.length) {
     return (
       <div className="px-4 py-16 text-center lg:px-0">
-        <DesktopTopBar title="Cart" />
-        <h1 className="font-serif text-2xl font-semibold lg:text-3xl">Your cart is empty</h1>
+        <DesktopTopBar title={t('navCart')} />
+        <h1 className="font-serif text-2xl font-semibold lg:text-3xl">{t('cartEmpty')}</h1>
         <Link href="/home" className="btn-primary mt-6 inline-flex">
-          Browse sarees
+          {t('startShopping')}
         </Link>
       </div>
     );
@@ -90,16 +91,16 @@ export default function CartPage() {
 
   return (
     <div className="space-y-6 px-4 py-6 lg:space-y-0 lg:px-0 lg:py-0">
-      <DesktopTopBar title="Cart" subtitle={`${lines.length} item${lines.length === 1 ? '' : 's'}`} />
+      <DesktopTopBar title={t('navCart')} subtitle={`${lines.length} ${t('itemsCount')}`} />
 
-      <h1 className="font-serif text-2xl font-semibold lg:hidden">Cart</h1>
+      <h1 className="font-serif text-2xl font-semibold lg:hidden">{t('navCart')}</h1>
 
-      <div className="desktop-two-col">
+      <div className="lg:desktop-two-col">
         <ul className="space-y-4 lg:space-y-5">
           {lines.map((line) => (
             <li key={line.product.id} className="card flex gap-3 p-3 lg:gap-5 lg:p-5">
               <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-cream-deep lg:h-32 lg:w-28">
-                {isValidImageUrl(line.product.imageUrl) ? (
+                {line.product.imageUrl ? (
                   <Image
                     src={line.product.imageUrl}
                     alt={line.product.name}
@@ -132,7 +133,7 @@ export default function CartPage() {
                     className="ml-auto text-xs text-text-secondary transition hover:text-maroon lg:cursor-pointer lg:text-sm"
                     onClick={() => remove(line.product.id)}
                   >
-                    Remove
+                    {t('remove')}
                   </button>
                 </div>
               </div>
@@ -143,31 +144,31 @@ export default function CartPage() {
         <div className="space-y-4 lg:sticky lg:top-8">
           <div className="card space-y-2 p-4 text-sm lg:p-6 lg:text-base">
             <div className="flex justify-between">
-              <span>Subtotal</span>
+              <span>{t('subtotal')}</span>
               <span>{formatInr(summary.subtotal)}</span>
             </div>
             <div className="flex justify-between text-green-800">
-              <span>{summary.discountPercent}% wholesale discount</span>
+              <span>{summary.discountPercent}% {t('wholesaleDiscount')}</span>
               <span>−{formatInr(summary.discountAmount)}</span>
             </div>
             <div className="flex justify-between font-bold lg:text-lg">
-              <span>Total</span>
+              <span>{t('grandTotal')}</span>
               <span>{formatInr(summary.total)}</span>
             </div>
           </div>
 
           <div className="card space-y-4 p-4 lg:p-6">
-            <h3 className="font-serif text-lg font-semibold lg:text-xl">Buyer details</h3>
+            <h3 className="font-serif text-lg font-semibold lg:text-xl">{t('buyerDetails')}</h3>
             <input
               className="input-field"
-              placeholder="Business name"
+              placeholder={t('businessNamePlaceholder')}
               value={buyerName}
               onChange={(e) => setBuyerName(e.target.value)}
               required
             />
             <input
               className="input-field"
-              placeholder="Phone number"
+              placeholder={t('phonePlaceholder')}
               value={buyerPhone}
               onChange={(e) => setBuyerPhone(e.target.value)}
             />
@@ -179,7 +180,7 @@ export default function CartPage() {
             disabled={submitting}
             onClick={placeOrder}
           >
-            {submitting ? 'Placing order…' : 'Order via WhatsApp'}
+            {submitting ? t('placingOrder') : t('placeOrder')}
           </button>
         </div>
       </div>

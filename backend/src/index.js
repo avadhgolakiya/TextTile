@@ -1,4 +1,3 @@
-// v1.2.0 – google-login debug logs + issuer/expiry validation
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -8,6 +7,7 @@ import productRoutes from './routes/products.js';
 import orderRoutes from './routes/orders.js';
 import bannerRoutes from './routes/banners.js';
 import notificationRoutes from './routes/notifications.js';
+import gstRoutes from './routes/gst.js';
 import uploadRoutes from './routes/upload.js';
 
 const PORT = Number(process.env.PORT || 3333);
@@ -26,6 +26,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/uploads', express.static('uploads'));
+app.use('/api', gstRoutes);
 
 connectDB()
   .then(() => {

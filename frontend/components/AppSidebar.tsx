@@ -3,14 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/lib/cart-store';
-
-const navItems = [
-  { href: '/home', label: "Today's Drop", icon: '✦' },
-  { href: '/collection', label: 'Collection', icon: '🧵' },
-  { href: '/search', label: 'Search', icon: '🔍' },
-  { href: '/orders', label: 'Orders', icon: '📦' },
-  { href: '/profile', label: 'Profile', icon: '👤' },
-] as const;
+import { useTranslation } from '@/lib/language-store';
 
 type Props = { isAdmin?: boolean };
 
@@ -18,15 +11,25 @@ type Props = { isAdmin?: boolean };
 export function AppSidebar({ isAdmin = false }: Props) {
   const pathname = usePathname();
   const totalQuantity = useCartStore((s) => s.totalQuantity());
+  const { t } = useTranslation();
+
+  const navItems = [
+    { href: '/home', label: t('todaysDrop'), icon: '✦' },
+    { href: '/collection', label: t('navCollection'), icon: '🧵' },
+    { href: '/search', label: t('navSearch'), icon: '🔍' },
+    { href: '/orders', label: t('navOrders'), icon: '📦' },
+    { href: '/profile', label: t('navProfile'), icon: '👤' },
+  ];
+
   const items = isAdmin
-    ? [...navItems, { href: '/admin', label: 'Admin', icon: '🛡️' } as const]
+    ? [...navItems, { href: '/admin', label: t('navAdmin'), icon: '🛡️' }]
     : navItems;
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-divider bg-white lg:flex">
       <div className="border-b border-divider px-6 py-7">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
-          Wholesale
+          {t('wholesaleBuyer')}
         </p>
         <h1 className="mt-1 font-serif text-2xl font-bold text-text-primary">
           Swastik Fashion
@@ -66,7 +69,7 @@ export function AppSidebar({ isAdmin = false }: Props) {
         >
           <span className="flex items-center gap-2">
             <span aria-hidden>🛒</span>
-            View cart
+            {t('viewCart')}
           </span>
           {totalQuantity > 0 ? (
             <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs">

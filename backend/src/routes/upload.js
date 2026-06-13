@@ -64,7 +64,7 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
     // LOCAL SERVER FALLBACK
     const ext = path.extname(file.originalname);
     const filename = `${Date.now()}_${crypto.randomUUID()}${ext}`;
-    const uploadDir = path.resolve('../frontend/public/uploads');
+    const uploadDir = path.resolve('./uploads');
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -73,8 +73,12 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
     const filePath = path.join(uploadDir, filename);
     fs.writeFileSync(filePath, file.buffer);
 
-    // Return the relative URL (Next.js serves the public folder at the root '/')
-    return res.json({ imageUrl: `/uploads/${filename}` });
+    // Construct absolute URL based on the request host (e.g., http://localhost:3333/uploads/filename)
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const imageUrl = `${protocol}://${host}/uploads/${filename}`;
+
+    return res.json({ imageUrl });
   } catch (e) {
     console.error('[Upload] Error:', e);
     return res.status(500).json({ error: 'Failed to upload image' });

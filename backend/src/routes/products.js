@@ -65,9 +65,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const p = req.body?.product;
-    console.log('[API] POST /api/products received product:', p?.id, '-', p?.name);
     if (!p?.id || !p?.name || p.price == null) {
-      console.warn('[API] Invalid product payload:', p);
       return res.status(400).json({ error: 'Invalid product payload' });
     }
 
@@ -96,20 +94,10 @@ router.post('/', authMiddleware, async (req, res) => {
     );
 
     const isNewProduct = result.upsertedCount > 0;
-    console.log('[API] Product upsert result:', {
-      upsertedCount: result.upsertedCount,
-      matchedCount: result.matchedCount,
-      modifiedCount: result.modifiedCount,
-      isNewProduct,
-    });
-
     if (isNewProduct && (p.isVisible ?? true)) {
-      console.log('[FCM] Attempting to send push notification...');
       notifyNewProduct(p).catch((err) =>
         console.error('[FCM] notifyNewProduct failed:', err),
       );
-    } else {
-      console.log('[FCM] Skipping push notification. isNewProduct:', isNewProduct, 'isVisible:', p.isVisible);
     }
 
     return res.json({ ok: true, isNew: isNewProduct });

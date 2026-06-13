@@ -40,8 +40,11 @@ export type OrderItem = {
 export type AppUser = {
   id: string;
   email: string;
+  name?: string | null;
   businessName: string;
   phone?: string | null;
+  gstin?: string | null;
+  address?: string | null;
   isAdmin: boolean;
 };
 
