@@ -18,18 +18,19 @@ export async function middleware(request: NextRequest) {
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );
 
-  if (isProtected) {
-    if (!token) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = '/login';
-      loginUrl.searchParams.set('next', path);
-      return NextResponse.redirect(loginUrl);
-    }
-
+  // Always check if IP is blocked for all routes (except /blocked itself)
+  if (path !== '/blocked') {
     try {
       const ip = request.ip || request.headers.get('x-forwarded-for') || '127.0.0.1';
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3333';
-      const res = await fetch(`${apiUrl}/api/auth/check-ip?ip=${encodeURIComponent(ip)}`, { cache: 'no-store' });
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      const res = await fetch(`${apiUrl}/api/auth/check-ip?ip=${encodeURIComponent(ip)}`, { 
+        cache: 'no-store',
+        headers 
+      });
+      
       if (res.ok) {
         const data = await res.json();
         if (data.blocked) {
@@ -40,6 +41,15 @@ export async function middleware(request: NextRequest) {
       }
     } catch (e) {
       console.error('IP check failed in middleware', e);
+    }
+  }
+
+  if (isProtected) {
+    if (!token) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.set('next', path);
+      return NextResponse.redirect(loginUrl);
     }
   }
 

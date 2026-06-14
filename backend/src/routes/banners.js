@@ -18,6 +18,7 @@ router.get('/', async (_req, res) => {
       banners: docs.map((doc) => ({
         id: doc._id.toString(),
         image_url: doc.imageUrl,
+        redirect_url: doc.redirectUrl || '',
         sort_order: doc.sortOrder ?? 0,
       })),
     });
@@ -29,13 +30,14 @@ router.get('/', async (_req, res) => {
 
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { imageUrl, sortOrder } = req.body || {};
+    const { imageUrl, sortOrder, redirectUrl } = req.body || {};
     if (!imageUrl) {
       return res.status(400).json({ error: 'imageUrl is required' });
     }
     const bannersColl = getCollection('banners');
     await bannersColl.insertOne({
       imageUrl,
+      redirectUrl: redirectUrl || '',
       sortOrder: Number(sortOrder || 0),
       createdAt: new Date(),
     });

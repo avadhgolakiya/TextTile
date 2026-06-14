@@ -7,7 +7,7 @@ import { isValidImageUrl } from '@/lib/image';
 import { FALLBACK_BANNER } from '@/lib/constants/sample-data';
 
 type Props = {
-  banners: string[];
+  banners: { image_url: string; redirect_url?: string }[];
   isAdmin?: boolean;
 };
 
@@ -17,7 +17,7 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const autoplayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const list = banners.length ? banners : [FALLBACK_BANNER];
+  const list = banners.length ? banners : [{ image_url: FALLBACK_BANNER }];
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
@@ -33,7 +33,7 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
   const startAutoplay = () => {
     stopAutoplay();
     if (list.length <= 1) return;
-    autoplayTimerRef.current = setInterval(nextSlide, 5000);
+    autoplayTimerRef.current = setInterval(nextSlide, 3000);
   };
 
   const stopAutoplay = () => {
@@ -92,13 +92,27 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <Image
-                src={isValidImageUrl(banner) ? banner : FALLBACK_BANNER}
-                alt={`Promo banner ${index + 1}`}
-                fill
-                className="object-cover"
-                priority={index === 0}
-              />
+              {banner.redirect_url ? (
+                <a href={banner.redirect_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative cursor-pointer">
+                  <Image
+                    src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
+                    alt={`Promo banner ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                </a>
+              ) : (
+                <div className="w-full h-full relative">
+                  <Image
+                    src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
+                    alt={`Promo banner ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                </div>
+              )}
             </div>
           );
         })}

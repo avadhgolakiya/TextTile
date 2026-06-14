@@ -16,13 +16,13 @@ import { useTranslation } from '@/lib/language-store';
 export default function HomePage() {
   const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
-  const [banners, setBanners] = useState<string[]>([FALLBACK_BANNER]);
+  const [banners, setBanners] = useState<{ image_url: string; redirect_url?: string }[]>([{ image_url: FALLBACK_BANNER }]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       productApi.fetchFeatured().then((res) => res.products).catch(() => []),
-      bannerApi.fetchUrls().then((res) => res.urls.length ? res.urls : [FALLBACK_BANNER]).catch(() => [FALLBACK_BANNER])
+      bannerApi.fetchUrls().then((res) => res.banners.length ? res.banners : [{ image_url: FALLBACK_BANNER }]).catch(() => [{ image_url: FALLBACK_BANNER }])
     ]).then(([prodRes, bannerRes]) => {
       setProducts(prodRes);
       setBanners(bannerRes);
@@ -86,7 +86,7 @@ export default function HomePage() {
             {t('viewFullCollection')} →
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5 items-start">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

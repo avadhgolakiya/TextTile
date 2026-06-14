@@ -1,7 +1,7 @@
 import type { CartLine } from './types';
 import { formatInr } from './formatting/inr';
 import { ShopContact } from './constants/shop-contact';
-import { getFullImageUrl } from './image';
+import { getFullImageUrl, getWhatsAppThumbnailUrl } from './image';
 
 /** Port of lib/core/whatsapp/whatsapp_order_service.dart */
 export function buildCartMessage(options: {
@@ -38,7 +38,7 @@ export function buildCartMessage(options: {
     );
     parts.push(`   Subtotal: ${formatInr(lineTotal)}`);
     if (line.product.imageUrl) {
-      parts.push(`   📷 Photo: ${getFullImageUrl(line.product.imageUrl)}`);
+      parts.push(`   📷 Photo: ${getWhatsAppThumbnailUrl(line.product.imageUrl)}`);
     }
     parts.push('');
   });
@@ -104,7 +104,7 @@ export function openWhatsAppSingleOrder(options: {
     parts.push(`Note: ${note.trim()}`);
   }
   if (product.imageUrl) {
-    parts.push(`📷 Photo: ${getFullImageUrl(product.imageUrl)}`);
+    parts.push(`📷 Photo: ${getWhatsAppThumbnailUrl(product.imageUrl)}`);
   }
   parts.push('━━━━━━━━━━━━━━━━━━━', `🛒 *Total: ${formatInr(product.price * quantity)}*`);
   parts.push('', 'Please confirm my order.');

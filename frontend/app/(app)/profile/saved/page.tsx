@@ -51,7 +51,7 @@ export default function SavedProductsPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5 items-start">
             {savedItems.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -27,12 +27,13 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [orderFilter, setOrderFilter] = useState<'all' | 'user' | 'manual'>('all');
   const [buyers, setBuyers] = useState<{ id: string; name: string; email?: string; phone: string; orders: number; isBlocked: boolean }[]>([]);
-  const [banners, setBanners] = useState<{ id: string; image_url: string; sort_order: number }[]>([]);
+  const [buyerSearchQuery, setBuyerSearchQuery] = useState('');
+  const [banners, setBanners] = useState<{ id: string; image_url: string; redirect_url: string; sort_order: number }[]>([]);
   const [systemAdmins, setSystemAdmins] = useState<{ id: string; email: string; name: string }[]>([]);
 
   // States for IP Management
   const [isIpModalOpen, setIsIpModalOpen] = useState(false);
-  const [selectedBuyerForIp, setSelectedBuyerForIp] = useState<{ id: string; name: string } | null>(null);
+  const [selectedBuyerForIp, setSelectedBuyerForIp] = useState<{ id: string; name: string; email?: string; phone?: string; isBlocked: boolean } | null>(null);
   const [buyerIps, setBuyerIps] = useState<{ id: string; ipAddress: string; detectedAt: string; source: string }[]>([]);
 
   // States for product form modal
@@ -53,6 +54,7 @@ export default function AdminPage() {
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [newBannerUrl, setNewBannerUrl] = useState('');
+  const [newRedirectUrl, setNewRedirectUrl] = useState('');
   const [draggedBannerId, setDraggedBannerId] = useState<string | null>(null);
 
   // States for file uploading
@@ -350,13 +352,13 @@ export default function AdminPage() {
     }
   }
 
-  async function openIpModal(buyerId: string, buyerName: string) {
-    setSelectedBuyerForIp({ id: buyerId, name: buyerName });
+  async function openIpModal(buyer: { id: string; name: string; email?: string; phone: string; isBlocked: boolean }) {
+    setSelectedBuyerForIp(buyer);
     setIsIpModalOpen(true);
     setBuyerIps([]);
     try {
       const token = getToken();
-      const res = await authApi.fetchBuyerIps(token, buyerId);
+      const res = await authApi.fetchBuyerIps(token, buyer.id);
       setBuyerIps(res.ips || []);
     } catch (err) {
       console.error(err);
@@ -371,9 +373,10 @@ export default function AdminPage() {
     if (!newBannerUrl.trim()) return;
     const token = getToken();
     try {
-      await bannerApi.add(token, newBannerUrl.trim(), banners.length);
+      await bannerApi.add(token, newBannerUrl.trim(), newRedirectUrl.trim(), banners.length);
       setIsBannerModalOpen(false);
       setNewBannerUrl('');
+      setNewRedirectUrl('');
       loadTabData('banners');
       toast.success('Banner added');
     } catch (err) {
@@ -705,8 +708,22 @@ export default function AdminPage() {
               <div className="space-y-4">
                 <h3 className="font-serif text-xl font-bold">Registered Users</h3>
 
+                <input
+                  type="text"
+                  placeholder="Search by email or name..."
+                  className="input-field max-w-md"
+                  value={buyerSearchQuery}
+                  onChange={(e) => setBuyerSearchQuery(e.target.value)}
+                />
+
                 <div className="space-y-3">
-                  {buyers.map((b) => (
+                  {buyers
+                    .filter(b => 
+                      !buyerSearchQuery || 
+                      b.email?.toLowerCase().includes(buyerSearchQuery.toLowerCase()) ||
+                      b.name.toLowerCase().includes(buyerSearchQuery.toLowerCase())
+                    )
+                    .map((b) => (
                     <div
                       key={b.id}
                       className={`card flex items-center justify-between p-4 border shadow-sm transition ${
@@ -738,10 +755,10 @@ export default function AdminPage() {
                           {b.orders} orders
                         </span>
                         <button
-                          onClick={() => openIpModal(b.id, b.name)}
+                          onClick={() => openIpModal(b)}
                           className="text-xs font-bold px-3 py-1.5 rounded-lg transition border bg-white text-text-secondary border-divider hover:bg-cream-deep"
                         >
-                          IPs
+                          Data & IPs
                         </button>
                         <button
                           onClick={() => toggleBlockBuyer(b.id, b.isBlocked)}
@@ -765,7 +782,7 @@ export default function AdminPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-serif text-xl font-bold">Slider Images</h3>
-                  <button onClick={() => { setNewBannerUrl(''); setIsBannerModalOpen(true); }} className="btn-primary py-2 px-5 text-xs">
+                  <button onClick={() => { setNewBannerUrl(''); setNewRedirectUrl(''); setIsBannerModalOpen(true); }} className="btn-primary py-2 px-5 text-xs">
                     + Add Image
                   </button>
                 </div>
@@ -1238,6 +1255,18 @@ export default function AdminPage() {
                   )}
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-secondary uppercase block">Redirect URL (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="https://example.com/collection"
+                  className="input-field py-3 text-xs"
+                  value={newRedirectUrl}
+                  onChange={(e) => setNewRedirectUrl(e.target.value)}
+                />
+              </div>
+
               <button type="submit" disabled={!newBannerUrl || uploadingImage} className="btn-primary w-full h-12 mt-2">
                 Save Image
               </button>
@@ -1353,14 +1382,16 @@ export default function AdminPage() {
       {isIpModalOpen && selectedBuyerForIp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
           <div className="w-full max-w-lg bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 flex flex-col max-h-[80vh] animate-scaleIn">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="font-serif text-xl font-bold text-text-primary">
-                  Auto-Detected IPs for {selectedBuyerForIp.name}
+                  User Data: {selectedBuyerForIp.name}
                 </h3>
-                <p className="text-xs text-text-secondary mt-1">
-                  View IPs automatically captured for this user.
-                </p>
+                <div className="text-xs text-text-secondary mt-2 space-y-1">
+                  <p><strong>Email:</strong> {selectedBuyerForIp.email || 'N/A'}</p>
+                  <p><strong>Phone:</strong> {selectedBuyerForIp.phone || 'N/A'}</p>
+                  <p><strong>Status:</strong> {selectedBuyerForIp.isBlocked ? 'Blocked' : 'Active'}</p>
+                </div>
               </div>
               <button
                 onClick={() => setIsIpModalOpen(false)}
@@ -1370,6 +1401,23 @@ export default function AdminPage() {
               </button>
             </div>
 
+            <div className="mb-4">
+              <button
+                onClick={async () => {
+                  await toggleBlockBuyer(selectedBuyerForIp.id, selectedBuyerForIp.isBlocked);
+                  setSelectedBuyerForIp(prev => prev ? { ...prev, isBlocked: !prev.isBlocked } : null);
+                }}
+                className={`w-full py-2 rounded-lg font-bold text-sm transition border ${
+                  selectedBuyerForIp.isBlocked
+                    ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                    : 'bg-red-600 text-white border-transparent hover:bg-red-700'
+                }`}
+              >
+                {selectedBuyerForIp.isBlocked ? 'Unblock User' : 'Block User'}
+              </button>
+            </div>
+
+            <h4 className="font-bold text-sm text-text-primary mb-2">Tracked IP Addresses</h4>
             <div className="flex-1 overflow-y-auto min-h-[200px] border border-divider rounded-xl bg-cream-deep/50 p-4">
               {buyerIps.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-text-secondary">

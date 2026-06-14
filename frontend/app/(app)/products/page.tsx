@@ -63,7 +63,7 @@ function ProductsContent() {
             <p className="text-lg font-serif">No products found in this category</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5 items-start">
             {products.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}

@@ -60,7 +60,7 @@ export default function ProductDetailPage() {
 
   async function handleWhatsAppOrder() {
     if (!product) return;
-    
+
     const token = getToken();
     if (!token) {
       router.push(`/login?next=/products/${product.id}`);
@@ -101,7 +101,7 @@ export default function ProductDetailPage() {
 
   function handleAddToCart() {
     if (!product) return;
-    
+
     const token = getToken();
     if (!token) {
       router.push(`/login?next=/products/${product.id}`);
@@ -110,6 +110,25 @@ export default function ProductDetailPage() {
 
     addToCart(product, quantity);
     toast.success(`Added ${quantity} × ${product.name} to cart!`);
+  }
+
+  async function handleShare() {
+    if (!product) return;
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Check out ${product.name} at Swastik Fashion!`,
+          url: url,
+        });
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success('Link copied to clipboard!');
+    }
   }
 
   if (loading) {
@@ -163,17 +182,15 @@ export default function ProductDetailPage() {
       <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-8 lg:max-w-none lg:px-0 lg:py-0 lg:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Left Column: Image Gallery */}
         <div className="space-y-4">
-          <div className="relative aspect-[3/4] bg-white rounded-card overflow-hidden shadow-sm border border-divider">
+          <div className="relative bg-white rounded-card overflow-hidden shadow-sm border border-divider">
             {images.length > 0 ? (
-              <Image
+              <img
                 src={images[activeImageIdx]}
                 alt={product.name}
-                fill
-                className="object-cover"
-                priority
+                className="w-full h-[600px] block"
               />
             ) : (
-              <div className="w-full h-full bg-cream-deep flex items-center justify-center text-text-secondary">
+              <div className="w-full aspect-[3/4] bg-cream-deep flex items-center justify-center text-text-secondary">
                 No Image Available
               </div>
             )}
@@ -191,9 +208,8 @@ export default function ProductDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImageIdx(i)}
-                  className={`relative w-16 h-20 rounded-md overflow-hidden shrink-0 border-2 transition duration-200 ${
-                    i === activeImageIdx ? 'border-maroon scale-95 shadow' : 'border-divider'
-                  }`}
+                  className={`relative w-16 h-20 rounded-md overflow-hidden shrink-0 border-2 transition duration-200 ${i === activeImageIdx ? 'border-maroon scale-95 shadow' : 'border-divider'
+                    }`}
                 >
                   <Image src={img} alt={`Thumbnail ${i}`} fill className="object-cover" />
                 </button>
@@ -205,9 +221,20 @@ export default function ProductDetailPage() {
         {/* Right Column: Info & Actions */}
         <div className="space-y-6 lg:sticky lg:top-8 lg:self-start">
           <div className="space-y-2">
-            <span className="text-xs uppercase tracking-wider text-text-secondary">
-              {t('codeLabel')}: {product.id}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wider text-text-secondary">
+                {t('codeLabel')}: {product.id}
+              </span>
+              <button 
+                onClick={handleShare} 
+                className="p-2 text-maroon hover:bg-peach rounded-full transition flex items-center justify-center" 
+                title="Share Product"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </button>
+            </div>
             <h2 className="font-serif text-3xl font-bold text-text-primary leading-tight lg:text-4xl">
               {product.name}
             </h2>
@@ -281,8 +308,8 @@ export default function ProductDetailPage() {
               onClick={handleWhatsAppOrder}
               className="w-full h-14 bg-gradient-to-r from-[#1B8C4D] to-[#25D366] text-white rounded-[18px] font-bold text-base shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
             >
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                <path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.758.459 3.407 1.264 4.849L2 22l5.313-1.393c1.405.766 3.003 1.205 4.699 1.205 5.506 0 9.988-4.482 9.988-9.988 0-5.506-4.482-9.988-9.988-9.988zm6.541 14.248c-.287.808-1.42 1.484-1.966 1.55-.472.057-1.093.086-1.768-.13a10.05 10.05 0 0 1-4.053-2.482 9.878 9.878 0 0 1-2.482-4.053c-.314-.805-.282-1.39-.053-1.768.125-.205.287-.417.43-.585.161-.186.214-.287.319-.489.105-.205.053-.385-.027-.551-.08-.166-.719-1.734-.985-2.382-.258-.632-.524-.543-.719-.553-.186-.01-.4-.01-.611-.01-.212 0-.557.08-.849.4-.293.319-1.117 1.093-1.117 2.662 0 1.569 1.143 3.087 1.303 3.3.161.212 2.25 3.434 5.451 4.819.76.329 1.353.526 1.815.672.763.243 1.458.209 2.008.127.611-.09 1.868-.763 2.133-1.465.266-.702.266-1.303.186-1.43-.08-.127-.293-.205-.611-.365s-1.868-.921-2.155-1.026c-.287-.105-.497-.161-.708.161-.212.319-.82 1.026-1.006 1.237-.186.212-.373.238-.691.08-.319-.16-1.344-.495-2.56-1.58-1.002-.892-1.68-1.996-1.876-2.332-.196-.336-.021-.518.139-.677.144-.143.319-.373.48-.558.16-.186.214-.319.319-.53.106-.212.053-.399-.027-.558-.08-.16-.719-1.734-.985-2.382z" />
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
               </svg>
               {t('whatsappOrder')}
             </button>
@@ -313,11 +340,11 @@ export default function ProductDetailPage() {
                 ✕
               </button>
             </div>
-            
+
             <p className="text-sm text-text-secondary">
               Please provide a shipping address before completing your order via WhatsApp.
             </p>
-            
+
             <form onSubmit={handleSaveAddress} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-text-secondary uppercase mb-2 block">
@@ -331,7 +358,7 @@ export default function ProductDetailPage() {
                   required
                 />
               </div>
-              
+
               <button
                 type="submit"
                 disabled={isSavingAddress || !buyerAddress.trim()}

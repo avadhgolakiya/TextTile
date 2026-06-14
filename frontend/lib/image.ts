@@ -19,3 +19,15 @@ export function getFullImageUrl(url?: string | null): string {
   return trimmed;
 }
 
+export function getWhatsAppThumbnailUrl(url?: string | null): string {
+  const fullUrl = getFullImageUrl(url);
+  if (!fullUrl) return '';
+  
+  // If it's a Cloudinary URL, inject transformations to ensure WhatsApp generates a preview
+  // WhatsApp requires images < ~300KB for link previews
+  if (fullUrl.includes('res.cloudinary.com') && fullUrl.includes('/image/upload/')) {
+    return fullUrl.replace('/image/upload/', '/image/upload/w_600,q_auto,f_jpg/');
+  }
+  
+  return fullUrl;
+}

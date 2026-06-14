@@ -95,7 +95,7 @@ export default function CollectionPage() {
               <p className="text-sm mt-1">{t('tryAnotherCategory')}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4 items-start">
               {filteredProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}

@@ -15,7 +15,7 @@ export default function BlockedPage() {
           Access Restricted
         </h1>
         <p className="mb-8 text-sm leading-relaxed text-text-secondary">
-          Your access to this application has been temporarily restricted. If you believe this is a mistake, please reach out to support.
+          You are blocked by admin. Your access to this application has been restricted. If you believe this is a mistake, please reach out to support.
         </p>
         <a
           href="mailto:support@swastikfashion.com"

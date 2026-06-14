@@ -18,7 +18,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
-  const [address, setAddress] = useState('');
   
   // GST verification states
   const [gstin, setGstin] = useState('');
@@ -101,7 +100,6 @@ export default function SignUpPage() {
         mobile: mobile.trim(),
         gstin: gstin.trim(),
         businessName: verifiedBusinessName.trim(),
-        address: address.trim(),
       });
 
       // Save token in cookie (30 days expiry)
@@ -180,18 +178,6 @@ export default function SignUpPage() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Shop Address */}
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1">{t('shopAddress')}</label>
-              <textarea
-                className="input-field min-h-[80px] py-3 resize-none"
-                placeholder={t('shopAddress')}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
                 required
               />
             </div>

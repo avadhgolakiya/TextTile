@@ -22,7 +22,10 @@ function getToken() {
 export default function CartPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const lines = useCartStore((s) => s.lines());
+  const byId = useCartStore((s) => s.byId);
+  const lines = Object.entries(byId)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, line]) => line);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
@@ -33,8 +36,10 @@ export default function CartPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const token = getToken();
     if (!token) return;
     authApi
@@ -104,6 +109,10 @@ export default function CartPage() {
       console.error(err);
       setIsSavingAddress(false);
     }
+  }
+
+  if (!mounted) {
+    return null; // Prevent hydration mismatch
   }
 
   if (!lines.length) {

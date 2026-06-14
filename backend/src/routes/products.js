@@ -71,6 +71,9 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     const productsColl = getCollection('products');
+    const existingProduct = await productsColl.findOne({ _id: p.id });
+    const isNewProduct = !existingProduct;
+
     const result = await productsColl.updateOne(
       { _id: p.id },
       {
@@ -94,7 +97,6 @@ router.post('/', authMiddleware, async (req, res) => {
       { upsert: true },
     );
 
-    const isNewProduct = result.upsertedCount > 0;
     if (isNewProduct && (p.isVisible ?? true)) {
       notifyNewProduct(p).catch((err) =>
         console.error('[FCM] notifyNewProduct failed:', err),

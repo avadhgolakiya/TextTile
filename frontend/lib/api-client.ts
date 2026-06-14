@@ -202,17 +202,17 @@ export const notificationApi = {
 };
 
 export const bannerApi = {
-  fetchUrls: () => apiFetch<{ urls: string[] }>('/api/banners', { cache: 'no-store' }),
+  fetchUrls: () => apiFetch<{ urls: string[]; banners: { id: string; image_url: string; redirect_url: string; sort_order: number }[] }>('/api/banners', { cache: 'no-store' }),
   fetchAllAdmin: (token: string) =>
-    apiFetch<{ urls: string[]; banners: { id: string; image_url: string; sort_order: number }[] }>('/api/banners', {
+    apiFetch<{ urls: string[]; banners: { id: string; image_url: string; redirect_url: string; sort_order: number }[] }>('/api/banners', {
       token,
       cache: 'no-store',
     }),
-  add: (token: string, imageUrl: string, sortOrder?: number) =>
+  add: (token: string, imageUrl: string, redirectUrl: string, sortOrder?: number) =>
     apiFetch<{ ok: true }>('/api/banners', {
       method: 'POST',
       token,
-      body: JSON.stringify({ imageUrl, sortOrder }),
+      body: JSON.stringify({ imageUrl, redirectUrl, sortOrder }),
     }),
   delete: (token: string, id: string) =>
     apiFetch<{ ok: true }>(`/api/banners/${id}`, { method: 'DELETE', token }),

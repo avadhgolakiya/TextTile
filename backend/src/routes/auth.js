@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { getCollection } from '../db.js';
 import { authMiddleware, mapUser, signToken } from '../lib/auth.js';
 import { logActivity } from '../lib/activity.js';
@@ -10,11 +11,11 @@ const router = Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, mobile, gstin, businessName, address } = req.body || {};
-    if (!name || !email || !password || !mobile || !gstin || !businessName || !address) {
+    const { name, email, password, mobile, gstin, businessName } = req.body || {};
+    if (!name || !email || !password || !mobile || !gstin || !businessName) {
       return res
         .status(400)
-        .json({ error: 'name, email, password, mobile, gstin, businessName, and address are required' });
+        .json({ error: 'name, email, password, mobile, gstin, and businessName are required' });
     }
     const em = String(email).trim().toLowerCase();
     const hash = await bcrypt.hash(String(password), 10);
@@ -32,7 +33,7 @@ router.post('/register', async (req, res) => {
       phone: String(mobile).trim(),
       gstin: String(gstin).trim().toUpperCase(),
       businessName: String(businessName).trim(),
-      address: String(address).trim(),
+      address: null, // Address can be added later during checkout
       isAdmin: false,
       createdAt: new Date(),
     };
@@ -174,6 +175,9 @@ router.patch('/buyers/:id/block', authMiddleware, async (req, res) => {
         }));
         await blockedIpsColl.bulkWrite(ops);
       }
+    } else {
+      const blockedIpsColl = getCollection('blocked_user_ips');
+      await blockedIpsColl.deleteMany({ userId: req.params.id });
     }
 
     await usersColl.updateOne(
@@ -276,11 +280,26 @@ router.get('/admins/:id/activity', authMiddleware, async (req, res) => {
 router.get('/check-ip', async (req, res) => {
   try {
     const ip = req.query.ip || getClientIp(req);
-    const blocked = await checkIpBlocked(ip);
+    let blocked = await checkIpBlocked(ip);
+    
+    if (blocked) {
+      const h = req.headers.authorization;
+      if (h && h.startsWith('Bearer ')) {
+        const token = h.slice(7);
+        try {
+          const payload = jwt.verify(token, process.env.JWT_SECRET);
+          const usersColl = getCollection('users');
+          const user = await usersColl.findOne({ _id: new ObjectId(payload.sub) });
+          if (user && user.isAdmin) {
+            blocked = false; // Admins bypass the block
+          }
+        } catch (err) {}
+      }
+    }
+
     return res.json({ blocked });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: 'Server error' });
+  } catch (err) {
+    return res.json({ blocked: false });
   }
 });
 
@@ -290,8 +309,8 @@ router.get('/buyers/:id/ips', authMiddleware, async (req, res) => {
     const adminDoc = await usersColl.findOne({ _id: new ObjectId(req.userId) });
     if (!adminDoc || !adminDoc.isAdmin) return res.status(403).json({ error: 'Forbidden' });
 
-    const blockedIpsColl = getCollection('blocked_user_ips');
-    const ips = await blockedIpsColl.find({ userId: req.params.id }).toArray();
+    const userIpLogColl = getCollection('user_ip_log');
+    const ips = await userIpLogColl.find({ userId: req.params.id }).toArray();
     
     return res.json({ ips: ips.map(i => ({ id: i._id.toString(), ipAddress: i.ipAddress, detectedAt: i.detectedAt, source: i.source })) });
   } catch (e) {
