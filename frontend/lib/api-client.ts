@@ -163,6 +163,8 @@ export const authApi = {
       token,
       body: JSON.stringify({ address }),
     }),
+  checkIp: () =>
+    apiFetch<{ blocked: boolean }>('/api/auth/check-ip', { cache: 'no-store' }),
 
   // Admin operations
   fetchBuyersAdmin: (token: string) =>

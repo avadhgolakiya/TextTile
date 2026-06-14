@@ -4,6 +4,7 @@ import { AppBottomNav } from '@/components/AppBottomNav';
 import { AppSidebar } from '@/components/AppSidebar';
 import { CartFab } from '@/components/CartFab';
 import { NotificationSetup } from '@/components/NotificationSetup';
+import { BlockChecker } from '@/components/BlockChecker';
 
 export default async function AppLayout({
   children,
@@ -32,6 +33,7 @@ export default async function AppLayout({
         <main className="lg:mx-auto lg:max-w-7xl lg:px-10 lg:py-8">
           <CartFab />
           <NotificationSetup />
+          <BlockChecker />
           {children}
         </main>
       </div>

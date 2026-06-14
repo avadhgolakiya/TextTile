@@ -49,6 +49,7 @@ export type AppUser = {
   address?: string | null;
   isAdmin: boolean;
   isSuperAdmin?: boolean;
+  isBlocked?: boolean;
 };
 
 export type Admin = {
