@@ -10,8 +10,15 @@ async function apiFetch<T>(
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
+  
+  // Disable caching so admin changes are immediately visible
+  const fetchOptions: RequestInit = {
+    ...init,
+    headers,
+    cache: 'no-store',
+  };
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const res = await fetch(`${API_BASE}${path}`, fetchOptions);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? `Request failed (${res.status})`);
@@ -163,6 +170,8 @@ export const authApi = {
       token,
       body: JSON.stringify({ address }),
     }),
+  checkIp: () =>
+    apiFetch<{ blocked: boolean }>('/api/auth/check-ip', { cache: 'no-store' }),
 
   // Admin operations
   fetchBuyersAdmin: (token: string) =>

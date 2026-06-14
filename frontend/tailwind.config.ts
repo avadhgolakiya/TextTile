@@ -1,19 +1,20 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-        cream: '#FFF8F2',
-        'cream-deep': '#F5EDE0',
-        maroon: '#7B1428',
-        'maroon-dark': '#4E0A15',
-        gold: '#BF9B45',
-        peach: '#FDE8DF',
-        'text-primary': '#1E0D07',
-        'text-secondary': '#7A6860',
-        divider: '#EDE5DC',
+        cream: 'var(--cream)',
+        'cream-deep': 'var(--cream-deep)',
+        maroon: 'var(--maroon)',
+        'maroon-dark': 'var(--maroon-dark)',
+        gold: 'var(--gold)',
+        peach: 'var(--peach)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        divider: 'var(--divider)',
       },
       fontFamily: {
         serif: ['var(--font-playfair)', 'Georgia', 'serif'],

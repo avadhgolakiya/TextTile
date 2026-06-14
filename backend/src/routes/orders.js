@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getCollection } from '../db.js';
 import { authMiddleware } from '../lib/auth.js';
 import { logActivity } from '../lib/activity.js';
+import { notifyLowStock } from '../lib/notifications.js';
 import { ObjectId } from 'mongodb';
 
 const router = Router();
@@ -126,6 +127,25 @@ router.post('/', authMiddleware, async (req, res) => {
       status: 'pending',
       createdAt: new Date(),
     });
+
+    // Decrement stock and check for low stock
+    for (const line of lines) {
+      const p = byId[line.productId];
+      if (p && p.stock !== undefined) {
+        const oldStock = p.stock || 0;
+        const newStock = Math.max(0, oldStock - line.quantity);
+        await productsColl.updateOne(
+          { _id: line.productId },
+          { $set: { stock: newStock } }
+        );
+        
+        if (oldStock > 10 && newStock > 0 && newStock <= 10) {
+          notifyLowStock({ ...p, stock: newStock }).catch((err) =>
+            console.error('[FCM] notifyLowStock failed:', err),
+          );
+        }
+      }
+    }
 
     return res.status(201).json({ ok: true });
   } catch (e) {

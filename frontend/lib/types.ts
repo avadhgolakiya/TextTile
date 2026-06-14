@@ -10,6 +10,7 @@ export type Product = {
   categoryKey?: string | null;
   isVisible: boolean;
   sareeSet?: string | null;
+  stock?: number;
 };
 
 export type CartLine = {
@@ -50,6 +51,7 @@ export type AppUser = {
   address?: string | null;
   isAdmin: boolean;
   isSuperAdmin?: boolean;
+  isBlocked?: boolean;
 };
 
 export type Admin = {

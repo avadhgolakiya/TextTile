@@ -46,6 +46,13 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           ) : null}
         </div>
+        {product.stock === 0 ? (
+          <p className="text-xs font-bold text-red-600">Out of Stock</p>
+        ) : (product.stock !== undefined && product.stock > 0 && product.stock <= 10) ? (
+          <p className="text-[10px] font-bold text-red-600 bg-red-50 inline-block px-2 py-0.5 rounded">
+            Only {product.stock} left!
+          </p>
+        ) : null}
       </div>
     </Link>
   );

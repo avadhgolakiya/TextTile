@@ -62,3 +62,38 @@ export async function notifyNewProduct(product) {
   console.log(`[FCM] Sent new-product notification for "${product.name}"`);
   return true;
 }
+
+/** Send push notification when product stock drops to low levels. */
+export async function notifyLowStock(product) {
+  const admin = getFirebaseAdmin();
+  if (!admin) {
+    console.warn('[FCM] Firebase Admin not configured — skipping low stock notification');
+    return false;
+  }
+
+  const frontendUrl = process.env.FRONTEND_URL || 'https://text-tile.vercel.app';
+  const productLink = `${frontendUrl.replace(/\/$/, '')}/products/${product.id || product._id || ''}`;
+
+  await admin.messaging().send({
+    topic: NEW_PRODUCTS_TOPIC,
+    notification: {
+      title: `🏃 Hurry! Only ${product.stock} left`,
+      body: `${product.name} is almost sold out. Grab yours before it's gone!`,
+    },
+    data: {
+      type: 'low_stock',
+      productId: String(product.id || product._id || ''),
+      productName: String(product.name || ''),
+      link: productLink,
+    },
+    webpush: {
+      fcmOptions: {
+        link: productLink,
+      },
+      notification: {},
+    },
+  });
+
+  console.log(`[FCM] Sent low-stock notification for "${product.name}"`);
+  return true;
+}

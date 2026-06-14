@@ -50,6 +50,7 @@ export default function AdminPage() {
     categoryKey: 'sarees',
     isVisible: true,
     sareeSet: '',
+    stock: 0,
   });
   const [isFeatured, setIsFeatured] = useState(false);
 
@@ -187,11 +188,12 @@ export default function AdminPage() {
       price: p.price,
       originalPrice: p.originalPrice,
       imageUrl: p.imageUrl,
-      imageUrls: p.imageUrls,
+      imageUrls: p.imageUrls || [],
       badge: p.badge,
       categoryKey: p.categoryKey || 'sarees',
       isVisible: p.isVisible,
       sareeSet: p.sareeSet || '',
+      stock: p.stock ?? 0,
     });
     // Check if featured (for demo/seeding)
     setIsFeatured(false);
@@ -211,6 +213,7 @@ export default function AdminPage() {
       categoryKey: 'sarees',
       isVisible: true,
       sareeSet: '',
+      stock: 0,
     });
     setIsFeatured(false);
     setIsFormOpen(true);
@@ -231,7 +234,17 @@ export default function AdminPage() {
     const token = getToken();
     try {
       const res = await productApi.uploadImage(token, file);
-      setFormProduct((prev) => ({ ...prev, imageUrl: res.imageUrl }));
+      setFormProduct((prev) => {
+        const newUrls = [...(prev.imageUrls || [])];
+        if (!newUrls.includes(res.imageUrl)) {
+          newUrls.push(res.imageUrl);
+        }
+        return {
+          ...prev,
+          imageUrls: newUrls,
+          imageUrl: prev.imageUrl || res.imageUrl, // Set primary image if none exists
+        };
+      });
       toast.success('Image uploaded successfully');
     } catch (err: any) {
       console.error(err);
@@ -253,6 +266,8 @@ export default function AdminPage() {
         originalPrice: formProduct.originalPrice ? Number(formProduct.originalPrice) : null,
         imageUrls: formProduct.imageUrl ? [formProduct.imageUrl] : [],
         sareeSet: formProduct.sareeSet?.trim() || null,
+        stock: Number(formProduct.stock) || 0,
+        imageUrls: formProduct.imageUrls || [],
       };
       await productApi.upsert(token, payload, isFeatured);
       setIsFormOpen(false);
@@ -951,7 +966,7 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-text-secondary uppercase">Wholesale Price (₹)</label>
                   <input
@@ -964,61 +979,66 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Original Price (Optional)</label>
+                  <label className="text-xs font-bold text-text-secondary uppercase">Original Price</label>
                   <input
                     type="number"
-                    placeholder="Original Price"
+                    placeholder="Optional"
                     className="input-field"
                     value={formProduct.originalPrice || ''}
                     onChange={(e) => setFormProduct({ ...formProduct, originalPrice: e.target.value ? Number(e.target.value) : null })}
                   />
                 </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-text-secondary uppercase">Stock Qty</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    className="input-field"
+                    value={formProduct.stock || ''}
+                    onChange={(e) => setFormProduct({ ...formProduct, stock: Number(e.target.value) })}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-text-secondary uppercase block">Product Image</label>
+                <label className="text-xs font-bold text-text-secondary uppercase block">Product Images</label>
                 
-                {/* Visual Live Image Preview */}
-                <div className="border-[1.4px] border-dashed border-divider rounded-2xl p-4 bg-cream/40 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden group">
-                  {formProduct.imageUrl ? (
-                    <div className="relative w-full h-[150px] flex flex-col items-center justify-center">
-                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-divider">
-                        <img
-                          src={getFullImageUrl(formProduct.imageUrl)}
-                          alt="Product preview"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                {/* Visual Live Image Previews */}
+                <div className="flex flex-wrap gap-4 mb-2">
+                  {(formProduct.imageUrls || []).map((url, idx) => (
+                    <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-divider group">
+                      <img src={getFullImageUrl(url)} alt="preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => {
-                          setFormProduct({ ...formProduct, imageUrl: '' });
-                          setUploadError(null);
+                          const newUrls = [...(formProduct.imageUrls || [])];
+                          newUrls.splice(idx, 1);
+                          setFormProduct({ ...formProduct, imageUrls: newUrls, imageUrl: newUrls.length > 0 ? newUrls[0] : '' });
                         }}
-                        className="mt-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-white shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition"
-                      >
-                        Remove Image
-                      </button>
+                        className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"
+                      >✕</button>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-text-secondary py-4">
-                      {uploadingImage ? (
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-divider border-t-maroon" />
-                          <p className="text-xs">Uploading file...</p>
-                        </div>
-                      ) : (
-                        <div className="text-center space-y-1">
-                          <span className="text-3xl block mb-1">🖼️</span>
-                          <p className="text-xs font-semibold">Drag & drop or click to upload</p>
-                          <p className="text-[10px] text-text-secondary">PNG, JPG, WEBP up to 5MB</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  ))}
+                </div>
+
+                <div className="border-[1.4px] border-dashed border-divider rounded-2xl p-4 bg-cream/40 flex flex-col items-center justify-center min-h-[120px] relative overflow-hidden group hover:border-maroon transition">
+                  <div className="flex flex-col items-center justify-center text-text-secondary py-4">
+                    {uploadingImage ? (
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-divider border-t-maroon" />
+                        <p className="text-xs">Uploading file...</p>
+                      </div>
+                    ) : (
+                      <div className="text-center space-y-1">
+                        <span className="text-3xl block mb-1">🖼️</span>
+                        <p className="text-xs font-semibold">Drag & drop or click to upload</p>
+                        <p className="text-[10px] text-text-secondary">PNG, JPG, WEBP up to 5MB</p>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Hidden File Input */}
-                  {!formProduct.imageUrl && !uploadingImage && (
+                  {!uploadingImage && (
                     <input
                       type="file"
                       accept="image/*"
@@ -1031,16 +1051,26 @@ export default function AdminPage() {
                 {/* Paste URL option */}
                 <div className="space-y-1">
                   <span className="text-[11px] font-semibold text-text-secondary block">Or paste web image URL:</span>
-                  <input
-                    type="text"
-                    placeholder="https://images.unsplash.com/..."
-                    className="input-field py-3 text-xs"
-                    value={formProduct.imageUrl || ''}
-                    onChange={(e) => {
-                      setFormProduct({ ...formProduct, imageUrl: e.target.value });
-                      setUploadError(null);
-                    }}
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="https://images.unsplash.com/..."
+                      className="input-field py-3 text-xs flex-1"
+                      id="manual-url-input"
+                    />
+                    <button
+                      type="button"
+                      className="btn-primary px-4 py-2 text-xs"
+                      onClick={() => {
+                        const input = document.getElementById('manual-url-input') as HTMLInputElement;
+                        if (input && input.value) {
+                          const newUrls = [...(formProduct.imageUrls || []), input.value];
+                          setFormProduct({ ...formProduct, imageUrls: newUrls, imageUrl: formProduct.imageUrl || input.value });
+                          input.value = '';
+                        }
+                      }}
+                    >Add</button>
+                  </div>
                 </div>
                 {uploadError && (
                   <p className="text-xs text-red-600 font-medium mt-1">❌ {uploadError}</p>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/lib/cart-store';
 import { useTranslation } from '@/lib/language-store';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 type Props = {
   title?: string;
@@ -45,6 +46,7 @@ export function DesktopTopBar({ title, subtitle }: Props) {
       </div>
 
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <Link
           href="/search"
           className="rounded-full border border-divider bg-white px-5 py-2.5 text-sm font-medium text-text-secondary transition hover:border-gold hover:text-maroon"
