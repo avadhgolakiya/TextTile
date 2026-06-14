@@ -8,7 +8,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
 import { useTranslation } from '@/lib/language-store';
 
-const filters = ['All', 'Sarees', 'Suits', 'Lehenga', 'Fabric', 'Dupatta'];
+const filters = ['All', 'Sarees', 'Suits', 'Lehenga'];
 
 export default function CollectionPage() {
   const { t } = useTranslation();
@@ -33,9 +33,28 @@ export default function CollectionPage() {
     if (selected === 'All') return true;
     return (
       p.name.toLowerCase().includes(selected.toLowerCase()) ||
-      p.subtitle.toLowerCase().includes(selected.toLowerCase())
+      p.subtitle.toLowerCase().includes(selected.toLowerCase()) ||
+      p.categoryKey?.toLowerCase() === selected.toLowerCase()
     );
   });
+
+  // Group products by set
+  const groupedProducts: { [setName: string]: Product[] } = {};
+  const ungroupedProducts: Product[] = [];
+
+  filteredProducts.forEach((p) => {
+    if (p.sareeSet && p.sareeSet.trim() !== '') {
+      const setKey = p.sareeSet.trim();
+      if (!groupedProducts[setKey]) {
+        groupedProducts[setKey] = [];
+      }
+      groupedProducts[setKey].push(p);
+    } else {
+      ungroupedProducts.push(p);
+    }
+  });
+
+  const hasGroups = Object.keys(groupedProducts).length > 0;
 
   return (
     <div className="min-h-screen bg-cream pb-12 lg:bg-transparent lg:pb-0">
@@ -95,10 +114,47 @@ export default function CollectionPage() {
               <p className="text-sm mt-1">{t('tryAnotherCategory')}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4 items-start">
-              {filteredProducts.map((p) => (
-                <ProductCard key={p.id} product={p} />
+            <div className="space-y-8">
+              {/* Grouped Sets */}
+              {Object.entries(groupedProducts).map(([setName, items]) => (
+                <div key={setName} className="space-y-4 bg-white/60 backdrop-blur border border-divider/60 rounded-3xl p-5 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-divider/40 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-maroon text-base">📦</span>
+                      <h4 className="font-serif text-base font-bold text-text-primary uppercase tracking-wide">
+                        {setName} Set
+                      </h4>
+                    </div>
+                    <span className="text-xs font-bold bg-maroon/10 text-maroon px-2.5 py-1 rounded-full">
+                      {items.length} {items.length === 1 ? 'Color' : 'Colors'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4 items-start">
+                    {items.map((p) => (
+                      <ProductCard key={p.id} product={p} />
+                    ))}
+                  </div>
+                </div>
               ))}
+
+              {/* Ungrouped/Single Designs */}
+              {ungroupedProducts.length > 0 && (
+                <div className="space-y-4">
+                  {hasGroups && (
+                    <div className="flex items-center gap-2 border-b border-divider/40 pb-2">
+                      <span className="text-maroon text-base">✨</span>
+                      <h4 className="font-serif text-base font-bold text-text-primary uppercase tracking-wide">
+                        Single Designs
+                      </h4>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4 items-start">
+                    {ungroupedProducts.map((p) => (
+                      <ProductCard key={p.id} product={p} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -25,6 +25,7 @@ export default function ProductDetailPage() {
   const { t } = useTranslation();
   const id = params.id as string;
   const [product, setProduct] = useState<Product | null>(null);
+  const [setProducts, setSetProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
@@ -42,6 +43,20 @@ export default function ProductDetailPage() {
       .then(({ product }) => {
         setProduct(product);
         setLoading(false);
+
+        // Fetch other products in the same saree set
+        if (product.sareeSet) {
+          productApi.fetchAll()
+            .then(({ products }) => {
+              const matched = products.filter(
+                (p) => p.sareeSet === product.sareeSet && p.id !== product.id
+              );
+              setSetProducts(matched);
+            })
+            .catch(console.error);
+        } else {
+          setSetProducts([]);
+        }
       })
       .catch((err) => {
         console.error(err);
@@ -266,6 +281,35 @@ export default function ProductDetailPage() {
               {t('estimatedFor')} {quantity} {t('pcLabel')}: {formatInr(product.price * quantity)}
             </p>
           </div>
+
+          {setProducts.length > 0 && (
+            <div className="space-y-2 bg-cream-deep/30 p-3 rounded-2xl border border-divider/50">
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-wider block">
+                Other Colors in this Design:
+              </span>
+              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
+                {setProducts.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      router.push(`/products/${p.id}`);
+                    }}
+                    className="group flex flex-col items-center gap-1 shrink-0"
+                    title={p.name}
+                  >
+                    <div className="relative w-12 h-14 rounded-lg overflow-hidden border border-divider group-hover:border-maroon transition duration-200 shadow-sm group-hover:scale-105">
+                      <Image
+                        src={getFullImageUrl(p.imageUrl)}
+                        alt={p.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <hr className="border-divider" />
 

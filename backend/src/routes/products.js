@@ -88,6 +88,7 @@ router.post('/', authMiddleware, async (req, res) => {
           categoryKey: p.categoryKey ?? null,
           isFeatured: req.body.isFeatured ?? false,
           isVisible: p.isVisible ?? true,
+          sareeSet: p.sareeSet ?? null,
           updatedAt: new Date(),
         },
         $setOnInsert: {

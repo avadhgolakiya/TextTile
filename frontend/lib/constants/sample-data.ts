@@ -19,11 +19,9 @@ export function orderSummary(lines: CartLine[]): OrderSummary {
 }
 
 export const CATEGORIES = [
-  { label: 'Banarasi', icon: '✨' },
-  { label: 'Kanjivaram', icon: '💎' },
-  { label: 'Chiffon', icon: '🌫️' },
-  { label: 'Georgette', icon: '▦' },
-  { label: 'Cotton', icon: '🌸' },
+  { label: 'Sarees', icon: '🥻' },
+  { label: 'Suits', icon: '👗' },
+  { label: 'Lehenga', icon: '✨' },
 ] as const;
 
 export const FALLBACK_BANNER =

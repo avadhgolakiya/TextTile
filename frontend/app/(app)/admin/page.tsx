@@ -47,8 +47,9 @@ export default function AdminPage() {
     imageUrl: '',
     imageUrls: [],
     badge: null,
-    categoryKey: 'banarasi',
+    categoryKey: 'sarees',
     isVisible: true,
+    sareeSet: '',
   });
   const [isFeatured, setIsFeatured] = useState(false);
 
@@ -188,8 +189,9 @@ export default function AdminPage() {
       imageUrl: p.imageUrl,
       imageUrls: p.imageUrls,
       badge: p.badge,
-      categoryKey: p.categoryKey || 'banarasi',
+      categoryKey: p.categoryKey || 'sarees',
       isVisible: p.isVisible,
+      sareeSet: p.sareeSet || '',
     });
     // Check if featured (for demo/seeding)
     setIsFeatured(false);
@@ -206,8 +208,9 @@ export default function AdminPage() {
       imageUrl: '',
       imageUrls: [],
       badge: null,
-      categoryKey: 'banarasi',
+      categoryKey: 'sarees',
       isVisible: true,
+      sareeSet: '',
     });
     setIsFeatured(false);
     setIsFormOpen(true);
@@ -249,6 +252,7 @@ export default function AdminPage() {
         price: Number(formProduct.price),
         originalPrice: formProduct.originalPrice ? Number(formProduct.originalPrice) : null,
         imageUrls: formProduct.imageUrl ? [formProduct.imageUrl] : [],
+        sareeSet: formProduct.sareeSet?.trim() || null,
       };
       await productApi.upsert(token, payload, isFeatured);
       setIsFormOpen(false);
@@ -477,6 +481,14 @@ export default function AdminPage() {
     { id: 'banners', label: 'Slider' },
     ...(isSuperAdmin ? [{ id: 'system-admins', label: 'System Admins' }] : []),
   ] as const;
+
+  const uniqueSets = Array.from(
+    new Set(
+      products
+        .map((p) => p.sareeSet)
+        .filter((set): set is string => typeof set === 'string' && set.trim() !== '')
+    )
+  ).sort();
 
   return (
     <div className="min-h-screen bg-cream pb-24 font-sans text-text-primary lg:bg-transparent lg:pb-0">
@@ -906,14 +918,12 @@ export default function AdminPage() {
                   <label className="text-xs font-bold text-text-secondary uppercase">Category</label>
                   <select
                     className="input-field py-3.5"
-                    value={formProduct.categoryKey || 'banarasi'}
+                    value={formProduct.categoryKey || 'sarees'}
                     onChange={(e) => setFormProduct({ ...formProduct, categoryKey: e.target.value })}
                   >
-                    <option value="banarasi">Banarasi</option>
-                    <option value="kanjivaram">Kanjivaram</option>
-                    <option value="chiffon">Chiffon</option>
-                    <option value="georgette">Georgette</option>
-                    <option value="cotton">Cotton</option>
+                    <option value="sarees">Sarees</option>
+                    <option value="suits">Suits</option>
+                    <option value="lehenga">Lehenga</option>
                   </select>
                 </div>
               </div>
@@ -1035,6 +1045,22 @@ export default function AdminPage() {
                 {uploadError && (
                   <p className="text-xs text-red-600 font-medium mt-1">❌ {uploadError}</p>
                 )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Saree Set (Design Group)</label>
+                <input
+                  list="saree-sets"
+                  placeholder="e.g. Design 101, Floral-Zari-Set"
+                  className="input-field"
+                  value={formProduct.sareeSet || ''}
+                  onChange={(e) => setFormProduct({ ...formProduct, sareeSet: e.target.value })}
+                />
+                <datalist id="saree-sets">
+                  {uniqueSets.map((set) => (
+                    <option key={set} value={set} />
+                  ))}
+                </datalist>
               </div>
 
               <div className="space-y-1">

@@ -64,5 +64,6 @@ export function mapProduct(doc) {
     badge: doc.badge || null,
     categoryKey: doc.categoryKey || null,
     isVisible: doc.isVisible ?? true,
+    sareeSet: doc.sareeSet ?? null,
   };
 }

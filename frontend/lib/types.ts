@@ -9,6 +9,7 @@ export type Product = {
   badge?: string | null;
   categoryKey?: string | null;
   isVisible: boolean;
+  sareeSet?: string | null;
 };
 
 export type CartLine = {
