@@ -81,8 +81,9 @@ export function openWhatsAppSingleOrder(options: {
   buyerPhone?: string | null;
   buyerAddress?: string | null;
   note?: string;
+  imageUrls?: string[];
 }): void {
-  const { product, quantity, buyerName, buyerPhone, buyerAddress, note } = options;
+  const { product, quantity, buyerName, buyerPhone, buyerAddress, note, imageUrls } = options;
   const parts: string[] = [];
   parts.push(`🧵 *New Order — ${ShopContact.businessName}*`, '');
   parts.push(`👤 *Buyer:* ${buyerName}`);
@@ -103,9 +104,21 @@ export function openWhatsAppSingleOrder(options: {
   if (note?.trim()) {
     parts.push(`Note: ${note.trim()}`);
   }
-  if (product.imageUrl) {
-    parts.push(`📷 Photo: ${getWhatsAppThumbnailUrl(product.imageUrl)}`);
+
+  // Include all product photos
+  const allImages = imageUrls && imageUrls.length > 0
+    ? imageUrls
+    : product.imageUrl
+      ? [product.imageUrl]
+      : [];
+
+  if (allImages.length > 0) {
+    parts.push('', `📷 *Photos (${allImages.length}):*`);
+    allImages.forEach((img: string, i: number) => {
+      parts.push(`  ${i + 1}. ${getWhatsAppThumbnailUrl(img)}`);
+    });
   }
+
   parts.push('━━━━━━━━━━━━━━━━━━━', `🛒 *Total: ${formatInr(product.price * quantity)}*`);
   parts.push('', 'Please confirm my order.');
   const text = parts.join('\n');

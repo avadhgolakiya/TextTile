@@ -94,6 +94,7 @@ export default function ProductDetailPage() {
       buyerPhone: buyerPhone || null,
       buyerAddress: buyerAddress || null,
       note,
+      imageUrls: images,
     });
   }
 
@@ -130,12 +131,43 @@ export default function ProductDetailPage() {
   async function handleShare() {
     if (!product) return;
     const url = window.location.href;
+
+    // Try to share actual image files via Web Share API (works on mobile Chrome/Safari)
+    const canShareFiles = typeof navigator.canShare === 'function';
+
+    if (navigator.share && canShareFiles && images.length > 0) {
+      try {
+        // Fetch all images as blobs
+        const filePromises = images.map(async (imgUrl, i) => {
+          const res = await fetch(imgUrl);
+          const blob = await res.blob();
+          const ext = blob.type.includes('png') ? 'png' : 'jpg';
+          return new File([blob], `${product.name.replace(/\s+/g, '_')}_${i + 1}.${ext}`, { type: blob.type });
+        });
+        const files = await Promise.all(filePromises);
+
+        const shareData: ShareData = {
+          title: product.name,
+          text: `✨ *${product.name}*\nCode: ${product.id}\nPrice: ₹${product.price}\n\nCheck it out at Swastik Fashion!`,
+          files,
+        };
+
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          return;
+        }
+      } catch (err) {
+        console.error('File share failed, falling back:', err);
+      }
+    }
+
+    // Fallback: share link (desktop or unsupported browsers)
     if (navigator.share) {
       try {
         await navigator.share({
           title: product.name,
           text: `Check out ${product.name} at Swastik Fashion!`,
-          url: url,
+          url,
         });
       } catch (err) {
         console.error('Share failed:', err);
