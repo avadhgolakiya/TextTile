@@ -9,6 +9,7 @@ import type { Product } from '@/lib/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/language-store';
+import { getFullImageUrl } from '@/lib/image';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -87,7 +88,7 @@ export default function SearchPage() {
                 <div className="relative w-20 h-28 rounded-lg overflow-hidden shrink-0 bg-cream-deep border border-divider">
                   {product.imageUrl ? (
                     <Image
-                      src={product.imageUrl}
+                      src={getFullImageUrl(product.imageUrl)}
                       alt={product.name}
                       fill
                       className="object-cover"

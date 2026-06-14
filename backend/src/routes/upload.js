@@ -10,7 +10,7 @@ const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
 
@@ -21,44 +21,18 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const admin = getFirebaseAdmin();
-    if (admin) {
-      const bucketNameEnv = process.env.FIREBASE_STORAGE_BUCKET;
-      let bucket;
-      if (bucketNameEnv) {
-        bucket = admin.storage().bucket(bucketNameEnv);
-      } else {
-        const b1 = 'texttile-253c7.firebasestorage.app';
-        const b2 = 'texttile-253c7.appspot.com';
-        try {
-          const [exists1] = await admin.storage().bucket(b1).exists();
-          bucket = exists1 ? admin.storage().bucket(b1) : admin.storage().bucket(b2);
-        } catch {
-          bucket = admin.storage().bucket(b2);
-        }
-      }
+    const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME && 
+                         process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloudinary_cloud_name_here';
 
+    if (hasCloudinary) {
       try {
-        const token = crypto.randomUUID();
-        const uniqueName = `uploads/${Date.now()}_${crypto.randomUUID()}_${file.originalname}`;
-        const blob = bucket.file(uniqueName);
-
-        await blob.save(file.buffer, {
-          metadata: {
-            contentType: file.mimetype,
-            metadata: {
-              firebaseStorageDownloadTokens: token,
-            },
-          },
-        });
-
-        const encodedPath = encodeURIComponent(uniqueName);
-        const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${token}`;
-
-        return res.json({ imageUrl: publicUrl });
+        const result = await uploadBuffer(file.buffer, file.originalname);
+        return res.json({ imageUrl: result.secure_url });
       } catch (err) {
-        console.warn('[Upload] Firebase storage upload failed or not enabled, falling back to local server storage:', err.message);
+        console.warn('[Upload] Cloudinary upload failed, falling back to local server storage:', err.message);
       }
+    } else {
+      console.warn('[Upload] Cloudinary is not configured (missing CLOUDINARY_CLOUD_NAME), falling back to local server storage.');
     }
 
     // LOCAL SERVER FALLBACK
@@ -73,10 +47,8 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
     const filePath = path.join(uploadDir, filename);
     fs.writeFileSync(filePath, file.buffer);
 
-    // Construct absolute URL based on the request host (e.g., http://localhost:3333/uploads/filename)
-    const protocol = req.protocol;
-    const host = req.get('host');
-    const imageUrl = `${protocol}://${host}/uploads/${filename}`;
+    // Return root-relative URL for cleaner local path resolution
+    const imageUrl = `/uploads/${filename}`;
 
     return res.json({ imageUrl });
   } catch (e) {

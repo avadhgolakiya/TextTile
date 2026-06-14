@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
+import { getFullImageUrl } from '@/lib/image';
 
 /** Port of lib/widgets/product_card.dart */
 export function ProductCard({ product }: { product: Product }) {
@@ -13,7 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-[3/4] bg-cream-deep">
         {product.imageUrl ? (
           <Image
-            src={product.imageUrl}
+            src={getFullImageUrl(product.imageUrl)}
             alt={product.name}
             fill
             className="object-cover"

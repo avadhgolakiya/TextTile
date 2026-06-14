@@ -11,6 +11,7 @@ import { authApi, orderApi } from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/lib/language-store';
+import { getFullImageUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -95,14 +96,14 @@ export default function CartPage() {
 
       <h1 className="font-serif text-2xl font-semibold lg:hidden">{t('navCart')}</h1>
 
-      <div className="lg:desktop-two-col">
+      <div className="desktop-two-col">
         <ul className="space-y-4 lg:space-y-5">
           {lines.map((line) => (
             <li key={line.product.id} className="card flex gap-3 p-3 lg:gap-5 lg:p-5">
               <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-cream-deep lg:h-32 lg:w-28">
                 {line.product.imageUrl ? (
                   <Image
-                    src={line.product.imageUrl}
+                    src={getFullImageUrl(line.product.imageUrl)}
                     alt={line.product.name}
                     fill
                     className="object-cover"

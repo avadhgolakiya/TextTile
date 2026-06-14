@@ -57,7 +57,7 @@ export default function CollectionPage() {
         </p>
       </div>
 
-      <div className="lg:desktop-split">
+      <div className="desktop-split">
         {/* Filter chips — horizontal on mobile, vertical sidebar on desktop */}
         <aside className="px-6 py-4 lg:sticky lg:top-8 lg:px-0 lg:py-0">
           <h3 className="mb-3 hidden font-serif text-lg font-bold text-text-primary lg:block">

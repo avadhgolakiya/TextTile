@@ -12,6 +12,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
 import Image from 'next/image';
 import { useTranslation } from '@/lib/language-store';
+import { getFullImageUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -83,11 +84,12 @@ export default function ProductDetailPage() {
     );
   }
 
-  const images = product.imageUrls && product.imageUrls.length > 0
+  const images = (product.imageUrls && product.imageUrls.length > 0
     ? product.imageUrls
     : product.imageUrl
       ? [product.imageUrl]
-      : [];
+      : []).map((img) => getFullImageUrl(img));
+
 
   const discountPercent = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)

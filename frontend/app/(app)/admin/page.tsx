@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product, OrderItem } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import Image from 'next/image';
+import { getFullImageUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -302,7 +303,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="lg:desktop-split lg:max-w-none">
+      <div className="desktop-split lg:max-w-none">
         {/* Desktop tab sidebar */}
         <aside className="hidden lg:block lg:sticky lg:top-8">
           <div className="card border border-divider p-3">
@@ -354,7 +355,7 @@ export default function AdminPage() {
                       <div className="flex items-center gap-4 min-w-0 flex-1">
                         <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-cream-deep shrink-0 border border-divider">
                           {p.imageUrl ? (
-                            <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+                            <Image src={getFullImageUrl(p.imageUrl)} alt={p.name} fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-text-secondary">
                               🖼️
@@ -497,7 +498,7 @@ export default function AdminPage() {
                     >
                       <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className="relative w-28 h-16 rounded-lg overflow-hidden bg-cream-deep shrink-0 border border-divider">
-                          <Image src={b.image_url} alt="Banner" fill className="object-cover" />
+                          <Image src={getFullImageUrl(b.image_url)} alt="Banner" fill className="object-cover" />
                         </div>
                         <p className="text-xs text-text-secondary truncate flex-1 leading-relaxed">
                           {b.image_url}
@@ -619,7 +620,7 @@ export default function AdminPage() {
                     <div className="relative w-full h-[150px] flex flex-col items-center justify-center">
                       <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-divider">
                         <img
-                          src={formProduct.imageUrl}
+                          src={getFullImageUrl(formProduct.imageUrl)}
                           alt="Product preview"
                           className="w-full h-full object-cover"
                         />
