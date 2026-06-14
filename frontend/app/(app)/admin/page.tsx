@@ -34,7 +34,6 @@ export default function AdminPage() {
   const [isIpModalOpen, setIsIpModalOpen] = useState(false);
   const [selectedBuyerForIp, setSelectedBuyerForIp] = useState<{ id: string; name: string } | null>(null);
   const [buyerIps, setBuyerIps] = useState<{ id: string; ipAddress: string; detectedAt: string; source: string }[]>([]);
-  const [newIpAddress, setNewIpAddress] = useState('');
 
   // States for product form modal
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -362,22 +361,6 @@ export default function AdminPage() {
     } catch (err) {
       console.error(err);
       toast.error('Failed to load IPs');
-    }
-  }
-
-  async function handleAddIp(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedBuyerForIp || !newIpAddress.trim()) return;
-    try {
-      const token = getToken();
-      await authApi.addBuyerIp(token, selectedBuyerForIp.id, newIpAddress.trim());
-      setNewIpAddress('');
-      toast.success('IP added to blocklist');
-      const res = await authApi.fetchBuyerIps(token, selectedBuyerForIp.id);
-      setBuyerIps(res.ips || []);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to add IP');
     }
   }
 
@@ -1373,10 +1356,10 @@ export default function AdminPage() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="font-serif text-xl font-bold text-text-primary">
-                  Manage IPs for {selectedBuyerForIp.name}
+                  Auto-Detected IPs for {selectedBuyerForIp.name}
                 </h3>
                 <p className="text-xs text-text-secondary mt-1">
-                  Tracked IPs and manual blocklist.
+                  View IPs automatically captured for this user.
                 </p>
               </div>
               <button
@@ -1386,20 +1369,6 @@ export default function AdminPage() {
                 ✕
               </button>
             </div>
-
-            <form onSubmit={handleAddIp} className="flex gap-3 mb-6">
-              <input
-                type="text"
-                placeholder="Enter IP address manually..."
-                value={newIpAddress}
-                onChange={(e) => setNewIpAddress(e.target.value)}
-                className="flex-1 input-field"
-                required
-              />
-              <button type="submit" className="btn-primary whitespace-nowrap">
-                Add IP
-              </button>
-            </form>
 
             <div className="flex-1 overflow-y-auto min-h-[200px] border border-divider rounded-xl bg-cream-deep/50 p-4">
               {buyerIps.length === 0 ? (

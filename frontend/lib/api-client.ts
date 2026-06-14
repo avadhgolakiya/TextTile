@@ -180,12 +180,6 @@ export const authApi = {
     apiFetch<{ ips: { id: string; ipAddress: string; detectedAt: string; source: string }[] }>(`/api/auth/buyers/${buyerId}/ips`, {
       token,
     }),
-  addBuyerIp: (token: string, buyerId: string, ipAddress: string) =>
-    apiFetch<{ ok: boolean }>(`/api/auth/buyers/${buyerId}/ips`, {
-      method: 'POST',
-      token,
-      body: JSON.stringify({ ipAddress }),
-    }),
   createAdmin: (token: string, payload: { name: string; email: string; password: string }) =>
     apiFetch<{ ok: true; admin: any }>('/api/auth/admins', {
       method: 'POST',

@@ -150,6 +150,30 @@ router.patch('/buyers/:id/block', authMiddleware, async (req, res) => {
     const updateObj = { isBlocked, updatedAt: new Date() };
     if (isBlocked) {
       updateObj.blockedAt = new Date();
+
+      // Auto-capture all known IPs for this user from user_ip_log
+      const userIpLogColl = getCollection('user_ip_log');
+      const blockedIpsColl = getCollection('blocked_user_ips');
+      
+      const knownIps = await userIpLogColl.find({ userId: req.params.id }).toArray();
+      if (knownIps.length > 0) {
+        const ops = knownIps.map((log) => ({
+          updateOne: {
+            filter: { ipAddress: log.ipAddress, userId: req.params.id },
+            update: {
+              $set: {
+                userId: req.params.id,
+                ipAddress: log.ipAddress,
+                auto_detected: true,
+                detectedAt: new Date(),
+                source: log.source
+              }
+            },
+            upsert: true
+          }
+        }));
+        await blockedIpsColl.bulkWrite(ops);
+      }
     }
 
     await usersColl.updateOne(
@@ -270,29 +294,6 @@ router.get('/buyers/:id/ips', authMiddleware, async (req, res) => {
     const ips = await blockedIpsColl.find({ userId: req.params.id }).toArray();
     
     return res.json({ ips: ips.map(i => ({ id: i._id.toString(), ipAddress: i.ipAddress, detectedAt: i.detectedAt, source: i.source })) });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: 'Server error' });
-  }
-});
-
-router.post('/buyers/:id/ips', authMiddleware, async (req, res) => {
-  try {
-    const usersColl = getCollection('users');
-    const adminDoc = await usersColl.findOne({ _id: new ObjectId(req.userId) });
-    if (!adminDoc || !adminDoc.isAdmin) return res.status(403).json({ error: 'Forbidden' });
-
-    const { ipAddress } = req.body;
-    if (!ipAddress) return res.status(400).json({ error: 'IP address required' });
-
-    const blockedIpsColl = getCollection('blocked_user_ips');
-    await blockedIpsColl.updateOne(
-      { userId: req.params.id, ipAddress },
-      { $set: { userId: req.params.id, ipAddress, detectedAt: new Date(), source: 'manual' } },
-      { upsert: true }
-    );
-
-    return res.json({ ok: true });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error' });
