@@ -76,7 +76,7 @@ export function AppBottomNav({ isAdmin = false, isLoggedIn = false }: Props) {
     : tabs;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.06)] pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-surface rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.06)] pb-safe">
       <ul className="flex items-center justify-around px-2 pt-3 pb-3">
         {items.map((tab) => {
           const active =

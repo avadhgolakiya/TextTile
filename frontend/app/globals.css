@@ -12,6 +12,7 @@
   --text-primary: 30 13 7;
   --text-secondary: 122 104 96;
   --divider: 237 229 220;
+  --surface: 255 255 255;
 }
 
 .dark {
@@ -24,6 +25,7 @@
   --text-primary: 245 245 245;
   --text-secondary: 163 163 163;
   --divider: 51 51 51;
+  --surface: 26 26 26;
 }
 
 body {
@@ -40,11 +42,11 @@ body {
   }
 
   .input-field {
-    @apply w-full rounded-input border border-divider bg-white px-5 py-4 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold;
+    @apply w-full rounded-input border border-divider bg-surface px-5 py-4 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold;
   }
 
   .card {
-    @apply rounded-card bg-white shadow-sm;
+    @apply rounded-card bg-surface shadow-sm;
   }
 }
 

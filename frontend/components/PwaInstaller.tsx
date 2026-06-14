@@ -125,7 +125,7 @@ export function PwaInstaller() {
             )}
             <button
               onClick={handleDismiss}
-              className="rounded-full border border-divider bg-white px-4 py-1.5 text-xs font-medium text-text-secondary transition hover:bg-cream hover:text-text-primary active:scale-95"
+              className="rounded-full border border-divider bg-surface px-4 py-1.5 text-xs font-medium text-text-secondary transition hover:bg-cream hover:text-text-primary active:scale-95"
             >
               Maybe Later
             </button>

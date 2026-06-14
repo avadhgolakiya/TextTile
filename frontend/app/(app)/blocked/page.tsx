@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 export default function BlockedPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-cream px-6 text-center">
-      <div className="w-full max-w-md rounded-3xl border border-divider bg-white p-10 shadow-sm">
+      <div className="w-full max-w-md rounded-3xl border border-divider bg-surface p-10 shadow-sm">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl text-red-500">
           🔒
         </div>

@@ -122,7 +122,7 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
       {isAdmin && (
         <Link
           href="/admin?tab=banners"
-          className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-full bg-white/80 hover:bg-white px-4 py-2 text-xs font-bold text-maroon shadow-md backdrop-blur-sm transition active:scale-95 duration-200"
+          className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-full bg-white/80 hover:bg-surface px-4 py-2 text-xs font-bold text-maroon shadow-md backdrop-blur-sm transition active:scale-95 duration-200"
         >
           <span>⚙️</span> Manage Banners
         </Link>
@@ -158,7 +158,7 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
                 key={index}
                 onClick={() => { setCurrentIndex(index); startAutoplay(); }}
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  active ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60 w-2'
+                  active ? 'bg-surface w-6' : 'bg-white/40 hover:bg-white/60 w-2'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />

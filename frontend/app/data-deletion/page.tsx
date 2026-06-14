@@ -95,7 +95,7 @@ export default function DataDeletionPage() {
 
             <button
               onClick={() => setStep('confirm')}
-              className="w-full rounded-full border-2 border-red-300 bg-white py-4 text-sm font-bold text-red-700 transition hover:bg-red-50 hover:border-red-400 cursor-pointer"
+              className="w-full rounded-full border-2 border-red-300 bg-surface py-4 text-sm font-bold text-red-700 transition hover:bg-red-50 hover:border-red-400 cursor-pointer"
             >
               Continue to Deletion Request →
             </button>
@@ -151,7 +151,7 @@ export default function DataDeletionPage() {
               <button
                 type="button"
                 onClick={() => setStep('info')}
-                className="flex-1 rounded-full border border-divider bg-white py-3 text-sm font-semibold text-text-secondary transition hover:bg-cream-deep cursor-pointer"
+                className="flex-1 rounded-full border border-divider bg-surface py-3 text-sm font-semibold text-text-secondary transition hover:bg-cream-deep cursor-pointer"
               >
                 ← Back
               </button>

@@ -226,7 +226,7 @@ export default function CartPage() {
       {/* Address Edit Modal */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+          <div className="w-full max-w-sm bg-surface rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
             <div className="flex justify-between items-center">
               <h3 className="font-serif text-xl font-bold text-text-primary">
                 Add Shipping Address
