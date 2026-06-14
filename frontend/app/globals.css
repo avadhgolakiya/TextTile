@@ -3,27 +3,29 @@
 @tailwind utilities;
 
 :root {
-  --cream: #FFF8F2;
-  --cream-deep: #F5EDE0;
-  --maroon: #7B1428;
-  --maroon-dark: #4E0A15;
-  --gold: #BF9B45;
-  --peach: #FDE8DF;
-  --text-primary: #1E0D07;
-  --text-secondary: #7A6860;
-  --divider: #EDE5DC;
+  --cream: 255 248 242;
+  --cream-deep: 245 237 224;
+  --maroon: 123 20 40;
+  --maroon-dark: 78 10 21;
+  --gold: 191 155 69;
+  --peach: 253 232 223;
+  --text-primary: 30 13 7;
+  --text-secondary: 122 104 96;
+  --divider: 237 229 220;
+  --surface: 255 255 255;
 }
 
 .dark {
-  --cream: #121212;
-  --cream-deep: #1A1A1A;
-  --maroon: #A12B42;
-  --maroon-dark: #7B1428;
-  --gold: #D4AF37;
-  --peach: #2A1519;
-  --text-primary: #F5F5F5;
-  --text-secondary: #A3A3A3;
-  --divider: #333333;
+  --cream: 18 18 18;
+  --cream-deep: 26 26 26;
+  --maroon: 161 43 66;
+  --maroon-dark: 123 20 40;
+  --gold: 212 175 55;
+  --peach: 42 21 25;
+  --text-primary: 245 245 245;
+  --text-secondary: 163 163 163;
+  --divider: 51 51 51;
+  --surface: 26 26 26;
 }
 
 body {
@@ -40,11 +42,11 @@ body {
   }
 
   .input-field {
-    @apply w-full rounded-input border border-divider bg-white px-5 py-4 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold;
+    @apply w-full rounded-input border border-divider bg-surface px-5 py-4 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold;
   }
 
   .card {
-    @apply rounded-card bg-white shadow-sm;
+    @apply rounded-card bg-surface shadow-sm;
   }
 }
 

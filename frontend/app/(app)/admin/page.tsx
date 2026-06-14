@@ -668,7 +668,7 @@ export default function AdminPage() {
                       onClick={() => setOrderFilter(f.id as any)}
                       className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${
                         orderFilter === f.id
-                          ? 'bg-white text-maroon shadow-sm border border-divider'
+                          ? 'bg-surface text-maroon shadow-sm border border-divider'
                           : 'text-text-secondary hover:text-text-primary'
                       }`}
                     >
@@ -783,7 +783,7 @@ export default function AdminPage() {
                         </span>
                         <button
                           onClick={() => openIpModal(b)}
-                          className="text-xs font-bold px-3 py-1.5 rounded-lg transition border bg-white text-text-secondary border-divider hover:bg-cream-deep"
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg transition border bg-surface text-text-secondary border-divider hover:bg-cream-deep"
                         >
                           Data & IPs
                         </button>
@@ -791,8 +791,8 @@ export default function AdminPage() {
                           onClick={() => toggleBlockBuyer(b.id, b.isBlocked)}
                           className={`text-xs font-bold px-3 py-1.5 rounded-lg transition border ${
                             b.isBlocked 
-                              ? 'bg-white text-red-700 border-red-200 hover:bg-red-50' 
-                              : 'bg-white text-text-secondary border-divider hover:text-red-600 hover:border-red-200'
+                              ? 'bg-surface text-red-700 border-red-200 hover:bg-red-50' 
+                              : 'bg-surface text-text-secondary border-divider hover:text-red-600 hover:border-red-200'
                           }`}
                         >
                           {b.isBlocked ? 'Unblock' : 'Block'}
@@ -905,7 +905,7 @@ export default function AdminPage() {
       {/* --- ADD/EDIT PRODUCT MODAL FORM --- */}
       {isFormOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 overflow-y-auto">
-          <div className="bg-white rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
+          <div className="bg-surface rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
             <header className="px-6 py-4 border-b border-divider flex justify-between items-center shrink-0">
               <h3 className="font-serif text-xl font-bold">
                 {formProduct.name ? 'Edit Product' : 'Add New Product'}
@@ -1137,7 +1137,7 @@ export default function AdminPage() {
       {/* --- ADD MANUAL ORDER MODAL FORM --- */}
       {isManualOrderOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 overflow-y-auto">
-          <div className="bg-white rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
+          <div className="bg-surface rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
             <header className="px-6 py-4 border-b border-divider flex justify-between items-center shrink-0">
               <h3 className="font-serif text-xl font-bold">Add Manual Order</h3>
               <button onClick={() => setIsManualOrderOpen(false)} className="text-text-secondary text-lg hover:text-maroon p-1">
@@ -1212,7 +1212,7 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => setManualOrderForm({ ...manualOrderForm, imageUrl: '' })}
-                        className="mt-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-white shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition"
+                        className="mt-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-surface shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition"
                       >
                         Remove Image
                       </button>
@@ -1255,7 +1255,7 @@ export default function AdminPage() {
       {/* --- ADD BANNER MODAL FORM --- */}
       {isBannerModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
-          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6 space-y-4">
+          <div className="bg-surface rounded-card shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-serif text-lg font-bold">Add Slider Image</h3>
               <button onClick={() => setIsBannerModalOpen(false)} className="text-text-secondary hover:text-maroon text-lg p-1">
@@ -1280,7 +1280,7 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => setNewBannerUrl('')}
-                        className="absolute bottom-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-white shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition z-10"
+                        className="absolute bottom-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-surface shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition z-10"
                       >
                         Remove Image
                       </button>
@@ -1334,7 +1334,7 @@ export default function AdminPage() {
       {/* --- CREATE ADMIN MODAL FORM --- */}
       {isCreateAdminOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
-          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6 space-y-4">
+          <div className="bg-surface rounded-card shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-serif text-lg font-bold">Create New Admin</h3>
               <button onClick={() => setIsCreateAdminOpen(false)} className="text-text-secondary text-lg hover:text-maroon p-1">
@@ -1386,7 +1386,7 @@ export default function AdminPage() {
       {/* --- ADMIN ACTIVITY MODAL --- */}
       {selectedAdminActivity && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 overflow-y-auto">
-          <div className="bg-white rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
+          <div className="bg-surface rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
             <header className="px-6 py-4 border-b border-divider flex justify-between items-center shrink-0 bg-cream">
               <div>
                 <h3 className="font-serif text-xl font-bold">Activity Log</h3>
@@ -1437,7 +1437,7 @@ export default function AdminPage() {
       {/* IP Management Modal */}
       {isIpModalOpen && selectedBuyerForIp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="w-full max-w-lg bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 flex flex-col max-h-[80vh] animate-scaleIn">
+          <div className="w-full max-w-lg bg-surface rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 flex flex-col max-h-[80vh] animate-scaleIn">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="font-serif text-xl font-bold text-text-primary">
@@ -1483,7 +1483,7 @@ export default function AdminPage() {
               ) : (
                 <ul className="space-y-3">
                   {buyerIps.map((ip) => (
-                    <li key={ip.id} className="bg-white border border-divider rounded-lg p-3 flex justify-between items-center shadow-sm">
+                    <li key={ip.id} className="bg-surface border border-divider rounded-lg p-3 flex justify-between items-center shadow-sm">
                       <div>
                         <p className="font-mono text-sm font-bold text-text-primary">{ip.ipAddress}</p>
                         <p className="text-xs text-text-secondary mt-0.5">

@@ -197,7 +197,7 @@ export default function ProductDetailPage() {
       <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-8 lg:max-w-none lg:px-0 lg:py-0 lg:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Left Column: Image Gallery */}
         <div className="space-y-4">
-          <div className="relative bg-white rounded-card overflow-hidden shadow-sm border border-divider">
+          <div className="relative bg-surface rounded-card overflow-hidden shadow-sm border border-divider">
             {images.length > 0 ? (
               <div className="relative w-full aspect-[9/16]">
                 <img
@@ -349,7 +349,7 @@ export default function ProductDetailPage() {
           <div className="space-y-2">
             <span className="text-sm font-bold text-text-primary">{t('noteToShop')}</span>
             <textarea
-              className="w-full rounded-input border border-divider bg-white px-4 py-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold resize-none"
+              className="w-full rounded-input border border-divider bg-surface px-4 py-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold resize-none"
               rows={3}
               placeholder="e.g. Need before Diwali, specific shade…"
               value={note}
@@ -386,7 +386,7 @@ export default function ProductDetailPage() {
       {/* Address Edit Modal */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+          <div className="w-full max-w-sm bg-surface rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
             <div className="flex justify-between items-center">
               <h3 className="font-serif text-xl font-bold text-text-primary">
                 Add Shipping Address

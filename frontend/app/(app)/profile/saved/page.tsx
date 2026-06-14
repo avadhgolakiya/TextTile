@@ -8,7 +8,8 @@ import Link from 'next/link';
 
 export default function SavedProductsPage() {
   const router = useRouter();
-  const savedItems = useSavedStore((s) => s.items());
+  const savedDict = useSavedStore((s) => s.saved);
+  const savedItems = Object.values(savedDict);
 
   return (
     <div className="min-h-screen bg-cream pb-12 lg:bg-transparent lg:pb-0">

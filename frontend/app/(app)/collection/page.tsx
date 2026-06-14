@@ -92,7 +92,7 @@ export default function CollectionPage() {
                   className={`shrink-0 rounded-full px-5 py-2 text-sm font-semibold border transition duration-200 lg:w-full lg:rounded-2xl lg:px-4 lg:py-3 lg:text-left ${
                     active
                       ? 'bg-gradient-to-r from-maroon-dark to-maroon text-white border-transparent shadow-sm'
-                      : 'bg-white text-text-secondary border-divider hover:bg-cream-deep lg:hover:border-gold'
+                      : 'bg-surface text-text-secondary border-divider hover:bg-cream-deep lg:hover:border-gold'
                   }`}
                 >
                   {f}

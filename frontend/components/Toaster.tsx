@@ -3,9 +3,9 @@
 import { useToastStore } from '@/lib/toast-store';
 
 const typeStyles = {
-  success: 'border-green-200 bg-white text-text-primary',
-  error: 'border-red-200 bg-white text-text-primary',
-  info: 'border-divider bg-white text-text-primary',
+  success: 'border-green-200 bg-surface text-text-primary',
+  error: 'border-red-200 bg-surface text-text-primary',
+  info: 'border-divider bg-surface text-text-primary',
 } as const;
 
 const typeIcons = {
@@ -62,7 +62,7 @@ export function Toaster() {
       {confirm ? (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <div
-            className="w-full max-w-md rounded-card border border-divider bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-card border border-divider bg-surface p-6 shadow-xl"
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirm-title"

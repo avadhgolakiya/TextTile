@@ -6,15 +6,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: 'var(--cream)',
-        'cream-deep': 'var(--cream-deep)',
-        maroon: 'var(--maroon)',
-        'maroon-dark': 'var(--maroon-dark)',
-        gold: 'var(--gold)',
-        peach: 'var(--peach)',
-        'text-primary': 'var(--text-primary)',
-        'text-secondary': 'var(--text-secondary)',
-        divider: 'var(--divider)',
+        cream: 'rgb(var(--cream) / <alpha-value>)',
+        'cream-deep': 'rgb(var(--cream-deep) / <alpha-value>)',
+        maroon: 'rgb(var(--maroon) / <alpha-value>)',
+        'maroon-dark': 'rgb(var(--maroon-dark) / <alpha-value>)',
+        gold: 'rgb(var(--gold) / <alpha-value>)',
+        peach: 'rgb(var(--peach) / <alpha-value>)',
+        'text-primary': 'rgb(var(--text-primary) / <alpha-value>)',
+        'text-secondary': 'rgb(var(--text-secondary) / <alpha-value>)',
+        divider: 'rgb(var(--divider) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
       },
       fontFamily: {
         serif: ['var(--font-playfair)', 'Georgia', 'serif'],

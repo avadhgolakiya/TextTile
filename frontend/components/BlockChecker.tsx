@@ -38,7 +38,7 @@ export function BlockChecker() {
   if (!isBlocked) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center p-6 text-center">
+    <div className="fixed inset-0 z-[9999] bg-surface flex flex-col items-center justify-center p-6 text-center">
       <div className="bg-red-50 text-red-600 p-8 rounded-2xl max-w-md shadow-2xl border border-red-200">
         <svg className="w-20 h-20 mx-auto mb-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H9m3-10a9 9 0 110 18 9 9 0 010-18z" />

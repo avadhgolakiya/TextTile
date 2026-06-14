@@ -67,7 +67,7 @@ export default function HomePage() {
               <Link
                 key={cat.label}
                 href={`/products?category=${encodeURIComponent(cat.label.toLowerCase())}`}
-                className="shrink-0 rounded-full border border-divider bg-cream-deep px-4 py-2 text-sm transition hover:border-gold hover:bg-white lg:rounded-2xl lg:px-5 lg:py-3 lg:text-base"
+                className="shrink-0 rounded-full border border-divider bg-cream-deep px-4 py-2 text-sm transition hover:border-gold hover:bg-surface lg:rounded-2xl lg:px-5 lg:py-3 lg:text-base"
               >
                 {cat.icon} {cat.label}
               </Link>

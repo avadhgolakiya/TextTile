@@ -101,7 +101,7 @@ export default function ProfilePage() {
     language === 'gu' ? 'ગુજરાતી' : 'English';
 
   const menuItems = [
-    { title: t('savedProducts'), subtitle: t('savedProductsSubtitle'), icon: '🔖', action: () => router.push('/collection') },
+    { title: t('savedProducts'), subtitle: t('savedProductsSubtitle'), icon: '🔖', action: () => router.push('/profile/saved') },
     { 
       title: t('shippingAddress'), 
       subtitle: user.address ? (user.address.length > 30 ? user.address.substring(0, 30) + '...' : user.address) : t('shippingAddressSubtitle'), 
@@ -215,7 +215,7 @@ export default function ProfilePage() {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full h-14 bg-white hover:bg-red-50 text-maroon hover:text-red-800 border border-divider hover:border-red-200 rounded-2xl font-semibold shadow-sm hover:shadow transition duration-200 mt-6 flex items-center justify-center gap-2 lg:mt-0 lg:cursor-pointer"
+            className="w-full h-14 bg-surface hover:bg-red-50 text-maroon hover:text-red-800 border border-divider hover:border-red-200 rounded-2xl font-semibold shadow-sm hover:shadow transition duration-200 mt-6 flex items-center justify-center gap-2 lg:mt-0 lg:cursor-pointer"
           >
             <span>🚪</span> {t('logout')}
           </button>
@@ -229,7 +229,7 @@ export default function ProfilePage() {
       {/* Language Selection Modal */}
       {langModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+          <div className="w-full max-w-sm bg-surface rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
             <div className="flex justify-between items-center">
               <h3 className="font-serif text-xl font-bold text-text-primary">
                 {t('chooseLanguage')}
@@ -259,7 +259,7 @@ export default function ProfilePage() {
                     className={`w-full flex items-center justify-between p-4 rounded-2xl border transition duration-200 ${
                       active
                         ? 'border-maroon bg-peach/50 text-maroon font-bold'
-                        : 'border-divider bg-white hover:bg-cream-deep text-text-primary'
+                        : 'border-divider bg-surface hover:bg-cream-deep text-text-primary'
                     }`}
                   >
                     <div className="text-left">
@@ -278,7 +278,7 @@ export default function ProfilePage() {
       {/* Address Edit Modal */}
       {isAddressModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+          <div className="w-full max-w-sm bg-surface rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
             <div className="flex justify-between items-center">
               <h3 className="font-serif text-xl font-bold text-text-primary">
                 Shipping Address

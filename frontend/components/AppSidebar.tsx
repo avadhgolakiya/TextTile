@@ -20,7 +20,6 @@ export function AppSidebar({ isAdmin = false, isLoggedIn = false }: Props) {
   ];
 
   if (isLoggedIn) {
-    navItems.push({ href: '/orders', label: t('navOrders'), icon: '📦' });
     navItems.push({ href: '/profile', label: t('navProfile'), icon: '👤' });
   } else {
     navItems.push({ href: '/login', label: t('signIn'), icon: '🔑' });
@@ -32,7 +31,7 @@ export function AppSidebar({ isAdmin = false, isLoggedIn = false }: Props) {
     : navItems;
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-divider bg-white lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-divider bg-surface lg:flex">
       <div className="border-b border-divider px-6 py-7">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
           {t('wholesaleBuyer')}
@@ -78,7 +77,7 @@ export function AppSidebar({ isAdmin = false, isLoggedIn = false }: Props) {
             {t('viewCart')}
           </span>
           {totalQuantity > 0 ? (
-            <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs">
+            <span className="rounded-full bg-surface/20 px-2.5 py-0.5 text-xs">
               {totalQuantity}
             </span>
           ) : null}

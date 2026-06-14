@@ -46,7 +46,7 @@ export default function SearchPage() {
       <DesktopTopBar title={t('navSearch')} subtitle={t('searchPlaceholder')} />
 
       {/* Search Bar Header — mobile sticky */}
-      <header className="flex items-center gap-4 px-6 py-4 bg-white/90 backdrop-blur sticky top-0 z-10 border-b border-divider lg:static lg:mb-6 lg:rounded-card lg:border lg:bg-white lg:px-6 lg:py-5 lg:shadow-sm">
+      <header className="flex items-center gap-4 px-6 py-4 bg-white/90 backdrop-blur sticky top-0 z-10 border-b border-divider lg:static lg:mb-6 lg:rounded-card lg:border lg:bg-surface lg:px-6 lg:py-5 lg:shadow-sm">
         <button
           onClick={() => router.back()}
           className="text-text-primary hover:text-maroon transition p-1 font-semibold lg:hidden"
