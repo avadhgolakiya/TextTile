@@ -101,7 +101,7 @@ export default function ProfilePage() {
     language === 'gu' ? 'ગુજરાતી' : 'English';
 
   const menuItems = [
-    { title: t('savedProducts'), subtitle: t('savedProductsSubtitle'), icon: '🔖', action: () => router.push('/collection') },
+    { title: t('savedProducts'), subtitle: t('savedProductsSubtitle'), icon: '🔖', action: () => router.push('/profile/saved') },
     { 
       title: t('shippingAddress'), 
       subtitle: user.address ? (user.address.length > 30 ? user.address.substring(0, 30) + '...' : user.address) : t('shippingAddressSubtitle'), 

@@ -65,7 +65,6 @@ export function AppBottomNav({ isAdmin = false, isLoggedIn = false }: Props) {
   ];
 
   if (isLoggedIn) {
-    tabs.push({ href: '/orders', label: t('navOrders'), icon: OrdersIcon });
     tabs.push({ href: '/profile', label: t('navProfile'), icon: ProfileIcon });
   } else {
     tabs.push({ href: '/login', label: t('signIn'), icon: LoginIcon });

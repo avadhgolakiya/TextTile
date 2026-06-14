@@ -20,7 +20,6 @@ export function AppSidebar({ isAdmin = false, isLoggedIn = false }: Props) {
   ];
 
   if (isLoggedIn) {
-    navItems.push({ href: '/orders', label: t('navOrders'), icon: '📦' });
     navItems.push({ href: '/profile', label: t('navProfile'), icon: '👤' });
   } else {
     navItems.push({ href: '/login', label: t('signIn'), icon: '🔑' });
