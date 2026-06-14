@@ -59,7 +59,7 @@ body {
   }
 
   .input-field {
-    @apply px-6 py-4 text-base hover:border-gold/60;
+    @apply px-6 py-4 text-base hover:border-gold;
   }
 
   .card {

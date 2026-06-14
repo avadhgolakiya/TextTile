@@ -199,13 +199,15 @@ export default function ProductDetailPage() {
         <div className="space-y-4">
           <div className="relative bg-white rounded-card overflow-hidden shadow-sm border border-divider">
             {images.length > 0 ? (
-              <img
-                src={images[activeImageIdx]}
-                alt={product.name}
-                className="w-full h-[600px] block"
-              />
+              <div className="relative w-full aspect-[9/16]">
+                <img
+                  src={images[activeImageIdx]}
+                  alt={product.name}
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              </div>
             ) : (
-              <div className="w-full aspect-[3/4] bg-cream-deep flex items-center justify-center text-text-secondary">
+              <div className="w-full aspect-[9/16] bg-cream-deep flex items-center justify-center text-text-secondary">
                 No Image Available
               </div>
             )}
