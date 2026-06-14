@@ -3,6 +3,7 @@ import { Playfair_Display, Poppins } from 'next/font/google';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/Toaster';
 import { PwaInstaller } from '@/components/PwaInstaller';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -25,13 +26,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${playfair.variable} ${poppins.variable}`}>
-        <ErrorBoundary>
-          {children}
-          <Toaster />
-          <PwaInstaller />
-        </ErrorBoundary>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ErrorBoundary>
+            {children}
+            <Toaster />
+            <PwaInstaller />
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );

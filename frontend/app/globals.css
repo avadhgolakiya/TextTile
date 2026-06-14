@@ -3,9 +3,27 @@
 @tailwind utilities;
 
 :root {
-  --cream: #fff8f2;
-  --maroon: #7b1428;
-  --gold: #bf9b45;
+  --cream: #FFF8F2;
+  --cream-deep: #F5EDE0;
+  --maroon: #7B1428;
+  --maroon-dark: #4E0A15;
+  --gold: #BF9B45;
+  --peach: #FDE8DF;
+  --text-primary: #1E0D07;
+  --text-secondary: #7A6860;
+  --divider: #EDE5DC;
+}
+
+.dark {
+  --cream: #121212;
+  --cream-deep: #1A1A1A;
+  --maroon: #A12B42;
+  --maroon-dark: #7B1428;
+  --gold: #D4AF37;
+  --peach: #2A1519;
+  --text-primary: #F5F5F5;
+  --text-secondary: #A3A3A3;
+  --divider: #333333;
 }
 
 body {

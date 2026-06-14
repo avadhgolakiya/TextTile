@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authApi, orderApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { AppUser } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
@@ -143,6 +144,9 @@ export default function ProfilePage() {
             <p className="text-sm text-white/70 mt-1 truncate">
               {user.phone ? `📞 ${user.phone}` : `✉️ ${user.email}`}
             </p>
+          </div>
+          <div className="lg:hidden text-white">
+            <ThemeToggle className="text-white hover:text-white" />
           </div>
         </div>
 

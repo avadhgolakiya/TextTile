@@ -8,8 +8,8 @@ type Props = { isAdmin?: boolean; isLoggedIn?: boolean };
 
 function HomeIcon({ className }: { className?: string }) {
   return (
-    <svg fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M17.66 11.2c-.23-.3-.51-.56-.77-.82-.67-.6-1.43-1.03-2.07-1.66C13.33 7.26 13 4.85 13.95 3c-.95.23-1.78.75-2.49 1.32-2.59 2.08-3.61 5.75-2.39 8.9.04.1.08.2.08.33 0 .22-.15.42-.35.5-.22.1-.46.04-.56-.16-.39-.77-.52-1.63-.39-2.48-.96 1.05-1.55 2.5-1.52 4.02.04 2.87 2.39 5.25 5.27 5.51 3.51.32 6.5-2.44 6.5-5.89 0-1.28-.4-2.5-1.1-3.48zM12 19.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
     </svg>
   );
 }
@@ -60,7 +60,7 @@ export function AppBottomNav({ isAdmin = false, isLoggedIn = false }: Props) {
   const { t } = useTranslation();
 
   const tabs = [
-    { href: '/home', label: t('navHome'), icon: HomeIcon },
+    { href: '/home', label: 'Drop', icon: HomeIcon },
     { href: '/collection', label: t('navCollection'), icon: CollectionIcon },
   ];
 
@@ -76,27 +76,36 @@ export function AppBottomNav({ isAdmin = false, isLoggedIn = false }: Props) {
     : tabs;
 
   return (
-    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 lg:hidden">
-      <ul className="flex items-center gap-1 sm:gap-2 rounded-[2rem] bg-black/85 backdrop-blur-md px-3 py-2 shadow-2xl border border-white/10">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.06)] pb-safe">
+      <ul className="flex items-center justify-around px-2 pt-3 pb-3">
         {items.map((tab) => {
           const active =
             pathname === tab.href || pathname.startsWith(`${tab.href}/`);
           const Icon = tab.icon;
           return (
-            <li key={tab.href}>
+            <li key={tab.href} className="flex-1 flex justify-center">
               <Link
                 href={tab.href}
                 aria-label={tab.label}
                 title={tab.label}
-                className={`flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all duration-300 ${
-                  active
-                    ? 'bg-white/20 scale-105'
-                    : 'hover:bg-white/10'
-                }`}
+                className="flex flex-col items-center gap-1.5 group w-full py-1"
               >
-                <Icon className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors duration-300 ${
-                  active ? 'text-white' : 'text-white/60'
-                }`} />
+                <div
+                  className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
+                    active
+                      ? 'bg-maroon/10 scale-105'
+                      : 'bg-transparent group-hover:bg-cream'
+                  }`}
+                >
+                  <Icon className={`w-6 h-6 transition-colors duration-300 ${
+                    active ? 'text-maroon' : 'text-text-secondary'
+                  }`} />
+                </div>
+                <span className={`text-[10px] font-bold transition-colors duration-300 ${
+                  active ? 'text-maroon' : 'text-text-secondary'
+                }`}>
+                  {tab.label}
+                </span>
               </Link>
             </li>
           );
