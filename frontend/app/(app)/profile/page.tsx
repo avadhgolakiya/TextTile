@@ -23,6 +23,9 @@ export default function ProfilePage() {
   const [totalSpent, setTotalSpent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [langModalOpen, setLangModalOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [newAddress, setNewAddress] = useState('');
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
   const clearCart = useCartStore((s) => s.clear);
 
   useEffect(() => {
@@ -57,6 +60,23 @@ export default function ProfilePage() {
     router.refresh();
   }
 
+  async function handleSaveAddress(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newAddress.trim() || !user) return;
+    
+    setIsSavingAddress(true);
+    try {
+      const token = getToken();
+      await authApi.updateAddress(token, newAddress);
+      setUser({ ...user, address: newAddress.trim() });
+      setIsAddressModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingAddress(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center">
@@ -81,7 +101,15 @@ export default function ProfilePage() {
 
   const menuItems = [
     { title: t('savedProducts'), subtitle: t('savedProductsSubtitle'), icon: '🔖', action: () => router.push('/collection') },
-    { title: t('shippingAddress'), subtitle: t('shippingAddressSubtitle'), icon: '📍' },
+    { 
+      title: t('shippingAddress'), 
+      subtitle: user.address ? (user.address.length > 30 ? user.address.substring(0, 30) + '...' : user.address) : t('shippingAddressSubtitle'), 
+      icon: '📍',
+      action: () => {
+        setNewAddress(user.address || '');
+        setIsAddressModalOpen(true);
+      }
+    },
     { title: t('paymentMethods'), subtitle: t('paymentMethodsSubtitle'), icon: '💳' },
     { 
       title: t('preferences'), 
@@ -239,6 +267,48 @@ export default function ProfilePage() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Address Edit Modal */}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+            <div className="flex justify-between items-center">
+              <h3 className="font-serif text-xl font-bold text-text-primary">
+                Shipping Address
+              </h3>
+              <button
+                onClick={() => setIsAddressModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-cream-deep hover:bg-divider transition text-text-secondary font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveAddress} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-text-secondary uppercase mb-2 block">
+                  Delivery Address
+                </label>
+                <textarea
+                  className="input-field min-h-[100px] resize-none"
+                  placeholder="Enter your complete address..."
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={isSavingAddress || !newAddress.trim()}
+                className="btn-primary w-full h-12"
+              >
+                {isSavingAddress ? 'Saving...' : 'Save Address'}
+              </button>
+            </form>
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { getFirebaseAdmin } from '../lib/firebase.js';
 import { authMiddleware } from '../lib/auth.js';
+import { uploadBuffer } from '../lib/cloudinary.js';
 
 const router = Router();
 const upload = multer({

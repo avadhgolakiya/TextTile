@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import { globalIpBlocker } from './lib/ipTracker.js';
 import { connectDB } from './db.js';
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
@@ -15,6 +16,8 @@ const PORT = Number(process.env.PORT || 3333);
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
+
+app.use(globalIpBlocker);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });

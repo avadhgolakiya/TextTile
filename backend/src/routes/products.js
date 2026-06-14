@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getCollection } from '../db.js';
 import { authMiddleware, mapProduct } from '../lib/auth.js';
 import { notifyNewProduct } from '../lib/notifications.js';
+import { logActivity } from '../lib/activity.js';
 
 const router = Router();
 
@@ -100,6 +101,8 @@ router.post('/', authMiddleware, async (req, res) => {
       );
     }
 
+    await logActivity(req, isNewProduct ? 'created_product' : 'updated_product', { productId: p.id, name: p.name });
+
     return res.json({ ok: true, isNew: isNewProduct });
   } catch (e) {
     console.error(e);
@@ -110,7 +113,10 @@ router.post('/', authMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const productsColl = getCollection('products');
+    const doc = await productsColl.findOne({ _id: req.params.id });
     await productsColl.deleteOne({ _id: req.params.id });
+    
+    await logActivity(req, 'deleted_product', { productId: req.params.id, name: doc?.name });
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);
@@ -126,6 +132,8 @@ router.patch('/:id/visibility', authMiddleware, async (req, res) => {
       { _id: req.params.id },
       { $set: { isVisible: !!isVisible, updatedAt: new Date() } }
     );
+    
+    await logActivity(req, 'updated_product_visibility', { productId: req.params.id, isVisible });
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);
@@ -141,6 +149,27 @@ router.patch('/:id/featured', authMiddleware, async (req, res) => {
       { _id: req.params.id },
       { $set: { isFeatured: !!isFeatured, updatedAt: new Date() } }
     );
+    
+    await logActivity(req, 'updated_product_featured', { productId: req.params.id, isFeatured });
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/:id/notify', authMiddleware, async (req, res) => {
+  try {
+    const productsColl = getCollection('products');
+    const doc = await productsColl.findOne({ _id: req.params.id });
+    if (!doc) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    // Map to the object shape expected by notifyNewProduct
+    // It uses id or _id, name, subtitle, price
+    await notifyNewProduct(doc);
+    
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);

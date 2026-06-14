@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ProductCard } from '@/components/ProductCard';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { BannerSlider } from '@/components/BannerSlider';
 import { CATEGORIES, FALLBACK_BANNER } from '@/lib/constants/sample-data';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -55,9 +56,7 @@ export default function HomePage() {
       </header>
 
       <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-        <div className="relative aspect-[16/7] overflow-hidden rounded-card lg:col-span-8 lg:aspect-[21/9]">
-          <Image src={banners[0]} alt="Promo banner" fill className="object-cover" priority />
-        </div>
+        <BannerSlider banners={banners} />
 
         <section className="mt-8 lg:col-span-4 lg:mt-0">
           <h2 className="mb-3 font-serif text-xl font-semibold lg:mb-4 lg:text-2xl">

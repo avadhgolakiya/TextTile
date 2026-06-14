@@ -35,6 +35,8 @@ export type OrderItem = {
   total: number;
   thumbnailUrl: string;
   status: OrderStatus;
+  buyerName?: string;
+  isManual?: boolean;
 };
 
 export type AppUser = {
@@ -46,6 +48,23 @@ export type AppUser = {
   gstin?: string | null;
   address?: string | null;
   isAdmin: boolean;
+  isSuperAdmin?: boolean;
+};
+
+export type Admin = {
+  id: string;
+  email: string;
+  name: string;
+};
+
+export type ActivityLog = {
+  id: string;
+  adminId: string;
+  adminName: string;
+  adminEmail: string;
+  action: string;
+  details: any;
+  createdAt: string;
 };
 
 export type CategoryItem = {

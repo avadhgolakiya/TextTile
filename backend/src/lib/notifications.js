@@ -36,6 +36,9 @@ export async function notifyNewProduct(product) {
     ? `${product.name} — ${product.subtitle}${price ? ` · ${price}` : ''}`
     : `${product.name}${price ? ` · ${price}` : ''}`;
 
+  const frontendUrl = process.env.FRONTEND_URL || 'https://text-tile.vercel.app';
+  const productLink = `${frontendUrl.replace(/\/$/, '')}/products/${product.id || product._id || ''}`;
+
   await admin.messaging().send({
     topic: NEW_PRODUCTS_TOPIC,
     notification: {
@@ -46,11 +49,11 @@ export async function notifyNewProduct(product) {
       type: 'new_product',
       productId: String(product.id || product._id || ''),
       productName: String(product.name || ''),
-      link: `/products/${product.id || product._id || ''}`,
+      link: productLink,
     },
     webpush: {
       fcmOptions: {
-        link: `/products/${product.id || product._id || ''}`,
+        link: productLink,
       },
       notification: {},
     },

@@ -55,7 +55,7 @@ export const translations = {
     originalPrice: 'Original Price',
     discountOff: 'off',
     estimatedPrice: 'Estimated for',
-    quantity: 'Quantity',
+    quantity: 'Set',
     noteToShop: 'Note to shop (optional)',
     whatsappOrder: 'Place order on WhatsApp',
     addToCart: 'Add to cart instead',

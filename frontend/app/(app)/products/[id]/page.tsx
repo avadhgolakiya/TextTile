@@ -29,6 +29,11 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState('');
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [buyerName, setBuyerName] = useState('Buyer');
+  const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerAddress, setBuyerAddress] = useState('');
   const addToCart = useCartStore((s) => s.add);
 
   useEffect(() => {
@@ -42,25 +47,67 @@ export default function ProductDetailPage() {
         console.error(err);
         setLoading(false);
       });
+
+    const token = getToken();
+    if (token) {
+      authApi.me(token).then(({ user }) => {
+        setBuyerName(user.businessName || user.email.split('@')[0] || 'Buyer');
+        setBuyerPhone(user.phone || '');
+        setBuyerAddress(user.address || '');
+      }).catch(console.error);
+    }
   }, [id]);
 
   async function handleWhatsAppOrder() {
     if (!product) return;
-    let buyerName = 'Buyer';
+    
     const token = getToken();
-    if (token) {
-      try {
-        const { user } = await authApi.me(token);
-        buyerName = user.businessName || user.email.split('@')[0];
-      } catch (err) {
-        console.error(err);
-      }
+    if (!token) {
+      router.push(`/login?next=/products/${product.id}`);
+      return;
     }
-    openWhatsAppSingleOrder({ product, quantity, buyerName, note });
+
+    if (!buyerAddress.trim()) {
+      setIsAddressModalOpen(true);
+      return;
+    }
+
+    openWhatsAppSingleOrder({
+      product,
+      quantity,
+      buyerName,
+      buyerPhone: buyerPhone || null,
+      buyerAddress: buyerAddress || null,
+      note,
+    });
+  }
+
+  async function handleSaveAddress(e: React.FormEvent) {
+    e.preventDefault();
+    if (!buyerAddress.trim()) return;
+
+    setIsSavingAddress(true);
+    try {
+      const token = getToken();
+      await authApi.updateAddress(token, buyerAddress);
+      setIsAddressModalOpen(false);
+      handleWhatsAppOrder();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingAddress(false);
+    }
   }
 
   function handleAddToCart() {
     if (!product) return;
+    
+    const token = getToken();
+    if (!token) {
+      router.push(`/login?next=/products/${product.id}`);
+      return;
+    }
+
     addToCart(product, quantity);
     toast.success(`Added ${quantity} × ${product.name} to cart!`);
   }
@@ -250,6 +297,52 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Address Edit Modal */}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+            <div className="flex justify-between items-center">
+              <h3 className="font-serif text-xl font-bold text-text-primary">
+                Add Shipping Address
+              </h3>
+              <button
+                onClick={() => setIsAddressModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-cream-deep hover:bg-divider transition text-text-secondary font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p className="text-sm text-text-secondary">
+              Please provide a shipping address before completing your order via WhatsApp.
+            </p>
+            
+            <form onSubmit={handleSaveAddress} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-text-secondary uppercase mb-2 block">
+                  Delivery Address
+                </label>
+                <textarea
+                  className="input-field min-h-[100px] resize-none"
+                  placeholder="Enter your complete address..."
+                  value={buyerAddress}
+                  onChange={(e) => setBuyerAddress(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={isSavingAddress || !buyerAddress.trim()}
+                className="btn-primary w-full h-12"
+              >
+                {isSavingAddress ? 'Saving...' : 'Save Address & Proceed'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

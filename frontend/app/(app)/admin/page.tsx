@@ -18,14 +18,23 @@ function getToken() {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'buyers' | 'banners'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'buyers' | 'banners' | 'system-admins'>('products');
   const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // States for lists
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderItem[]>([]);
-  const [buyers, setBuyers] = useState<{ id: string; name: string; phone: string; orders: number }[]>([]);
+  const [orderFilter, setOrderFilter] = useState<'all' | 'user' | 'manual'>('all');
+  const [buyers, setBuyers] = useState<{ id: string; name: string; email?: string; phone: string; orders: number; isBlocked: boolean }[]>([]);
   const [banners, setBanners] = useState<{ id: string; image_url: string; sort_order: number }[]>([]);
+  const [systemAdmins, setSystemAdmins] = useState<{ id: string; email: string; name: string }[]>([]);
+
+  // States for IP Management
+  const [isIpModalOpen, setIsIpModalOpen] = useState(false);
+  const [selectedBuyerForIp, setSelectedBuyerForIp] = useState<{ id: string; name: string } | null>(null);
+  const [buyerIps, setBuyerIps] = useState<{ id: string; ipAddress: string; detectedAt: string; source: string }[]>([]);
+  const [newIpAddress, setNewIpAddress] = useState('');
 
   // States for product form modal
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -43,14 +52,29 @@ export default function AdminPage() {
   });
   const [isFeatured, setIsFeatured] = useState(false);
 
-  // States for banner form modal
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [newBannerUrl, setNewBannerUrl] = useState('');
-  const [newBannerOrder, setNewBannerOrder] = useState(0);
+  const [draggedBannerId, setDraggedBannerId] = useState<string | null>(null);
 
   // States for file uploading
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // States for manual order form
+  const [isManualOrderOpen, setIsManualOrderOpen] = useState(false);
+  const [savingManualOrder, setSavingManualOrder] = useState(false);
+  const [manualOrderForm, setManualOrderForm] = useState({
+    buyerName: '',
+    itemName: '',
+    quantity: 1,
+    price: '',
+    imageUrl: '',
+  });
+
+  // States for system admins
+  const [isCreateAdminOpen, setIsCreateAdminOpen] = useState(false);
+  const [createAdminForm, setCreateAdminForm] = useState({ name: '', email: '', password: '' });
+  const [selectedAdminActivity, setSelectedAdminActivity] = useState<{ adminName: string; logs: any[] } | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -67,6 +91,7 @@ export default function AdminPage() {
           router.replace('/home');
           return;
         }
+        setIsSuperAdmin(user.isSuperAdmin || false);
         // Load default tab data
         loadTabData('products');
       })
@@ -92,6 +117,9 @@ export default function AdminPage() {
       } else if (tab === 'banners') {
         const res = await bannerApi.fetchAllAdmin(token);
         setBanners(res.banners);
+      } else if (tab === 'system-admins') {
+        const res = await authApi.fetchAdmins(token);
+        setSystemAdmins(res.admins);
       }
     } catch (err) {
       console.error(err);
@@ -134,6 +162,18 @@ export default function AdminPage() {
       toast.success(`"${p.name}" deleted`);
     } catch (err) {
       toast.error(`Delete failed: ${err}`);
+    }
+  }
+
+  async function sendProductNotification(p: Product) {
+    const ok = await toast.confirm(`Send a push notification for "${p.name}"?`);
+    if (!ok) return;
+    const token = getToken();
+    try {
+      await productApi.notify(token, p.id);
+      toast.success(`Notification sent for "${p.name}"`);
+    } catch (err) {
+      toast.error(`Failed to send notification: ${err}`);
     }
   }
 
@@ -233,6 +273,114 @@ export default function AdminPage() {
     }
   }
 
+  async function submitManualOrder(e: React.FormEvent) {
+    e.preventDefault();
+    if (!manualOrderForm.buyerName || !manualOrderForm.itemName || !manualOrderForm.price) return;
+    
+    setSavingManualOrder(true);
+    const token = getToken();
+    try {
+      await orderApi.createManual(token, {
+        buyerName: manualOrderForm.buyerName,
+        itemName: manualOrderForm.itemName,
+        quantity: Number(manualOrderForm.quantity) || 1,
+        price: Number(manualOrderForm.price),
+        imageUrl: manualOrderForm.imageUrl,
+      });
+      setIsManualOrderOpen(false);
+      setManualOrderForm({ buyerName: '', itemName: '', quantity: 1, price: '', imageUrl: '' });
+      toast.success('Manual order created successfully');
+      loadTabData('orders');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to create manual order');
+    } finally {
+      setSavingManualOrder(false);
+    }
+  }
+
+  async function uploadManualOrderImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File is too large. Max limit is 5MB.');
+      return;
+    }
+    setUploadingImage(true);
+    const token = getToken();
+    try {
+      const res = await productApi.uploadImage(token, file);
+      setManualOrderForm((prev) => ({ ...prev, imageUrl: res.imageUrl }));
+      toast.success('Image uploaded successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
+  }
+
+  const filteredOrders = orders.filter((o) => {
+    if (orderFilter === 'manual') return o.isManual;
+    if (orderFilter === 'user') return !o.isManual;
+    return true;
+  });
+
+  // --- Buyers Tab Actions ---
+
+  async function toggleBlockBuyer(buyerId: string, currentStatus: boolean) {
+    const newStatus = !currentStatus;
+    const actionName = newStatus ? 'Block' : 'Unblock';
+    
+    const ok = await toast.confirm(`Are you sure you want to ${actionName.toLowerCase()} this user?`);
+    if (!ok) return;
+
+    const token = getToken();
+    // Optimistic UI update
+    setBuyers(buyers.map((b) => (b.id === buyerId ? { ...b, isBlocked: newStatus } : b)));
+    
+    try {
+      await authApi.toggleBlockBuyer(token, buyerId, newStatus);
+      toast.success(`User successfully ${newStatus ? 'blocked' : 'unblocked'}`);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to ${actionName.toLowerCase()} user`);
+      // Revert on error
+      setBuyers(buyers.map((b) => (b.id === buyerId ? { ...b, isBlocked: currentStatus } : b)));
+    }
+  }
+
+  async function openIpModal(buyerId: string, buyerName: string) {
+    setSelectedBuyerForIp({ id: buyerId, name: buyerName });
+    setIsIpModalOpen(true);
+    setBuyerIps([]);
+    try {
+      const token = getToken();
+      const res = await authApi.fetchBuyerIps(token, buyerId);
+      setBuyerIps(res.ips || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load IPs');
+    }
+  }
+
+  async function handleAddIp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedBuyerForIp || !newIpAddress.trim()) return;
+    try {
+      const token = getToken();
+      await authApi.addBuyerIp(token, selectedBuyerForIp.id, newIpAddress.trim());
+      setNewIpAddress('');
+      toast.success('IP added to blocklist');
+      const res = await authApi.fetchBuyerIps(token, selectedBuyerForIp.id);
+      setBuyerIps(res.ips || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to add IP');
+    }
+  }
+
   // --- Banners Tab CRUD Actions ---
 
   async function addBanner(e: React.FormEvent) {
@@ -240,10 +388,9 @@ export default function AdminPage() {
     if (!newBannerUrl.trim()) return;
     const token = getToken();
     try {
-      await bannerApi.add(token, newBannerUrl.trim(), Number(newBannerOrder));
+      await bannerApi.add(token, newBannerUrl.trim(), banners.length);
       setIsBannerModalOpen(false);
       setNewBannerUrl('');
-      setNewBannerOrder(0);
       loadTabData('banners');
       toast.success('Banner added');
     } catch (err) {
@@ -264,11 +411,85 @@ export default function AdminPage() {
     }
   }
 
+  async function handleBannerDrop(targetId: string) {
+    if (!draggedBannerId || draggedBannerId === targetId) return;
+    
+    const draggedIndex = banners.findIndex(b => b.id === draggedBannerId);
+    const targetIndex = banners.findIndex(b => b.id === targetId);
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const newBanners = [...banners];
+    const [draggedItem] = newBanners.splice(draggedIndex, 1);
+    newBanners.splice(targetIndex, 0, draggedItem);
+    
+    // Optimistic update
+    setBanners(newBanners);
+    setDraggedBannerId(null);
+
+    const token = getToken();
+    try {
+      await bannerApi.reorder(token, newBanners.map(b => b.id));
+      toast.success('Slider order updated');
+    } catch (err) {
+      toast.error('Failed to save order');
+      loadTabData('banners'); // revert
+    }
+  }
+
+  async function uploadBannerImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File is too large. Max limit is 5MB.');
+      return;
+    }
+    setUploadingImage(true);
+    const token = getToken();
+    try {
+      const res = await productApi.uploadImage(token, file);
+      setNewBannerUrl(res.imageUrl);
+      toast.success('Image uploaded successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+      e.target.value = '';
+    }
+  }
+
+  // --- System Admins Actions ---
+
+  async function handleCreateAdmin(e: React.FormEvent) {
+    e.preventDefault();
+    const token = getToken();
+    try {
+      await authApi.createAdmin(token, createAdminForm);
+      setIsCreateAdminOpen(false);
+      setCreateAdminForm({ name: '', email: '', password: '' });
+      toast.success('Admin created successfully');
+      loadTabData('system-admins');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create admin');
+    }
+  }
+
+  async function openAdminActivity(adminId: string, adminName: string) {
+    const token = getToken();
+    try {
+      const res = await authApi.fetchAdminActivity(token, adminId);
+      setSelectedAdminActivity({ adminName, logs: res.logs });
+    } catch (err) {
+      toast.error('Failed to load activity logs');
+    }
+  }
+
   const tabs = [
     { id: 'products', label: 'Products' },
     { id: 'orders', label: 'Orders' },
     { id: 'buyers', label: 'Buyers' },
-    { id: 'banners', label: 'Banners' },
+    { id: 'banners', label: 'Slider' },
+    ...(isSuperAdmin ? [{ id: 'system-admins', label: 'System Admins' }] : []),
   ] as const;
 
   return (
@@ -378,6 +599,13 @@ export default function AdminPage() {
                       {/* Actions */}
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => sendProductNotification(p)}
+                          className="p-2 text-blue-600 hover:text-blue-800 transition text-lg"
+                          title="Send notification"
+                        >
+                          🔔
+                        </button>
+                        <button
                           onClick={() => toggleProductVisibility(p)}
                           className="p-2 text-text-secondary hover:text-maroon transition text-lg"
                           title={p.isVisible ? 'Hide from public' : 'Show to public'}
@@ -408,17 +636,55 @@ export default function AdminPage() {
             {/* ORDERS TAB */}
             {activeTab === 'orders' && (
               <div className="space-y-4">
-                <h3 className="font-serif text-xl font-bold">Manage Orders</h3>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="font-serif text-xl font-bold">Manage Orders</h3>
+                  <button onClick={() => setIsManualOrderOpen(true)} className="btn-primary py-2 px-5 text-xs self-start sm:self-auto">
+                    + Add Manual Order
+                  </button>
+                </div>
+
+                {/* Filters */}
+                <div className="flex gap-2 p-1 bg-cream-deep rounded-xl border border-divider w-full sm:max-w-md">
+                  {[
+                    { id: 'all', label: 'All Orders' },
+                    { id: 'user', label: 'User Orders' },
+                    { id: 'manual', label: 'Manual Orders' },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setOrderFilter(f.id as any)}
+                      className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${
+                        orderFilter === f.id
+                          ? 'bg-white text-maroon shadow-sm border border-divider'
+                          : 'text-text-secondary hover:text-text-primary'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
 
                 <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0">
-                  {orders.map((o) => (
+                  {filteredOrders.map((o) => (
                     <div
                       key={o.id}
                       className="card p-5 border border-divider shadow-sm space-y-4"
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-bold text-sm">Order ID: {o.id.slice(0, 8).toUpperCase()}</h4>
+                          <h4 className="font-bold text-sm flex items-center gap-2">
+                            Order ID: {o.id.slice(0, 8).toUpperCase()}
+                            {o.isManual && (
+                              <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+                                Manual
+                              </span>
+                            )}
+                          </h4>
+                          {o.buyerName && (
+                            <p className="text-xs font-semibold text-text-primary mt-1">
+                              Client: {o.buyerName}
+                            </p>
+                          )}
                           <p className="text-xs text-text-secondary mt-0.5">
                             {o.title} · {o.dateLabel}
                           </p>
@@ -454,26 +720,57 @@ export default function AdminPage() {
             {/* BUYERS TAB */}
             {activeTab === 'buyers' && (
               <div className="space-y-4">
-                <h3 className="font-serif text-xl font-bold">Registered Buyers</h3>
+                <h3 className="font-serif text-xl font-bold">Registered Users</h3>
 
                 <div className="space-y-3">
                   {buyers.map((b) => (
                     <div
                       key={b.id}
-                      className="card flex items-center justify-between p-4 border border-divider shadow-sm"
+                      className={`card flex items-center justify-between p-4 border shadow-sm transition ${
+                        b.isBlocked ? 'bg-red-50/50 border-red-200' : 'border-divider'
+                      }`}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full bg-maroon text-white font-bold flex items-center justify-center text-sm font-serif">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className={`w-11 h-11 rounded-full text-white font-bold flex items-center justify-center text-sm font-serif shrink-0 ${
+                          b.isBlocked ? 'bg-red-800' : 'bg-maroon'
+                        }`}>
                           {b.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-sm">{b.name}</h4>
-                          <p className="text-xs text-text-secondary mt-0.5">{b.phone}</p>
+                        <div className="min-w-0 pr-4">
+                          <h4 className="font-semibold text-sm truncate flex items-center gap-2">
+                            {b.name}
+                            {b.isBlocked && (
+                              <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+                                Blocked
+                              </span>
+                            )}
+                          </h4>
+                          <p className="text-xs text-text-secondary mt-0.5 truncate">
+                            {b.phone} {b.email ? `· ${b.email}` : ''}
+                          </p>
                         </div>
                       </div>
-                      <span className="bg-gold/15 text-gold text-xs px-3 py-1.5 rounded-lg font-bold">
-                        {b.orders} orders
-                      </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="hidden sm:inline-block bg-gold/15 text-gold text-xs px-3 py-1.5 rounded-lg font-bold">
+                          {b.orders} orders
+                        </span>
+                        <button
+                          onClick={() => openIpModal(b.id, b.name)}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg transition border bg-white text-text-secondary border-divider hover:bg-cream-deep"
+                        >
+                          IPs
+                        </button>
+                        <button
+                          onClick={() => toggleBlockBuyer(b.id, b.isBlocked)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition border ${
+                            b.isBlocked 
+                              ? 'bg-white text-red-700 border-red-200 hover:bg-red-50' 
+                              : 'bg-white text-text-secondary border-divider hover:text-red-600 hover:border-red-200'
+                          }`}
+                        >
+                          {b.isBlocked ? 'Unblock' : 'Block'}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -484,9 +781,9 @@ export default function AdminPage() {
             {activeTab === 'banners' && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-serif text-xl font-bold">Promo Banners</h3>
-                  <button onClick={() => setIsBannerModalOpen(true)} className="btn-primary py-2 px-5 text-xs">
-                    + Add Banner
+                  <h3 className="font-serif text-xl font-bold">Slider Images</h3>
+                  <button onClick={() => { setNewBannerUrl(''); setIsBannerModalOpen(true); }} className="btn-primary py-2 px-5 text-xs">
+                    + Add Image
                   </button>
                 </div>
 
@@ -494,9 +791,18 @@ export default function AdminPage() {
                   {banners.map((b) => (
                     <div
                       key={b.id}
-                      className="card flex items-center justify-between p-3 border border-divider shadow-sm"
+                      draggable
+                      onDragStart={() => setDraggedBannerId(b.id)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleBannerDrop(b.id)}
+                      className={`card flex items-center justify-between p-3 border shadow-sm cursor-grab active:cursor-grabbing transition-colors ${
+                        draggedBannerId === b.id ? 'opacity-50 border-maroon' : 'border-divider hover:border-maroon/30'
+                      }`}
                     >
                       <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="text-text-secondary cursor-grab p-2">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" /></svg>
+                        </div>
                         <div className="relative w-28 h-16 rounded-lg overflow-hidden bg-cream-deep shrink-0 border border-divider">
                           <Image src={getFullImageUrl(b.image_url)} alt="Banner" fill className="object-cover" />
                         </div>
@@ -507,10 +813,58 @@ export default function AdminPage() {
                       <button
                         onClick={() => deleteBanner(b.id)}
                         className="p-2 text-red-600 hover:text-red-800 transition text-lg ml-4"
-                        title="Remove banner"
+                        title="Remove image"
                       >
                         🗑️
                       </button>
+                    </div>
+                  ))}
+                  {banners.length === 0 && (
+                    <p className="text-sm text-text-secondary">No slider images uploaded yet.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SYSTEM ADMINS TAB */}
+            {isSuperAdmin && activeTab === 'system-admins' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-serif text-xl font-bold">System Admins</h3>
+                  <button onClick={() => setIsCreateAdminOpen(true)} className="btn-primary py-2 px-5 text-xs">
+                    + Create Admin
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {systemAdmins.map((admin) => (
+                    <div
+                      key={admin.id}
+                      className="card flex items-center justify-between p-4 border border-divider shadow-sm transition hover:border-maroon/30 cursor-pointer"
+                      onClick={() => openAdminActivity(admin.id, admin.name)}
+                    >
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="w-11 h-11 rounded-full bg-maroon text-white font-bold flex items-center justify-center text-sm font-serif shrink-0">
+                          {admin.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 pr-4">
+                          <h4 className="font-semibold text-sm truncate flex items-center gap-2">
+                            {admin.name}
+                            {admin.email === 'admin@example.com' && (
+                              <span className="bg-gold/20 text-gold text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">
+                                Super Admin
+                              </span>
+                            )}
+                          </h4>
+                          <p className="text-xs text-text-secondary mt-0.5 truncate">
+                            {admin.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-text-secondary">
+                        <span className="text-xs font-semibold">View Activity</span>
+                        <span>➡️</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -724,48 +1078,357 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* --- ADD MANUAL ORDER MODAL FORM --- */}
+      {isManualOrderOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 overflow-y-auto">
+          <div className="bg-white rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
+            <header className="px-6 py-4 border-b border-divider flex justify-between items-center shrink-0">
+              <h3 className="font-serif text-xl font-bold">Add Manual Order</h3>
+              <button onClick={() => setIsManualOrderOpen(false)} className="text-text-secondary text-lg hover:text-maroon p-1">
+                ✕
+              </button>
+            </header>
+
+            <form onSubmit={submitManualOrder} className="p-6 overflow-y-auto space-y-4 flex-1">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Client Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Rahul Sharma"
+                  className="input-field"
+                  value={manualOrderForm.buyerName}
+                  onChange={(e) => setManualOrderForm({ ...manualOrderForm, buyerName: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Product/Set Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Red Banarasi Saree Set"
+                  className="input-field"
+                  value={manualOrderForm.itemName}
+                  onChange={(e) => setManualOrderForm({ ...manualOrderForm, itemName: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-text-secondary uppercase">Sets</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    className="input-field"
+                    value={manualOrderForm.quantity}
+                    onChange={(e) => setManualOrderForm({ ...manualOrderForm, quantity: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-text-secondary uppercase">Price per item (₹)</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    placeholder="Price"
+                    className="input-field"
+                    value={manualOrderForm.price}
+                    onChange={(e) => setManualOrderForm({ ...manualOrderForm, price: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-secondary uppercase block">Sari Photo (Optional)</label>
+                
+                <div className="border-[1.4px] border-dashed border-divider rounded-2xl p-4 bg-cream/40 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden group">
+                  {manualOrderForm.imageUrl ? (
+                    <div className="relative w-full h-[150px] flex flex-col items-center justify-center">
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-divider">
+                        <img
+                          src={getFullImageUrl(manualOrderForm.imageUrl)}
+                          alt="Product preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setManualOrderForm({ ...manualOrderForm, imageUrl: '' })}
+                        className="mt-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-white shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-text-secondary py-4">
+                      {uploadingImage ? (
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-divider border-t-maroon" />
+                          <p className="text-xs">Uploading file...</p>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-1">
+                          <span className="text-3xl block mb-1">🖼️</span>
+                          <p className="text-xs font-semibold">Drag & drop or click to upload</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!manualOrderForm.imageUrl && !uploadingImage && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      onChange={uploadManualOrderImage}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <button type="submit" disabled={savingManualOrder} className="btn-primary w-full h-12 mt-4">
+                {savingManualOrder ? 'Saving...' : 'Save Manual Order'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* --- ADD BANNER MODAL FORM --- */}
       {isBannerModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
           <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="font-serif text-lg font-bold">Add Banner Image</h3>
+              <h3 className="font-serif text-lg font-bold">Add Slider Image</h3>
               <button onClick={() => setIsBannerModalOpen(false)} className="text-text-secondary hover:text-maroon text-lg p-1">
                 ✕
               </button>
             </div>
 
             <form onSubmit={addBanner} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-text-secondary uppercase">Image URL</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Paste banner image URL"
-                  className="input-field"
-                  value={newBannerUrl}
-                  onChange={(e) => setNewBannerUrl(e.target.value)}
-                />
-              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-secondary uppercase block">Image Upload</label>
+                
+                <div className="border-[1.4px] border-dashed border-divider rounded-2xl p-4 bg-cream/40 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden group">
+                  {newBannerUrl ? (
+                    <div className="relative w-full h-[150px] flex flex-col items-center justify-center">
+                      <div className="relative w-full h-full rounded-lg overflow-hidden border border-divider">
+                        <img
+                          src={getFullImageUrl(newBannerUrl)}
+                          alt="Slider preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setNewBannerUrl('')}
+                        className="absolute bottom-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-white shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition z-10"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-text-secondary py-4">
+                      {uploadingImage ? (
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-divider border-t-maroon" />
+                          <p className="text-xs">Uploading file...</p>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-1">
+                          <span className="text-3xl block mb-1">🖼️</span>
+                          <p className="text-xs font-semibold">Drag & drop or click to upload</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-text-secondary uppercase">Sort Order</label>
-                <input
-                  type="number"
-                  placeholder="Sort order (lower values first)"
-                  className="input-field"
-                  value={newBannerOrder || ''}
-                  onChange={(e) => setNewBannerOrder(Number(e.target.value))}
-                />
+                  {!newBannerUrl && !uploadingImage && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                      onChange={uploadBannerImage}
+                    />
+                  )}
+                </div>
               </div>
-
-              <button type="submit" className="btn-primary w-full h-12 mt-2">
-                Add Banner
+              <button type="submit" disabled={!newBannerUrl || uploadingImage} className="btn-primary w-full h-12 mt-2">
+                Save Image
               </button>
             </form>
           </div>
         </div>
       )}
+
+      {/* --- CREATE ADMIN MODAL FORM --- */}
+      {isCreateAdminOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-serif text-lg font-bold">Create New Admin</h3>
+              <button onClick={() => setIsCreateAdminOpen(false)} className="text-text-secondary text-lg hover:text-maroon p-1">
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleCreateAdmin} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Rahul Admin"
+                  className="input-field"
+                  value={createAdminForm.name}
+                  onChange={(e) => setCreateAdminForm({ ...createAdminForm, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="admin@swastik.com"
+                  className="input-field"
+                  value={createAdminForm.email}
+                  onChange={(e) => setCreateAdminForm({ ...createAdminForm, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="input-field"
+                  value={createAdminForm.password}
+                  onChange={(e) => setCreateAdminForm({ ...createAdminForm, password: e.target.value })}
+                />
+              </div>
+              <button type="submit" className="btn-primary w-full h-11 mt-2">
+                Create Admin Account
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- ADMIN ACTIVITY MODAL --- */}
+      {selectedAdminActivity && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 overflow-y-auto">
+          <div className="bg-white rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
+            <header className="px-6 py-4 border-b border-divider flex justify-between items-center shrink-0 bg-cream">
+              <div>
+                <h3 className="font-serif text-xl font-bold">Activity Log</h3>
+                <p className="text-xs text-text-secondary mt-0.5">{selectedAdminActivity.adminName}</p>
+              </div>
+              <button onClick={() => setSelectedAdminActivity(null)} className="text-text-secondary text-lg hover:text-maroon p-1">
+                ✕
+              </button>
+            </header>
+
+            <div className="p-6 overflow-y-auto space-y-4 flex-1 bg-cream/30">
+              {selectedAdminActivity.logs.length === 0 ? (
+                <div className="text-center py-10 text-text-secondary">
+                  <span className="text-3xl block mb-2">📭</span>
+                  <p className="text-sm">No recent activity found.</p>
+                </div>
+              ) : (
+                <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                  {selectedAdminActivity.logs.map((log) => (
+                    <div key={log.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                      {/* Icon */}
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-cream-deep text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                        {log.action.includes('delete') ? '🗑️' : log.action.includes('create') || log.action.includes('add') ? '✨' : '📝'}
+                      </div>
+                      
+                      {/* Card */}
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] card p-4 border border-divider shadow-sm">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-bold text-sm text-text-primary uppercase tracking-wide">
+                            {log.action.replace(/_/g, ' ')}
+                          </h4>
+                          <span className="text-[10px] text-text-secondary font-semibold">
+                            {new Date(log.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="text-xs text-text-secondary break-all bg-cream rounded p-2 border border-divider/50 mt-2">
+                          <pre className="font-mono text-[10px] whitespace-pre-wrap">{JSON.stringify(log.details, null, 2)}</pre>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* IP Management Modal */}
+      {isIpModalOpen && selectedBuyerForIp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-lg bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 flex flex-col max-h-[80vh] animate-scaleIn">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-text-primary">
+                  Manage IPs for {selectedBuyerForIp.name}
+                </h3>
+                <p className="text-xs text-text-secondary mt-1">
+                  Tracked IPs and manual blocklist.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsIpModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-cream-deep hover:bg-divider transition text-text-secondary font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddIp} className="flex gap-3 mb-6">
+              <input
+                type="text"
+                placeholder="Enter IP address manually..."
+                value={newIpAddress}
+                onChange={(e) => setNewIpAddress(e.target.value)}
+                className="flex-1 input-field"
+                required
+              />
+              <button type="submit" className="btn-primary whitespace-nowrap">
+                Add IP
+              </button>
+            </form>
+
+            <div className="flex-1 overflow-y-auto min-h-[200px] border border-divider rounded-xl bg-cream-deep/50 p-4">
+              {buyerIps.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-text-secondary">
+                  <span className="text-2xl mb-2 opacity-50">🌐</span>
+                  <p className="text-sm">No IPs tracked yet.</p>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {buyerIps.map((ip) => (
+                    <li key={ip.id} className="bg-white border border-divider rounded-lg p-3 flex justify-between items-center shadow-sm">
+                      <div>
+                        <p className="font-mono text-sm font-bold text-text-primary">{ip.ipAddress}</p>
+                        <p className="text-xs text-text-secondary mt-0.5">
+                          Source: <span className="uppercase">{ip.source}</span>
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-text-secondary font-medium">
+                        {new Date(ip.detectedAt).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

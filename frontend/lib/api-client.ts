@@ -56,6 +56,11 @@ export const productApi = {
       token,
       body: JSON.stringify({ isFeatured: featured }),
     }),
+  notify: (token: string, id: string) =>
+    apiFetch<{ ok: true }>(`/api/products/${id}/notify`, {
+      method: 'POST',
+      token,
+    }),
   uploadImage: (token: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -96,6 +101,22 @@ export const orderApi = {
   // Admin operations
   fetchAllAdmin: (token: string) =>
     apiFetch<{ orders: OrderItem[] }>('/api/orders', { token }),
+  createManual: (
+    token: string,
+    body: {
+      buyerName: string;
+      buyerPhone?: string;
+      itemName: string;
+      quantity: number;
+      price: number;
+      imageUrl?: string;
+    },
+  ) =>
+    apiFetch<{ ok: true }>('/api/orders/manual', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
   updateStatus: (token: string, id: string, status: string) =>
     apiFetch<{ ok: true }>(`/api/orders/${id}/status`, {
       method: 'PATCH',
@@ -136,13 +157,45 @@ export const authApi = {
     }),
   me: (token: string) =>
     apiFetch<{ user: AppUser }>('/api/auth/me', { token }),
+  updateAddress: (token: string, address: string) =>
+    apiFetch<{ ok: true }>('/api/auth/me/address', {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({ address }),
+    }),
 
   // Admin operations
   fetchBuyersAdmin: (token: string) =>
-    apiFetch<{ buyers: { id: string; name: string; phone: string; orders: number }[] }>(
+    apiFetch<{ buyers: { id: string; name: string; email?: string; phone: string; orders: number; isBlocked: boolean }[] }>(
       '/api/auth/buyers',
       { token },
     ),
+  toggleBlockBuyer: (token: string, buyerId: string, isBlocked: boolean) =>
+    apiFetch<{ ok: boolean }>(`/api/auth/buyers/${buyerId}/block`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({ isBlocked }),
+    }),
+  fetchBuyerIps: (token: string, buyerId: string) =>
+    apiFetch<{ ips: { id: string; ipAddress: string; detectedAt: string; source: string }[] }>(`/api/auth/buyers/${buyerId}/ips`, {
+      token,
+    }),
+  addBuyerIp: (token: string, buyerId: string, ipAddress: string) =>
+    apiFetch<{ ok: boolean }>(`/api/auth/buyers/${buyerId}/ips`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify({ ipAddress }),
+    }),
+  createAdmin: (token: string, payload: { name: string; email: string; password: string }) =>
+    apiFetch<{ ok: true; admin: any }>('/api/auth/admins', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(payload),
+    }),
+  fetchAdmins: (token: string) =>
+    apiFetch<{ admins: { id: string; email: string; name: string }[] }>('/api/auth/admins', { token }),
+  fetchAdminActivity: (token: string, adminId: string) =>
+    apiFetch<{ logs: any[] }>(`/api/auth/admins/${adminId}/activity`, { token }),
 };
 
 export const notificationApi = {
@@ -155,22 +208,24 @@ export const notificationApi = {
 };
 
 export const bannerApi = {
-  fetchUrls: () => apiFetch<{ urls: string[] }>('/api/banners'),
-
-  // Admin operations
+  fetchUrls: () => apiFetch<{ urls: string[] }>('/api/banners', { cache: 'no-store' }),
   fetchAllAdmin: (token: string) =>
-    apiFetch<{ banners: { id: string; image_url: string; sort_order: number }[] }>('/api/banners', {
+    apiFetch<{ urls: string[]; banners: { id: string; image_url: string; sort_order: number }[] }>('/api/banners', {
       token,
+      cache: 'no-store',
     }),
-  add: (token: string, imageUrl: string, sortOrder: number = 0) =>
+  add: (token: string, imageUrl: string, sortOrder?: number) =>
     apiFetch<{ ok: true }>('/api/banners', {
       method: 'POST',
       token,
       body: JSON.stringify({ imageUrl, sortOrder }),
     }),
   delete: (token: string, id: string) =>
-    apiFetch<{ ok: true }>(`/api/banners/${id}`, {
-      method: 'DELETE',
+    apiFetch<{ ok: true }>(`/api/banners/${id}`, { method: 'DELETE', token }),
+  reorder: (token: string, orderedIds: string[]) =>
+    apiFetch<{ ok: true }>('/api/banners/reorder', {
+      method: 'PATCH',
       token,
+      body: JSON.stringify({ orderedIds }),
     }),
 };

@@ -1,0 +1,29 @@
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Access Restricted | Swastik Fashion',
+};
+
+export default function BlockedPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-cream px-6 text-center">
+      <div className="w-full max-w-md rounded-3xl border border-divider bg-white p-10 shadow-sm">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl text-red-500">
+          🔒
+        </div>
+        <h1 className="mb-4 font-serif text-2xl font-bold text-text-primary">
+          Access Restricted
+        </h1>
+        <p className="mb-8 text-sm leading-relaxed text-text-secondary">
+          Your access to this application has been temporarily restricted. If you believe this is a mistake, please reach out to support.
+        </p>
+        <a
+          href="mailto:support@swastikfashion.com"
+          className="btn-primary block w-full rounded-2xl bg-maroon px-4 py-3 text-sm font-bold text-white transition hover:bg-maroon-dark"
+        >
+          Contact Support
+        </a>
+      </div>
+    </div>
+  );
+}

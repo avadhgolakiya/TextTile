@@ -14,7 +14,9 @@ export default async function AppLayout({
   const token = cookieStore.get('token')?.value;
 
   let isAdmin = false;
+  let isLoggedIn = false;
   if (token) {
+    isLoggedIn = true;
     try {
       const { user } = await authApi.me(token);
       isAdmin = user.isAdmin ?? false;
@@ -25,7 +27,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen bg-cream pb-20 lg:pb-0">
-      <AppSidebar isAdmin={isAdmin} />
+      <AppSidebar isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
       <div className="lg:pl-64">
         <main className="lg:mx-auto lg:max-w-7xl lg:px-10 lg:py-8">
           <CartFab />
@@ -33,7 +35,7 @@ export default async function AppLayout({
           {children}
         </main>
       </div>
-      <AppBottomNav isAdmin={isAdmin} />
+      <AppBottomNav isAdmin={isAdmin} isLoggedIn={isLoggedIn} />
     </div>
   );
 }

@@ -1,14 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const protectedPrefixes = [
-  '/home',
-  '/collection',
   '/orders',
   '/profile',
   '/cart',
   '/admin',
-  '/products',
-  '/search',
 ];
 
 export async function middleware(request: NextRequest) {
@@ -22,11 +18,29 @@ export async function middleware(request: NextRequest) {
     (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );
 
-  if (isProtected && !token) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
-    loginUrl.searchParams.set('next', path);
-    return NextResponse.redirect(loginUrl);
+  if (isProtected) {
+    if (!token) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/login';
+      loginUrl.searchParams.set('next', path);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    try {
+      const ip = request.ip || request.headers.get('x-forwarded-for') || '127.0.0.1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3333';
+      const res = await fetch(`${apiUrl}/api/auth/check-ip?ip=${encodeURIComponent(ip)}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.blocked) {
+          const blockedUrl = request.nextUrl.clone();
+          blockedUrl.pathname = '/blocked';
+          return NextResponse.rewrite(blockedUrl);
+        }
+      }
+    } catch (e) {
+      console.error('IP check failed in middleware', e);
+    }
   }
 
   if ((path === '/login' || path === '/signup') && token) {

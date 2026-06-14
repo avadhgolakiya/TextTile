@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getCollection } from '../db.js';
 import { authMiddleware } from '../lib/auth.js';
+import { logActivity } from '../lib/activity.js';
 import { ObjectId } from 'mongodb';
 
 const router = Router();
@@ -46,6 +47,8 @@ function mapOrder(doc) {
     total: doc.total,
     thumbnailUrl: first.imageUrl ?? '',
     status: doc.status ?? 'pending',
+    buyerName: doc.buyerName,
+    isManual: doc.isManual ?? false,
   };
 }
 
@@ -82,6 +85,15 @@ router.post('/', authMiddleware, async (req, res) => {
     const { buyerName, buyerPhone, lines, total } = req.body || {};
     if (!buyerName || !Array.isArray(lines) || total == null) {
       return res.status(400).json({ error: 'Invalid order payload' });
+    }
+
+    const usersColl = getCollection('users');
+    const userDoc = await usersColl.findOne({ _id: new ObjectId(req.userId) });
+    if (!userDoc) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+    if (userDoc.isBlocked) {
+      return res.status(403).json({ error: 'Your account has been blocked. You cannot place orders.' });
     }
 
     const productIds = lines.map((l) => l.productId);
@@ -122,6 +134,53 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+/** Create Manual Order (Admin Only) */
+router.post('/manual', authMiddleware, async (req, res) => {
+  try {
+    const { buyerName, itemName, quantity, price, imageUrl } = req.body || {};
+    if (!buyerName || !itemName || !quantity || price == null) {
+      return res.status(400).json({ error: 'buyerName, itemName, quantity, and price are required' });
+    }
+
+    const usersColl = getCollection('users');
+    const userDoc = await usersColl.findOne({ _id: new ObjectId(req.userId) });
+    if (!userDoc || !userDoc.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden. Admin access required.' });
+    }
+
+    const qty = Number(quantity);
+    const prc = Number(price);
+    const total = qty * prc;
+
+    const items = [{
+      name: String(itemName).trim(),
+      code: 'MANUAL',
+      qty,
+      price: prc,
+      imageUrl: imageUrl ? String(imageUrl).trim() : '',
+    }];
+
+    const ordersColl = getCollection('orders');
+    await ordersColl.insertOne({
+      buyerId: req.userId, // Storing admin's ID as the creator
+      buyerName: String(buyerName).trim(),
+      buyerPhone: null,
+      items,
+      total,
+      status: 'pending',
+      isManual: true,
+      createdAt: new Date(),
+    });
+
+    await logActivity(req, 'created_manual_order', { buyerName, total });
+
+    return res.status(201).json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 /** Update Order Status for Admin */
 router.patch('/:id/status', authMiddleware, async (req, res) => {
   try {
@@ -134,6 +193,9 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
       { _id: new ObjectId(req.params.id) },
       { $set: { status, updatedAt: new Date() } }
     );
+    
+    await logActivity(req, 'updated_order_status', { orderId: req.params.id, status });
+    
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);

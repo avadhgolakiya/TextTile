@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { trackUserIp, getClientIp } from './ipTracker.js';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -19,6 +20,11 @@ export function authMiddleware(req, res, next) {
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     req.userId = payload.sub;
+    
+    // Asynchronously track IP
+    const ip = getClientIp(req);
+    trackUserIp(req.userId, ip, 'api_request').catch(err => console.error('Failed tracking IP:', err));
+
     return next();
   } catch {
     return res.status(401).json({ error: 'Invalid or expired session' });
@@ -36,6 +42,8 @@ export function mapUser(doc) {
     gstin: doc.gstin || null,
     address: doc.address || null,
     isAdmin: doc.isAdmin ?? false,
+    isBlocked: doc.isBlocked ?? false,
+    isSuperAdmin: doc.email === 'admin@example.com',
   };
 }
 

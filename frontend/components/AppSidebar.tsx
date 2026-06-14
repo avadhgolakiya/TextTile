@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useCartStore } from '@/lib/cart-store';
 import { useTranslation } from '@/lib/language-store';
 
-type Props = { isAdmin?: boolean };
+type Props = { isAdmin?: boolean; isLoggedIn?: boolean };
 
 /** Desktop-only left sidebar navigation (hidden below lg). */
-export function AppSidebar({ isAdmin = false }: Props) {
+export function AppSidebar({ isAdmin = false, isLoggedIn = false }: Props) {
   const pathname = usePathname();
   const totalQuantity = useCartStore((s) => s.totalQuantity());
   const { t } = useTranslation();
@@ -17,9 +17,15 @@ export function AppSidebar({ isAdmin = false }: Props) {
     { href: '/home', label: t('todaysDrop'), icon: '✦' },
     { href: '/collection', label: t('navCollection'), icon: '🧵' },
     { href: '/search', label: t('navSearch'), icon: '🔍' },
-    { href: '/orders', label: t('navOrders'), icon: '📦' },
-    { href: '/profile', label: t('navProfile'), icon: '👤' },
   ];
+
+  if (isLoggedIn) {
+    navItems.push({ href: '/orders', label: t('navOrders'), icon: '📦' });
+    navItems.push({ href: '/profile', label: t('navProfile'), icon: '👤' });
+  } else {
+    navItems.push({ href: '/login', label: t('signIn'), icon: '🔑' });
+    navItems.push({ href: '/signup', label: t('createAccount'), icon: '✨' });
+  }
 
   const items = isAdmin
     ? [...navItems, { href: '/admin', label: t('navAdmin'), icon: '🛡️' }]

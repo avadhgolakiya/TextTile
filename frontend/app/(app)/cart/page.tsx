@@ -29,7 +29,10 @@ export default function CartPage() {
   const summary = orderSummary(lines);
   const [buyerName, setBuyerName] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerAddress, setBuyerAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   useEffect(() => {
     const token = getToken();
@@ -39,6 +42,7 @@ export default function CartPage() {
       .then(({ user }) => {
         setBuyerName(user.businessName ?? user.email?.split('@')[0] ?? '');
         setBuyerPhone(user.phone ?? '');
+        setBuyerAddress(user.address ?? '');
       })
       .catch((err) => {
         console.error('Failed to auto-fetch profile in cart:', err);
@@ -47,6 +51,12 @@ export default function CartPage() {
 
   async function placeOrder() {
     if (!lines.length || !buyerName.trim()) return;
+
+    if (!buyerAddress.trim()) {
+      setIsAddressModalOpen(true);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -71,11 +81,29 @@ export default function CartPage() {
       lines,
       buyerName: buyerName.trim(),
       buyerPhone: buyerPhone.trim() || null,
+      buyerAddress: buyerAddress.trim() || null,
     });
 
     clear();
     setSubmitting(false);
     router.push('/orders');
+  }
+
+  async function handleSaveAddress(e: React.FormEvent) {
+    e.preventDefault();
+    if (!buyerAddress.trim()) return;
+    
+    setIsSavingAddress(true);
+    try {
+      const token = getToken();
+      await authApi.updateAddress(token, buyerAddress);
+      setIsAddressModalOpen(false);
+      // Automatically place order after saving address
+      placeOrder();
+    } catch (err) {
+      console.error(err);
+      setIsSavingAddress(false);
+    }
   }
 
   if (!lines.length) {
@@ -185,6 +213,52 @@ export default function CartPage() {
           </button>
         </div>
       </div>
+
+      {/* Address Edit Modal */}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+            <div className="flex justify-between items-center">
+              <h3 className="font-serif text-xl font-bold text-text-primary">
+                Add Shipping Address
+              </h3>
+              <button
+                onClick={() => setIsAddressModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-cream-deep hover:bg-divider transition text-text-secondary font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p className="text-sm text-text-secondary">
+              Please provide a shipping address before completing your order via WhatsApp.
+            </p>
+            
+            <form onSubmit={handleSaveAddress} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-text-secondary uppercase mb-2 block">
+                  Delivery Address
+                </label>
+                <textarea
+                  className="input-field min-h-[100px] resize-none"
+                  placeholder="Enter your complete address..."
+                  value={buyerAddress}
+                  onChange={(e) => setBuyerAddress(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={isSavingAddress || !buyerAddress.trim()}
+                className="btn-primary w-full h-12"
+              >
+                {isSavingAddress ? 'Saving...' : 'Save Address & Proceed'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
