@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getCollection } from '../db.js';
 import { authMiddleware, mapProduct } from '../lib/auth.js';
-import { notifyNewProduct } from '../lib/notifications.js';
+import { notifyNewProduct, notifyLowStock } from '../lib/notifications.js';
 import { logActivity } from '../lib/activity.js';
 
 const router = Router();
@@ -88,6 +88,7 @@ router.post('/', authMiddleware, async (req, res) => {
           categoryKey: p.categoryKey ?? null,
           isFeatured: req.body.isFeatured ?? false,
           isVisible: p.isVisible ?? true,
+          stock: p.stock != null ? Number(p.stock) : 0,
           updatedAt: new Date(),
         },
         $setOnInsert: {
@@ -101,6 +102,15 @@ router.post('/', authMiddleware, async (req, res) => {
       notifyNewProduct(p).catch((err) =>
         console.error('[FCM] notifyNewProduct failed:', err),
       );
+    } else if (!isNewProduct && existingProduct) {
+      // Check low stock
+      const oldStock = existingProduct.stock ?? 0;
+      const newStock = p.stock != null ? Number(p.stock) : 0;
+      if (oldStock > 10 && newStock > 0 && newStock <= 10) {
+        notifyLowStock({ ...existingProduct, ...p }).catch((err) =>
+          console.error('[FCM] notifyLowStock failed:', err),
+        );
+      }
     }
 
     await logActivity(req, isNewProduct ? 'created_product' : 'updated_product', { productId: p.id, name: p.name });
