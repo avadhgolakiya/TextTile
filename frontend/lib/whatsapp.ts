@@ -112,10 +112,8 @@ export async function openWhatsAppCart(options: {
     }
   }
 
-  const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  // Try Web Share API with files (mobile only)
-  if (isMobile && navigator.share && allImageUrls.length > 0) {
+  // Try Web Share API with files
+  if (typeof navigator !== 'undefined' && navigator.share && allImageUrls.length > 0) {
     try {
       const files = await fetchImageFiles(allImageUrls, ShopContact.businessName + '_Order');
       if (files.length > 0) {
@@ -192,10 +190,8 @@ export async function openWhatsAppSingleOrder(options: {
 
   const text = parts.join('\n');
 
-  const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  // Try Web Share API with files (mobile only)
-  if (isMobile && navigator.share && allImages.length > 0) {
+  // Try Web Share API with files
+  if (typeof navigator !== 'undefined' && navigator.share && allImages.length > 0) {
     try {
       const files = await fetchImageFiles(allImages, product.name);
       if (files.length > 0) {
