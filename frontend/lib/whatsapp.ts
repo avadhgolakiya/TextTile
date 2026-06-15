@@ -1,7 +1,7 @@
 import type { CartLine } from './types';
 import { formatInr } from './formatting/inr';
 import { ShopContact } from './constants/shop-contact';
-import { getFullImageUrl } from './image';
+import { getFullImageUrl, getWhatsAppThumbnailUrl } from './image';
 
 /** Port of lib/core/whatsapp/whatsapp_order_service.dart */
 export function buildCartMessage(options: {
@@ -37,6 +37,9 @@ export function buildCartMessage(options: {
       `   Sets: ${line.quantity} × ${formatInr(line.product.price)}`,
     );
     parts.push(`   Subtotal: ${formatInr(lineTotal)}`);
+    if (line.product.imageUrl) {
+      parts.push(`   📷 Photo: ${getWhatsAppThumbnailUrl(line.product.imageUrl)}`);
+    }
     parts.push('');
   });
 
@@ -166,10 +169,6 @@ export async function openWhatsAppSingleOrder(options: {
   if (note?.trim()) {
     parts.push(`Note: ${note.trim()}`);
   }
-  parts.push('━━━━━━━━━━━━━━━━━━━', `🛒 *Total: ${formatInr(product.price * quantity)}*`);
-  parts.push('', 'Please confirm my order.');
-
-  const text = parts.join('\n');
 
   // Resolve image URLs
   const allImages: string[] =
@@ -178,6 +177,18 @@ export async function openWhatsAppSingleOrder(options: {
       : product.imageUrl
       ? [getFullImageUrl(product.imageUrl)]
       : [];
+
+  if (allImages.length > 0) {
+    parts.push('', `📷 *Photos (${allImages.length}):*`);
+    allImages.forEach((img: string, i: number) => {
+      parts.push(`  ${i + 1}. ${getWhatsAppThumbnailUrl(img)}`);
+    });
+  }
+
+  parts.push('━━━━━━━━━━━━━━━━━━━', `🛒 *Total: ${formatInr(product.price * quantity)}*`);
+  parts.push('', 'Please confirm my order.');
+
+  const text = parts.join('\n');
 
   // Try Web Share API with files (mobile)
   if (typeof navigator !== 'undefined' && navigator.share && allImages.length > 0) {
