@@ -1,7 +1,7 @@
 import type { CartLine } from './types';
 import { formatInr } from './formatting/inr';
 import { ShopContact } from './constants/shop-contact';
-import { getFullImageUrl, getWhatsAppThumbnailUrl } from './image';
+import { getFullImageUrl } from './image';
 
 /** Port of lib/core/whatsapp/whatsapp_order_service.dart */
 export function buildCartMessage(options: {

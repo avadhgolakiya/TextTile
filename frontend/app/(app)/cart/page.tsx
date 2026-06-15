@@ -34,6 +34,7 @@ export default function CartPage() {
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerAddress, setBuyerAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isOrdering, setIsOrdering] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -63,6 +64,7 @@ export default function CartPage() {
     }
 
     setSubmitting(true);
+    setIsOrdering(true);
 
     try {
       const token = getToken();
@@ -82,7 +84,7 @@ export default function CartPage() {
       console.error('Failed to save order to database:', err);
     }
 
-    openWhatsAppCart({
+    await openWhatsAppCart({
       lines,
       buyerName: buyerName.trim(),
       buyerPhone: buyerPhone.trim() || null,
@@ -91,6 +93,7 @@ export default function CartPage() {
 
     clear();
     setSubmitting(false);
+    setIsOrdering(false);
     router.push('/orders');
   }
 
@@ -214,11 +217,19 @@ export default function CartPage() {
 
           <button
             type="button"
-            className="btn-primary w-full"
-            disabled={submitting}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+            disabled={submitting || isOrdering}
             onClick={placeOrder}
           >
-            {submitting ? t('placingOrder') : t('placeOrder')}
+            {isOrdering ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                </svg>
+                Preparing photos…
+              </>
+            ) : submitting ? t('placingOrder') : t('placeOrder')}
           </button>
         </div>
       </div>
