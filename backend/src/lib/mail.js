@@ -232,7 +232,7 @@ function buildWelcomeEmailHtml(name, email) {
     <div class="eml-help">
       <div class="eml-help-text">
         <strong style="color:#1a1a18;font-size:12px">Need help or have questions?</strong><br>
-        WhatsApp us at <a href="https://wa.me/919876543210">+91 98765 43210</a> or email <a href="mailto:support@swastikfashion.com">support@swastikfashion.com</a>. We typically respond within 2 hours on business days.
+        WhatsApp us at <a href="https://wa.me/917984143368">+91 79841 43368</a> or email <a href="mailto:support@swastikfashion.com">support@swastikfashion.com</a>. We typically respond within 2 hours on business days.
       </div>
     </div>
 
