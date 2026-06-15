@@ -37,9 +37,6 @@ export function buildCartMessage(options: {
       `   Sets: ${line.quantity} × ${formatInr(line.product.price)}`,
     );
     parts.push(`   Subtotal: ${formatInr(lineTotal)}`);
-    if (line.product.imageUrl) {
-      parts.push(`   📷 Photo: ${getWhatsAppThumbnailUrl(line.product.imageUrl)}`);
-    }
     parts.push('');
   });
 
@@ -65,16 +62,79 @@ export function whatsappCartUrl(options: {
   return `https://wa.me/${ShopContact.whatsappOrderDigits}?text=${encodeURIComponent(text)}`;
 }
 
-export function openWhatsAppCart(options: {
+/**
+ * Fetches image URLs as File objects for sharing.
+ * Skips any image that fails to fetch.
+ */
+async function fetchImageFiles(imageUrls: string[], productName: string): Promise<File[]> {
+  const files: File[] = [];
+  for (let i = 0; i < imageUrls.length; i++) {
+    try {
+      const res = await fetch(imageUrls[i]);
+      const blob = await res.blob();
+      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+      files.push(new File([blob], `${productName.replace(/\s+/g, '_')}_${i + 1}.${ext}`, { type: blob.type }));
+    } catch {
+      // skip failed image
+    }
+  }
+  return files;
+}
+
+/**
+ * Opens a WhatsApp order for the cart.
+ * On mobile: uses Web Share API to attach actual photos + text.
+ * On desktop: opens wa.me link (text only).
+ */
+export async function openWhatsAppCart(options: {
   lines: CartLine[];
   buyerName: string;
   buyerPhone?: string | null;
   buyerAddress?: string | null;
-}): void {
+}): Promise<void> {
+  const text = buildCartMessage(options);
+
+  // Collect all unique image URLs from all cart lines
+  const allImageUrls: string[] = [];
+  for (const line of options.lines) {
+    const urls =
+      line.product.imageUrls && line.product.imageUrls.length > 0
+        ? line.product.imageUrls
+        : line.product.imageUrl
+        ? [line.product.imageUrl]
+        : [];
+    for (const url of urls) {
+      const full = getFullImageUrl(url);
+      if (!allImageUrls.includes(full)) allImageUrls.push(full);
+    }
+  }
+
+  // Try Web Share API with files (mobile)
+  if (typeof navigator !== 'undefined' && navigator.share && allImageUrls.length > 0) {
+    try {
+      const files = await fetchImageFiles(allImageUrls, ShopContact.businessName + '_Order');
+      if (files.length > 0) {
+        const shareData: ShareData = { text, files };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          return;
+        }
+      }
+    } catch {
+      // fallthrough to wa.me link
+    }
+  }
+
+  // Fallback: wa.me text link
   window.open(whatsappCartUrl(options), '_blank', 'noopener,noreferrer');
 }
 
-export function openWhatsAppSingleOrder(options: {
+/**
+ * Opens a WhatsApp order for a single product.
+ * On mobile: uses Web Share API to attach actual photos + text.
+ * On desktop: opens wa.me link (text only).
+ */
+export async function openWhatsAppSingleOrder(options: {
   product: any;
   quantity: number;
   buyerName: string;
@@ -82,8 +142,10 @@ export function openWhatsAppSingleOrder(options: {
   buyerAddress?: string | null;
   note?: string;
   imageUrls?: string[];
-}): void {
+}): Promise<void> {
   const { product, quantity, buyerName, buyerPhone, buyerAddress, note, imageUrls } = options;
+
+  // Build order message
   const parts: string[] = [];
   parts.push(`🧵 *New Order — ${ShopContact.businessName}*`, '');
   parts.push(`👤 *Buyer:* ${buyerName}`);
@@ -104,24 +166,39 @@ export function openWhatsAppSingleOrder(options: {
   if (note?.trim()) {
     parts.push(`Note: ${note.trim()}`);
   }
-
-  // Include all product photos
-  const allImages = imageUrls && imageUrls.length > 0
-    ? imageUrls
-    : product.imageUrl
-      ? [product.imageUrl]
-      : [];
-
-  if (allImages.length > 0) {
-    parts.push('', `📷 *Photos (${allImages.length}):*`);
-    allImages.forEach((img: string, i: number) => {
-      parts.push(`  ${i + 1}. ${getWhatsAppThumbnailUrl(img)}`);
-    });
-  }
-
   parts.push('━━━━━━━━━━━━━━━━━━━', `🛒 *Total: ${formatInr(product.price * quantity)}*`);
   parts.push('', 'Please confirm my order.');
-  const text = parts.join('\n');
-  window.open(`https://wa.me/${ShopContact.whatsappOrderDigits}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-}
 
+  const text = parts.join('\n');
+
+  // Resolve image URLs
+  const allImages: string[] =
+    imageUrls && imageUrls.length > 0
+      ? imageUrls
+      : product.imageUrl
+      ? [getFullImageUrl(product.imageUrl)]
+      : [];
+
+  // Try Web Share API with files (mobile)
+  if (typeof navigator !== 'undefined' && navigator.share && allImages.length > 0) {
+    try {
+      const files = await fetchImageFiles(allImages, product.name);
+      if (files.length > 0) {
+        const shareData: ShareData = { text, files };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          return;
+        }
+      }
+    } catch {
+      // fallthrough to wa.me link
+    }
+  }
+
+  // Fallback: wa.me text link (desktop or unsupported browsers)
+  window.open(
+    `https://wa.me/${ShopContact.whatsappOrderDigits}?text=${encodeURIComponent(text)}`,
+    '_blank',
+    'noopener,noreferrer',
+  );
+}
