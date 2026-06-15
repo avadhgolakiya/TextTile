@@ -112,23 +112,7 @@ export async function openWhatsAppCart(options: {
     }
   }
 
-  // Try Web Share API with files
-  if (typeof navigator !== 'undefined' && navigator.share && allImageUrls.length > 0) {
-    try {
-      const files = await fetchImageFiles(allImageUrls, ShopContact.businessName + '_Order');
-      if (files.length > 0) {
-        const shareData: ShareData = { text, files };
-        if (navigator.canShare && navigator.canShare(shareData)) {
-          await navigator.share(shareData);
-          return;
-        }
-      }
-    } catch {
-      // fallthrough to wa.me link
-    }
-  }
-
-  // Fallback: wa.me text link
+  // Open wa.me text link directly
   window.open(whatsappCartUrl(options), '_blank', 'noopener,noreferrer');
 }
 
@@ -190,23 +174,7 @@ export async function openWhatsAppSingleOrder(options: {
 
   const text = parts.join('\n');
 
-  // Try Web Share API with files
-  if (typeof navigator !== 'undefined' && navigator.share && allImages.length > 0) {
-    try {
-      const files = await fetchImageFiles(allImages, product.name);
-      if (files.length > 0) {
-        const shareData: ShareData = { text, files };
-        if (navigator.canShare && navigator.canShare(shareData)) {
-          await navigator.share(shareData);
-          return;
-        }
-      }
-    } catch {
-      // fallthrough to wa.me link
-    }
-  }
-
-  // Fallback: wa.me text link (desktop or unsupported browsers)
+  // Open wa.me text link directly
   window.open(
     `https://wa.me/${ShopContact.whatsappOrderDigits}?text=${encodeURIComponent(text)}`,
     '_blank',
