@@ -167,7 +167,10 @@ export default function CartPage() {
                   <button
                     type="button"
                     className="rounded-full border px-3 py-1 transition hover:border-maroon hover:bg-cream-deep lg:cursor-pointer lg:px-4 lg:py-1.5"
-                    onClick={() => setQuantity(line.product.id, line.quantity + 1)}
+                    onClick={() => {
+                      const maxQty = line.product.stock && line.product.stock > 0 ? line.product.stock : 999;
+                      setQuantity(line.product.id, Math.min(maxQty, line.quantity + 1));
+                    }}
                   >
                     +
                   </button>

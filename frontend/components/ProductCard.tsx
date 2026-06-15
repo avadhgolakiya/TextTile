@@ -35,6 +35,20 @@ export function ProductCard({ product }: { product: Product }) {
     }
   }
 
+  async function handleShare(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.share({
+        title: product.name,
+        text: `Check out ${product.name} at Swastik Fashion!`,
+        url: `${window.location.origin}/products/${product.id}`,
+      });
+    } catch (err) {
+      console.log('Share failed or was canceled', err);
+    }
+  }
+
   return (
     <div className="relative group">
     <Link
@@ -110,6 +124,17 @@ export function ProductCard({ product }: { product: Product }) {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
       </svg>
     </button>
+    {typeof navigator !== 'undefined' && navigator.share && (
+      <button
+        onClick={handleShare}
+        className="absolute top-[88px] right-2 w-9 h-9 rounded-full bg-surface/80 backdrop-blur-sm border border-divider shadow-sm flex items-center justify-center transition-all z-10 lg:opacity-0 lg:group-hover:opacity-100 text-text-secondary hover:text-maroon"
+        title="Share Product"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        </svg>
+      </button>
+    )}
     </div>
   );
 }

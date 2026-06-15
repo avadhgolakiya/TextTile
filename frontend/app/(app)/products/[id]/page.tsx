@@ -38,6 +38,36 @@ export default function ProductDetailPage() {
   const [buyerAddress, setBuyerAddress] = useState('');
   const addToCart = useCartStore((s) => s.add);
   const [isHovered, setIsHovered] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsHovered(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    setIsHovered(false);
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    const imageUrls = product?.imageUrls?.length ? product.imageUrls : (product?.imageUrl ? [product.imageUrl] : []);
+
+    if (isLeftSwipe) {
+      setActiveImageIdx((prev) => (prev < imageUrls.length - 1 ? prev + 1 : 0));
+    } else if (isRightSwipe) {
+      setActiveImageIdx((prev) => (prev > 0 ? prev - 1 : imageUrls.length - 1));
+    }
+  };
 
   useEffect(() => {
     if (!product || isHovered) return;
@@ -279,9 +309,12 @@ export default function ProductDetailPage() {
             className="relative bg-surface rounded-card overflow-hidden shadow-sm border border-divider group"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {images.length > 0 ? (
-              <div className="relative w-full aspect-[9/16]">
+              <div className="relative w-full aspect-[9/16] transition-transform duration-300">
                 <img
                   src={images[activeImageIdx]}
                   alt={product.name}
@@ -452,7 +485,10 @@ export default function ProductDetailPage() {
               </button>
               <span className="text-base font-semibold w-8 text-center">{quantity}</span>
               <button
-                onClick={() => setQuantity(q => Math.min(999, q + 1))}
+                onClick={() => {
+                  const maxQty = product.stock && product.stock > 0 ? product.stock : 999;
+                  setQuantity(q => Math.min(maxQty, q + 1));
+                }}
                 className="w-10 h-10 border border-divider rounded-full flex items-center justify-center text-lg hover:bg-cream-deep transition"
               >
                 +
