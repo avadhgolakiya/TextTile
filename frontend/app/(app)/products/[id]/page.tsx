@@ -37,6 +37,24 @@ export default function ProductDetailPage() {
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerAddress, setBuyerAddress] = useState('');
   const addToCart = useCartStore((s) => s.add);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (!product || isHovered) return;
+    
+    const imageUrls = product.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [];
+        
+    if (imageUrls.length > 1) {
+      const interval = setInterval(() => {
+        setActiveImageIdx((prev) => (prev < imageUrls.length - 1 ? prev + 1 : 0));
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [product, isHovered]);
 
   useEffect(() => {
     productApi
@@ -257,7 +275,11 @@ export default function ProductDetailPage() {
       <div className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-8 lg:max-w-none lg:px-0 lg:py-0 lg:gap-12 xl:grid-cols-[1.1fr_0.9fr]">
         {/* Left Column: Image Gallery */}
         <div className="space-y-4">
-          <div className="relative bg-surface rounded-card overflow-hidden shadow-sm border border-divider">
+          <div 
+            className="relative bg-surface rounded-card overflow-hidden shadow-sm border border-divider group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
             {images.length > 0 ? (
               <div className="relative w-full aspect-[9/16]">
                 <img
@@ -265,6 +287,28 @@ export default function ProductDetailPage() {
                   alt={product.name}
                   className="absolute inset-0 w-full h-full object-contain"
                 />
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setActiveImageIdx((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white text-text-primary rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      aria-label="Previous image"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setActiveImageIdx((prev) => (prev < images.length - 1 ? prev + 1 : 0))}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white text-text-primary rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      aria-label="Next image"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="w-full aspect-[9/16] bg-cream-deep flex items-center justify-center text-text-secondary">
@@ -361,7 +405,7 @@ export default function ProductDetailPage() {
               )}
             </div>
             <p className="text-xs text-text-secondary">
-              {t('estimatedFor')} {quantity} {t('pcLabel')}: {formatInr(product.price * quantity)}
+              {t('estimatedFor')} {quantity} {product.sareeSet ? 'Set(s)' : t('pcLabel')}: {formatInr(product.price * quantity)}
             </p>
           </div>
 

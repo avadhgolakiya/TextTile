@@ -11,29 +11,29 @@ const router = Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, mobile, gstin, businessName } = req.body || {};
-    if (!name || !email || !password || !mobile || !gstin || !businessName) {
+    const { name, password, mobile, gstin, businessName, address } = req.body || {};
+    if (!name || !password || !mobile || !gstin || !businessName || !address) {
       return res
         .status(400)
-        .json({ error: 'name, email, password, mobile, gstin, and businessName are required' });
+        .json({ error: 'name, password, mobile, address, gstin, and businessName are required' });
     }
-    const em = String(email).trim().toLowerCase();
+    const phoneNum = String(mobile).trim();
     const hash = await bcrypt.hash(String(password), 10);
 
     const usersColl = getCollection('users');
-    const existing = await usersColl.findOne({ email: em });
+    const existing = await usersColl.findOne({ phone: phoneNum });
     if (existing) {
-      return res.status(409).json({ error: 'An account already exists for this email.' });
+      return res.status(409).json({ error: 'An account already exists with this mobile number.' });
     }
 
     const doc = {
       name: String(name).trim(),
-      email: em,
+      email: null,
       passwordHash: hash,
-      phone: String(mobile).trim(),
+      phone: phoneNum,
       gstin: String(gstin).trim().toUpperCase(),
       businessName: String(businessName).trim(),
-      address: null, // Address can be added later during checkout
+      address: String(address).trim(),
       isAdmin: false,
       createdAt: new Date(),
     };
@@ -51,15 +51,23 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ error: 'email and password are required' });
+    const { identifier, password } = req.body || {};
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'identifier and password are required' });
     }
-    const em = String(email).trim().toLowerCase();
+    const idStr = String(identifier).trim();
     const usersColl = getCollection('users');
-    const userDoc = await usersColl.findOne({ email: em });
+    
+    // Check if it looks like an email or a phone number
+    const userDoc = await usersColl.findOne({ 
+      $or: [
+        { email: idStr.toLowerCase() },
+        { phone: idStr }
+      ] 
+    });
+    
     if (!userDoc) {
-      return res.status(401).json({ error: 'No account found for that email.' });
+      return res.status(401).json({ error: 'No account found.' });
     }
     const ip = getClientIp(req);
     if (userDoc.isBlocked) {

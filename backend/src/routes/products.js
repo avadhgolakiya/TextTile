@@ -66,7 +66,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const p = req.body?.product;
-    if (!p?.id || !p?.name || p.price == null) {
+    if (!p?.id || !p?.name) {
       return res.status(400).json({ error: 'Invalid product payload' });
     }
 
@@ -80,7 +80,7 @@ router.post('/', authMiddleware, async (req, res) => {
         $set: {
           name: p.name,
           subtitle: p.subtitle ?? '',
-          price: p.price,
+          price: p.price != null ? Number(p.price) : 0,
           originalPrice: p.originalPrice ?? null,
           imageUrl: p.imageUrl ?? '',
           imageUrls: p.imageUrls ?? [],

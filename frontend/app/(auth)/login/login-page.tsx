@@ -13,7 +13,7 @@ export default function LoginPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') ?? '/home';
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,14 +24,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await authApi.login(email.trim(), password);
+      const res = await authApi.login(identifier, password);
       // Save token in cookie (30 days expiry)
       document.cookie = `token=${res.accessToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
       
       router.replace(next);
       router.refresh();
     } catch (err: any) {
-      setError(err.message || 'Incorrect email or password.');
+      setError(err.message || 'Incorrect credentials.');
     } finally {
       setLoading(false);
     }
@@ -51,14 +51,20 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={onSubmit} className="card space-y-4 p-6 lg:p-8">
-          <input
-            className="input-field"
-            type="email"
-            placeholder={t('emailAddress')}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          {/* Email or Mobile Number */}
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary mb-1">
+              Email or Mobile Number
+            </label>
+            <input
+              className="input-field"
+              type="text"
+              placeholder="e.g. user@example.com or 9876543210"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              required
+            />
+          </div>
           <input
             className="input-field"
             type="password"

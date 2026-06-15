@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [newAddress, setNewAddress] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const clearCart = useCartStore((s) => s.clear);
@@ -111,14 +112,18 @@ export default function ProfilePage() {
         setIsAddressModalOpen(true);
       }
     },
-    { title: t('paymentMethods'), subtitle: t('paymentMethodsSubtitle'), icon: '💳' },
     { 
       title: t('preferences'), 
       subtitle: `${t('preferencesSubtitle')} (${currentLangLabel})`, 
       icon: '⚙️', 
       action: () => setLangModalOpen(true) 
     },
-    { title: t('helpSupport'), subtitle: t('helpSupportSubtitle'), icon: '❓' },
+    { 
+      title: t('helpSupport'), 
+      subtitle: t('helpSupportSubtitle'), 
+      icon: '❓',
+      action: () => setIsHelpModalOpen(true)
+    },
   ];
 
   return (
@@ -313,6 +318,61 @@ export default function ProfilePage() {
                 {isSavingAddress ? 'Saving...' : 'Save Address'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Help & Support Modal */}
+      {isHelpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-surface rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+            <div className="flex justify-between items-center">
+              <h3 className="font-serif text-xl font-bold text-text-primary">
+                Help & Support
+              </h3>
+              <button
+                onClick={() => setIsHelpModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-cream-deep hover:bg-divider transition text-text-secondary font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-text-secondary">
+                If you have any questions or need assistance, feel free to reach out to us on WhatsApp:
+              </p>
+              
+              <div className="space-y-3">
+                <a
+                  href="https://wa.me/917984143368"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-2xl border border-divider bg-cream-deep hover:border-green-500 hover:bg-green-50 transition"
+                >
+                  <span className="text-2xl">💬</span>
+                  <div className="flex-1">
+                    <div className="font-bold text-text-primary">Support</div>
+                    <div className="text-sm text-text-secondary">+91 79841 43368</div>
+                  </div>
+                  <span className="text-green-600 font-bold">→</span>
+                </a>
+
+                <a
+                  href="https://wa.me/918849502490"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-2xl border border-divider bg-cream-deep hover:border-green-500 hover:bg-green-50 transition"
+                >
+                  <span className="text-2xl">💬</span>
+                  <div className="flex-1">
+                    <div className="font-bold text-text-primary">Dineshbhai</div>
+                    <div className="text-sm text-text-secondary">+91 88495 02490</div>
+                  </div>
+                  <span className="text-green-600 font-bold">→</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}

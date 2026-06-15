@@ -47,12 +47,13 @@ export default function AdminPage() {
     imageUrl: '',
     imageUrls: [],
     badge: null,
-    categoryKey: 'sarees',
+    categoryKey: '',
     isVisible: true,
     sareeSet: '',
     stock: 0,
   });
   const [isFeatured, setIsFeatured] = useState(false);
+  const [isSetProduct, setIsSetProduct] = useState(false);
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [newBannerUrl, setNewBannerUrl] = useState('');
@@ -190,13 +191,14 @@ export default function AdminPage() {
       imageUrl: p.imageUrl,
       imageUrls: p.imageUrls || [],
       badge: p.badge,
-      categoryKey: p.categoryKey || 'sarees',
+      categoryKey: p.categoryKey || '',
       isVisible: p.isVisible,
       sareeSet: p.sareeSet || '',
       stock: p.stock ?? 0,
     });
-    // Check if featured (for demo/seeding)
-    setIsFeatured(false);
+    // Check if featured
+    setIsFeatured(p.isFeatured ?? false);
+    setIsSetProduct(!!p.sareeSet);
     setIsFormOpen(true);
   }
 
@@ -210,22 +212,24 @@ export default function AdminPage() {
       imageUrl: '',
       imageUrls: [],
       badge: null,
-      categoryKey: 'sarees',
+      categoryKey: '',
       isVisible: true,
       sareeSet: '',
       stock: 0,
     });
     setIsFeatured(false);
+    setIsSetProduct(false);
     setIsFormOpen(true);
   }
 
   async function handleImageFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File is too large. Max limit is 5MB.');
-      return;
+    const validFiles = files.filter((f) => f.size <= 5 * 1024 * 1024);
+    if (validFiles.length < files.length) {
+      setUploadError('Some files were too large. Max limit is 5MB per file.');
+      if (validFiles.length === 0) return;
     }
 
     setUploadingImage(true);
@@ -233,23 +237,35 @@ export default function AdminPage() {
 
     const token = getToken();
     try {
-      const res = await productApi.uploadImage(token, file);
+      const uploadPromises = validFiles.map((f) => productApi.uploadImage(token, f));
+      const results = await Promise.all(uploadPromises);
+
       setFormProduct((prev) => {
         const newUrls = [...(prev.imageUrls || [])];
-        if (!newUrls.includes(res.imageUrl)) {
-          newUrls.push(res.imageUrl);
-        }
+        let primaryUrl = prev.imageUrl;
+
+        results.forEach((res) => {
+          if (!newUrls.includes(res.imageUrl)) {
+            newUrls.push(res.imageUrl);
+          }
+          if (!primaryUrl) {
+            primaryUrl = res.imageUrl;
+          }
+        });
+
         return {
           ...prev,
           imageUrls: newUrls,
-          imageUrl: prev.imageUrl || res.imageUrl, // Set primary image if none exists
+          imageUrl: primaryUrl,
         };
       });
-      toast.success('Image uploaded successfully');
+      toast.success(
+        results.length > 1 ? `${results.length} images uploaded successfully` : 'Image uploaded successfully'
+      );
     } catch (err: any) {
       console.error(err);
       setUploadError(err.message || 'Image upload failed. Please try again.');
-      toast.error('Failed to upload image');
+      toast.error('Failed to upload image(s)');
     } finally {
       setUploadingImage(false);
       e.target.value = '';
@@ -500,8 +516,17 @@ export default function AdminPage() {
   const uniqueSets = Array.from(
     new Set(
       products
+        .filter((p) => !formProduct.categoryKey || p.categoryKey?.toLowerCase() === formProduct.categoryKey.toLowerCase())
         .map((p) => p.sareeSet)
         .filter((set): set is string => typeof set === 'string' && set.trim() !== '')
+    )
+  ).sort();
+
+  const uniqueCategories = Array.from(
+    new Set(
+      products
+        .map((p) => p.categoryKey)
+        .filter((cat): cat is string => typeof cat === 'string' && cat.trim() !== '')
     )
   ).sort();
 
@@ -931,15 +956,18 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-text-secondary uppercase">Category</label>
-                  <select
+                  <input
+                    list="categories-list"
                     className="input-field py-3.5"
-                    value={formProduct.categoryKey || 'sarees'}
+                    placeholder="e.g. sarees, suits..."
+                    value={formProduct.categoryKey || ''}
                     onChange={(e) => setFormProduct({ ...formProduct, categoryKey: e.target.value })}
-                  >
-                    <option value="sarees">Sarees</option>
-                    <option value="suits">Suits</option>
-                    <option value="lehenga">Lehenga</option>
-                  </select>
+                  />
+                  <datalist id="categories-list">
+                    {uniqueCategories.map((cat) => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
@@ -1042,6 +1070,7 @@ export default function AdminPage() {
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       onChange={handleImageFileUpload}
                     />
@@ -1077,21 +1106,53 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-text-secondary uppercase">Saree Set (Design Group)</label>
-                <input
-                  list="saree-sets"
-                  placeholder="e.g. Design 101, Floral-Zari-Set"
-                  className="input-field"
-                  value={formProduct.sareeSet || ''}
-                  onChange={(e) => setFormProduct({ ...formProduct, sareeSet: e.target.value })}
-                />
-                <datalist id="saree-sets">
-                  {uniqueSets.map((set) => (
-                    <option key={set} value={set} />
-                  ))}
-                </datalist>
+              {/* Product Type Selection */}
+              <div className="space-y-2 border border-divider rounded-xl p-3 bg-surface">
+                <label className="text-xs font-bold text-text-secondary uppercase">Product Type</label>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 text-sm text-text-primary font-medium cursor-pointer">
+                    <input
+                      type="radio"
+                      name="productType"
+                      checked={!isSetProduct}
+                      onChange={() => {
+                        setIsSetProduct(false);
+                        setFormProduct({ ...formProduct, sareeSet: '' });
+                      }}
+                      className="accent-maroon w-4 h-4"
+                    />
+                    Single Product
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-text-primary font-medium cursor-pointer">
+                    <input
+                      type="radio"
+                      name="productType"
+                      checked={isSetProduct}
+                      onChange={() => setIsSetProduct(true)}
+                      className="accent-maroon w-4 h-4"
+                    />
+                    Part of a Set
+                  </label>
+                </div>
               </div>
+
+              {isSetProduct && (
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-text-secondary uppercase">Saree Set (Design Group)</label>
+                  <input
+                    list="saree-sets"
+                    placeholder="e.g. Design 101, Floral-Zari-Set"
+                    className="input-field"
+                    value={formProduct.sareeSet || ''}
+                    onChange={(e) => setFormProduct({ ...formProduct, sareeSet: e.target.value })}
+                  />
+                  <datalist id="saree-sets">
+                    {uniqueSets.map((set) => (
+                      <option key={set} value={set} />
+                    ))}
+                  </datalist>
+                </div>
+              )}
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-text-secondary uppercase">Badge Text (Optional)</label>
@@ -1172,7 +1233,7 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase">Sets</label>
+                  <label className="text-xs font-bold text-text-secondary uppercase">Qty / Sets</label>
                   <input
                     type="number"
                     required

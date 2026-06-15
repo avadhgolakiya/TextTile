@@ -11,6 +11,7 @@ export type Product = {
   isVisible: boolean;
   sareeSet?: string | null;
   stock?: number;
+  isFeatured?: boolean;
 };
 
 export type CartLine = {

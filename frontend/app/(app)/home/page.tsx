@@ -5,12 +5,13 @@ import { ProductCard } from '@/components/ProductCard';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { BannerSlider } from '@/components/BannerSlider';
-import { CATEGORIES, FALLBACK_BANNER } from '@/lib/constants/sample-data';
+import { FALLBACK_BANNER } from '@/lib/constants/sample-data';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/lib/types';
 import { productApi, bannerApi } from '@/lib/api-client';
 import { useTranslation } from '@/lib/language-store';
+import { getFullImageUrl, isValidImageUrl } from '@/lib/image';
 
 /** Port of lib/features/home/home_screen.dart */
 export default function HomePage() {
@@ -21,7 +22,7 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      productApi.fetchFeatured().then((res) => res.products).catch(() => []),
+      productApi.fetchAll().then((res) => res.products).catch(() => []),
       bannerApi.fetchUrls().then((res) => res.banners.length ? res.banners : [{ image_url: FALLBACK_BANNER }]).catch(() => [{ image_url: FALLBACK_BANNER }])
     ]).then(([prodRes, bannerRes]) => {
       setProducts(prodRes);
@@ -29,6 +30,22 @@ export default function HomePage() {
       setLoading(false);
     });
   }, []);
+
+  const categoriesWithImages: { name: string; imageUrl: string }[] = [];
+  const seenCategories = new Set<string>();
+
+  products.forEach((p) => {
+    const cat = p.categoryKey?.trim();
+    if (cat && !seenCategories.has(cat.toLowerCase())) {
+      seenCategories.add(cat.toLowerCase());
+      categoriesWithImages.push({
+        name: cat,
+        imageUrl: p.imageUrl || FALLBACK_BANNER
+      });
+    }
+  });
+
+  const featuredProducts = products.filter(p => p.isFeatured);
 
   if (loading) {
     return (
@@ -55,26 +72,35 @@ export default function HomePage() {
         </Link>
       </header>
 
-      <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-        <BannerSlider banners={banners} />
+      <BannerSlider banners={banners} />
 
-        <section className="mt-8 lg:col-span-4 lg:mt-0">
-          <h2 className="mb-3 font-serif text-xl font-semibold lg:mb-4 lg:text-2xl">
-            {t('categories')}
-          </h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
-            {CATEGORIES.map((cat) => (
+      {/* Circle Categories Section */}
+      {categoriesWithImages.length > 0 && (
+        <section className="pt-2">
+          <h2 className="mb-4 font-serif text-2xl font-semibold">Scroll. Pick. Shop.</h2>
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+            {categoriesWithImages.map((cat) => (
               <Link
-                key={cat.label}
-                href={`/products?category=${encodeURIComponent(cat.label.toLowerCase())}`}
-                className="shrink-0 rounded-full border border-divider bg-cream-deep px-4 py-2 text-sm transition hover:border-gold hover:bg-surface lg:rounded-2xl lg:px-5 lg:py-3 lg:text-base"
+                key={cat.name}
+                href={`/collection?category=${encodeURIComponent(cat.name)}`}
+                className="flex flex-col items-center gap-2 shrink-0 group w-[72px] lg:w-24"
               >
-                {cat.icon} {cat.label}
+                <div className="w-[72px] h-[72px] lg:w-24 lg:h-24 rounded-full overflow-hidden border border-divider group-hover:border-maroon transition duration-300 shadow-sm relative">
+                  <Image
+                    src={isValidImageUrl(cat.imageUrl) ? getFullImageUrl(cat.imageUrl) : FALLBACK_BANNER}
+                    alt={cat.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <span className="text-[11px] lg:text-xs font-semibold text-text-primary text-center capitalize line-clamp-2 leading-tight group-hover:text-maroon transition">
+                  {cat.name}
+                </span>
               </Link>
             ))}
           </div>
         </section>
-      </div>
+      )}
 
       <section>
         <div className="mb-4 flex items-end justify-between lg:mb-6">
@@ -87,11 +113,11 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5 items-start">
-          {products.map((product) => (
+          {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
-        {products.length === 0 ? (
+        {featuredProducts.length === 0 ? (
           <p className="text-sm text-text-secondary">{t('noFeaturedProducts')}</p>
         ) : null}
       </section>

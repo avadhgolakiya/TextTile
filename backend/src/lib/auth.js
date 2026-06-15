@@ -66,5 +66,6 @@ export function mapProduct(doc) {
     isVisible: doc.isVisible ?? true,
     sareeSet: doc.sareeSet ?? null,
     stock: doc.stock ?? 0,
+    isFeatured: doc.isFeatured ?? false,
   };
 }

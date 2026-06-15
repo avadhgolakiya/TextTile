@@ -74,7 +74,7 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
 
   return (
     <div 
-      className="relative aspect-[21/9] w-full overflow-hidden rounded-card lg:col-span-8 group shadow-sm border border-divider/30"
+      className="relative aspect-[21/9] w-full overflow-hidden rounded-card group shadow-sm border border-divider/30"
       onMouseEnter={stopAutoplay}
       onMouseLeave={startAutoplay}
     >

@@ -3,6 +3,7 @@ import { Router } from 'express';
 const router = Router();
 
 const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
 
 router.post('/verify-gst', async (req, res) => {
   try {
@@ -14,6 +15,20 @@ router.post('/verify-gst', async (req, res) => {
     const uppercaseGstin = String(gstin).trim().toUpperCase();
 
     // 1. Format validation (Regex check)
+    const isPan = uppercaseGstin.length === 10;
+    
+    if (isPan) {
+      if (!PAN_REGEX.test(uppercaseGstin)) {
+        return res.status(200).json({ valid: false, message: 'Invalid PAN format' });
+      }
+      return res.json({
+        valid: true,
+        businessName: 'PAN Verified',
+        tradeName: 'N/A',
+        status: 'Active',
+      });
+    }
+
     if (!GSTIN_REGEX.test(uppercaseGstin)) {
       return res.status(200).json({ valid: false, message: 'Invalid GST format' });
     }

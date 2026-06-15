@@ -133,14 +133,13 @@ export const orderApi = {
 };
 
 export const authApi = {
-  login: (email: string, password: string) =>
+  login: (identifier: string, password: string) =>
     apiFetch<{ accessToken: string; user: AppUser }>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     }),
   register: (payload: {
     name: string;
-    email: string;
     password: string;
     mobile: string;
     gstin: string;

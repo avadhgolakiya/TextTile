@@ -18,10 +18,12 @@ export default function BlockedPage() {
           You are blocked by admin. Your access to this application has been restricted. If you believe this is a mistake, please reach out to support.
         </p>
         <a
-          href="mailto:support@swastikfashion.com"
-          className="btn-primary block w-full rounded-2xl bg-maroon px-4 py-3 text-sm font-bold text-white transition hover:bg-maroon-dark"
+          href="https://wa.me/917984143368"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-primary block w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-green-700"
         >
-          Contact Support
+          Contact on WhatsApp
         </a>
       </div>
     </div>

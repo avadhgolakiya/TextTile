@@ -20,6 +20,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'Swastik Fashion — Wholesale Sarees',
   description: 'Wholesale buyer app for Swastik Fashion',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Swastik Fashion',
+  },
 };
 
 export default function RootLayout({

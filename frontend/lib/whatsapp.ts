@@ -34,22 +34,17 @@ export function buildCartMessage(options: {
       parts.push(`   Details: ${line.product.subtitle}`);
     }
     parts.push(
-      `   Sets: ${line.quantity} × ${formatInr(line.product.price)}`,
+      `   ${line.product.sareeSet ? 'Sets' : 'Qty'}: ${line.quantity}`,
     );
-    parts.push(`   Subtotal: ${formatInr(lineTotal)}`);
     if (line.product.imageUrl) {
       parts.push(`   📷 Photo: ${getWhatsAppThumbnailUrl(line.product.imageUrl)}`);
     }
     parts.push('');
   });
 
-  const discounted = Math.round(runningTotal * 0.9);
   parts.push(
     '━━━━━━━━━━━━━━━━━━━',
-    `🛒 *Total: ${formatInr(runningTotal)}*`,
-    `💰 *After 10% discount: ${formatInr(discounted)}*`,
-    '',
-    'Please confirm my order. I will visit your shop for pickup.',
+    'thank you for shooping have a nice day 🙂',
   );
 
   return parts.join('\n');
@@ -148,8 +143,7 @@ export async function openWhatsAppSingleOrder(options: {
   if (product.subtitle) {
     parts.push(`Details: ${product.subtitle}`);
   }
-  parts.push(`Sets: ${quantity} × ${formatInr(product.price)}`);
-  parts.push(`Subtotal: ${formatInr(product.price * quantity)}`);
+  parts.push(`${product.sareeSet ? 'Sets' : 'Qty'}: ${quantity}`);
   if (note?.trim()) {
     parts.push(`Note: ${note.trim()}`);
   }
@@ -168,9 +162,7 @@ export async function openWhatsAppSingleOrder(options: {
       parts.push(`  ${i + 1}. ${getWhatsAppThumbnailUrl(img)}`);
     });
   }
-
-  parts.push('━━━━━━━━━━━━━━━━━━━', `🛒 *Total: ${formatInr(product.price * quantity)}*`);
-  parts.push('', 'Please confirm my order.');
+  parts.push('━━━━━━━━━━━━━━━━━━━', 'thank you for shooping have a nice day 🙂');
 
   const text = parts.join('\n');
 

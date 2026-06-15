@@ -8,13 +8,11 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product } from '@/lib/types';
 import { useTranslation } from '@/lib/language-store';
 
-const filters = ['All', 'Sarees', 'Suits', 'Lehenga'];
-
 export default function CollectionPage() {
   const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState('All');
+  const [selected, setSelected] = useState('');
 
   useEffect(() => {
     productApi
@@ -22,6 +20,22 @@ export default function CollectionPage() {
       .then(({ products }) => {
         setProducts(products);
         setLoading(false);
+        const cats = Array.from(
+          new Set(
+            products
+              .map((p) => p.categoryKey)
+              .filter((cat): cat is string => typeof cat === 'string' && cat.trim() !== '')
+          )
+        ).sort();
+        
+        const params = new URLSearchParams(window.location.search);
+        const catParam = params.get('category');
+        
+        if (catParam) {
+          setSelected(catParam);
+        } else if (cats.length > 0) {
+          setSelected(cats[0].charAt(0).toUpperCase() + cats[0].slice(1));
+        }
       })
       .catch((err) => {
         console.error(err);
@@ -29,13 +43,20 @@ export default function CollectionPage() {
       });
   }, []);
 
+  const dynamicCategories = Array.from(
+    new Set(
+      products
+        .map((p) => p.categoryKey)
+        .filter((cat): cat is string => typeof cat === 'string' && cat.trim() !== '')
+    )
+  )
+    .map((cat) => cat.charAt(0).toUpperCase() + cat.slice(1))
+    .sort();
+  
+  const filters = dynamicCategories;
+
   const filteredProducts = products.filter((p) => {
-    if (selected === 'All') return true;
-    return (
-      p.name.toLowerCase().includes(selected.toLowerCase()) ||
-      p.subtitle.toLowerCase().includes(selected.toLowerCase()) ||
-      p.categoryKey?.toLowerCase() === selected.toLowerCase()
-    );
+    return p.categoryKey?.toLowerCase() === selected.toLowerCase();
   });
 
   // Group products by set

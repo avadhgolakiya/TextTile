@@ -15,7 +15,8 @@ export default function SignUpPage() {
   
   // Registration form states
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [address, setAddress] = useState('');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   
@@ -41,7 +42,9 @@ export default function SignUpPage() {
       const result = await authApi.verifyGst(value);
       if (result.valid && result.businessName) {
         setGstVerified(true);
-        setVerifiedBusinessName(result.businessName);
+        if (result.businessName && result.businessName !== 'PAN Verified') {
+          setBusinessName(result.businessName);
+        }
       } else {
         setGstVerified(false);
         setGstError(result.message || 'GST not found or inactive');
@@ -65,17 +68,11 @@ export default function SignUpPage() {
       setGstVerified(false);
       setGstLoading(false);
       setGstError(null);
-      setVerifiedBusinessName('');
       return;
     }
 
-    // Trigger verification instantly when 15 characters are entered
-    if (uppercaseVal.length === 15) {
-      if (!GSTIN_REGEX.test(uppercaseVal)) {
-        setGstVerified(false);
-        setGstError('Invalid GST format');
-        return;
-      }
+    // Trigger verification instantly when 10 (PAN) or 15 (GST) characters are entered
+    if (uppercaseVal.length === 10 || uppercaseVal.length === 15) {
       verifyGstin(uppercaseVal);
     }
   }
@@ -85,8 +82,8 @@ export default function SignUpPage() {
     e.preventDefault();
     setFormError(null);
     
-    if (!gstVerified) {
-      setFormError('Please verify your GST number before proceeding.');
+    if (gstin.length > 0 && !gstVerified) {
+      setFormError('Please enter a valid GST or PAN before proceeding.');
       return;
     }
 
@@ -95,11 +92,11 @@ export default function SignUpPage() {
     try {
       const res = await authApi.register({
         name: fullName.trim(),
-        email: email.trim(),
         password,
         mobile: mobile.trim(),
         gstin: gstin.trim(),
-        businessName: verifiedBusinessName.trim(),
+        businessName: businessName.trim(),
+        address: address.trim(),
       });
 
       // Save token in cookie (30 days expiry)
@@ -140,15 +137,14 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Email */}
+            {/* Shop Name */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1">{t('emailAddress')}</label>
+              <label className="block text-xs font-semibold text-text-secondary mb-1">Shop Name</label>
               <input
                 className="input-field"
-                type="email"
-                placeholder={t('emailAddress')}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your shop or business name"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
                 required
               />
             </div>
@@ -164,6 +160,18 @@ export default function SignUpPage() {
                 title="Please enter a valid 10-digit mobile number"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                required
+              />
+            </div>
+
+            {/* Shop Address */}
+            <div>
+              <label className="block text-xs font-semibold text-text-secondary mb-1">Shop Address</label>
+              <input
+                className="input-field"
+                placeholder="Enter complete shop address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 required
               />
             </div>
@@ -185,7 +193,7 @@ export default function SignUpPage() {
             {/* GST Number with auto-verify */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="block text-xs font-semibold text-text-secondary">{t('gstNumber')}</label>
+                <label className="block text-xs font-semibold text-text-secondary">GST or PAN Number</label>
                 <span className="text-[10px] text-text-secondary bg-peach px-2 py-0.5 rounded-full font-medium">
                   {gstin.length}/15
                 </span>
@@ -196,7 +204,7 @@ export default function SignUpPage() {
                     gstVerified ? 'border-green-600 focus:border-green-600 focus:ring-green-600' : 
                     gstError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
                   }`}
-                  placeholder="e.g. 27AAPFU0939F1ZV"
+                  placeholder="e.g. 10 chars (PAN) or 15 chars (GST)"
                   value={gstin}
                   onChange={(e) => handleGstChange(e.target.value)}
                   maxLength={15}
@@ -215,13 +223,6 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* Status and business name display */}
-              {gstVerified && verifiedBusinessName && (
-                <div className="mt-2 p-2.5 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800 animate-fadeIn">
-                  <div className="font-semibold">Business Name:</div>
-                  <div>{verifiedBusinessName}</div>
-                </div>
-              )}
               {gstError && (
                 <p className="mt-1.5 text-xs text-red-600 font-medium animate-fadeIn">
                   ❌ {gstError}
@@ -240,7 +241,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none"
-              disabled={!gstVerified || loading}
+              disabled={!fullName || !businessName || !mobile || !address || !password || (gstin.length > 0 && !gstVerified) || loading}
             >
               {loading ? '...' : t('createAccount')}
             </button>

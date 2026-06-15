@@ -161,7 +161,9 @@ export default function CartPage() {
                   >
                     −
                   </button>
-                  <span className="lg:text-base">{line.quantity}</span>
+                  <span className="lg:text-base text-center min-w-[20px]">
+                    {line.quantity} <span className="text-xs text-text-secondary ml-1 font-medium">{line.product.sareeSet ? 'Set(s)' : 'pc'}</span>
+                  </span>
                   <button
                     type="button"
                     className="rounded-full border px-3 py-1 transition hover:border-maroon hover:bg-cream-deep lg:cursor-pointer lg:px-4 lg:py-1.5"
