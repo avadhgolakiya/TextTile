@@ -17,8 +17,9 @@ export function MultiShareBar() {
     
     setIsSharing(true);
     try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
       const text = `✨ *Checkout these products from Swastik Fashion!*\n\n` +
-        selectedProducts.map(p => `- ${p.name} (Code: ${p.id})`).join('\n') +
+        selectedProducts.map(p => `- *${p.name}*\n  Code: ${p.id}\n  Link: ${origin}/products/${p.id}`).join('\n\n') +
         `\n\nVisit our catalog to view more!`;
 
       const canShareFiles = typeof navigator !== 'undefined' && typeof navigator.canShare === 'function';
