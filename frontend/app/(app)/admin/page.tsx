@@ -24,6 +24,7 @@ export default function AdminPage() {
 
   // States for lists
   const [products, setProducts] = useState<Product[]>([]);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [orderFilter, setOrderFilter] = useState<'all' | 'user' | 'manual'>('all');
@@ -647,9 +648,19 @@ export default function AdminPage() {
                     + Add Product
                   </button>
                 </div>
+                
+                <input
+                  type="text"
+                  placeholder="Search products by name or code..."
+                  className="input-field max-w-md"
+                  value={productSearchQuery}
+                  onChange={(e) => setProductSearchQuery(e.target.value)}
+                />
 
                 <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 xl:grid-cols-2">
-                  {products.map((p) => (
+                  {products
+                    .filter(p => !productSearchQuery || p.name.toLowerCase().includes(productSearchQuery.toLowerCase()) || p.id.toLowerCase().includes(productSearchQuery.toLowerCase()))
+                    .map((p) => (
                     <div
                       key={p.id}
                       className={`card flex items-center justify-between p-4 border border-divider shadow-sm transition lg:hover:shadow-md ${
