@@ -63,8 +63,8 @@ export default function SignUpPage() {
     const uppercaseVal = val.toUpperCase().slice(0, 15);
     setGstin(uppercaseVal);
 
-    // If cleared or modified away from 15 characters, reset verification state
-    if (uppercaseVal.length < 15) {
+    // If cleared or modified away from 10 or 15 characters, reset verification state
+    if (uppercaseVal.length !== 10 && uppercaseVal.length !== 15) {
       setGstVerified(false);
       setGstLoading(false);
       setGstError(null);
