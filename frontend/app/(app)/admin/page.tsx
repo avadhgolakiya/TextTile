@@ -724,7 +724,7 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {categories.map((c) => (
-                    <div key={c.key} className="bg-white border border-divider rounded-lg p-4 flex justify-between items-center shadow-sm">
+                    <div key={c.key} className="bg-surface border border-divider rounded-lg p-4 flex justify-between items-center shadow-sm">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{c.icon || '📁'}</span>
                         <span className="font-semibold">{c.name}</span>
