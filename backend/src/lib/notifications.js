@@ -55,7 +55,9 @@ export async function notifyNewProduct(product) {
       fcmOptions: {
         link: productLink,
       },
-      notification: {},
+      notification: {
+        icon: `${frontendUrl.replace(/\/$/, '')}/icon-192.png`,
+      },
     },
   });
 
@@ -90,7 +92,9 @@ export async function notifyLowStock(product) {
       fcmOptions: {
         link: productLink,
       },
-      notification: {},
+      notification: {
+        icon: `${frontendUrl.replace(/\/$/, '')}/icon-192.png`,
+      },
     },
   });
 
