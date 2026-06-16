@@ -28,7 +28,7 @@ router.post('/register', async (req, res) => {
 
     const doc = {
       name: String(name).trim(),
-      email: null,
+      email: `buyer-${phoneNum}@system.local`,
       passwordHash: hash,
       phone: phoneNum,
       gstin: String(gstin).trim().toUpperCase(),
