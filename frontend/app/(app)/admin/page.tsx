@@ -281,7 +281,7 @@ export default function AdminPage() {
     try {
       const payload = {
         ...formProduct,
-        price: formProduct.price != null ? Number(formProduct.price) : null,
+        price: formProduct.price ? Number(formProduct.price) : null,
         originalPrice: formProduct.originalPrice ? Number(formProduct.originalPrice) : null,
         imageUrls: formProduct.imageUrl ? [formProduct.imageUrl] : [],
         sareeSet: formProduct.sareeSet?.trim() || null,
@@ -627,7 +627,7 @@ export default function AdminPage() {
                         <div className="min-w-0 flex-1">
                           <h4 className="font-semibold text-sm truncate">{p.name}</h4>
                           <p className="text-xs text-text-secondary mt-0.5">
-                            Code: {p.id} · Price: {p.price != null ? formatInr(p.price) : 'On Request'}
+                            Code: {p.id} · Price: {p.price ? formatInr(p.price) : 'On Request'}
                           </p>
                           {!p.isVisible && (
                             <span className="inline-block bg-gray-300 text-gray-700 text-[10px] px-2 py-0.5 rounded mt-1 font-semibold">

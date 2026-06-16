@@ -202,7 +202,7 @@ export default function ProductDetailPage() {
 
         const shareData: ShareData = {
           title: product.name,
-          text: `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price != null ? '₹' + product.price : 'On Request'}\n\nCheck it out at Swastik Fashion!`,
+          text: `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price ? '₹' + product.price : 'On Request'}\n\nCheck it out at Swastik Fashion!`,
           files,
         };
 
@@ -280,7 +280,7 @@ export default function ProductDetailPage() {
       : []).map((img) => getFullImageUrl(img));
 
 
-  const discountPercent = product.originalPrice && product.price != null
+  const discountPercent = product.originalPrice && product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
@@ -424,7 +424,7 @@ export default function ProductDetailPage() {
           <div className="space-y-1">
             <div className="flex items-baseline gap-3">
               <span className="text-3xl font-bold text-maroon">
-                {product.price != null ? formatInr(product.price) : 'Price on Request'}
+                {product.price ? formatInr(product.price) : 'Price on Request'}
               </span>
               {product.originalPrice && (
                 <>
@@ -438,7 +438,7 @@ export default function ProductDetailPage() {
               )}
             </div>
             <p className="text-xs text-text-secondary">
-              {t('estimatedFor')} {quantity} {product.sareeSet ? 'Set(s)' : t('pcLabel')}: {product.price != null ? formatInr(product.price * quantity) : 'Price on Request'}
+              {t('estimatedFor')} {quantity} {product.sareeSet ? 'Set(s)' : t('pcLabel')}: {product.price ? formatInr(product.price * quantity) : 'Price on Request'}
             </p>
           </div>
 

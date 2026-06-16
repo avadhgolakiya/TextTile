@@ -152,7 +152,7 @@ export default function CartPage() {
               </div>
               <div className="flex flex-1 flex-col gap-2 lg:gap-3">
                 <p className="font-semibold lg:text-lg">{line.product.name}</p>
-                <p className="text-sm text-maroon lg:text-base">{line.product.price != null ? formatInr(line.product.price) : 'Price on Request'}</p>
+                <p className="text-sm text-maroon lg:text-base">{line.product.price ? formatInr(line.product.price) : 'Price on Request'}</p>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"

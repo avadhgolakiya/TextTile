@@ -40,7 +40,7 @@ export function ProductCard({ product }: { product: Product }) {
     e.stopPropagation();
 
     const url = `${window.location.origin}/products/${product.id}`;
-    const text = `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price != null ? formatInr(product.price) : 'On Request'}\n\nCheck it out at Swastik Fashion!`;
+    const text = `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price ? formatInr(product.price) : 'On Request'}\n\nCheck it out at Swastik Fashion!`;
 
     const canShareFiles = typeof navigator.canShare === 'function';
 
@@ -112,7 +112,7 @@ export function ProductCard({ product }: { product: Product }) {
         ) : null}
         <div className="flex items-baseline gap-2 pt-1">
           <span className="text-sm font-bold text-maroon">
-            {product.price != null ? formatInr(product.price) : 'Price on Request'}
+            {product.price ? formatInr(product.price) : 'Price on Request'}
           </span>
           {product.originalPrice ? (
             <span className="text-xs text-text-secondary line-through">
