@@ -38,11 +38,41 @@ export function ProductCard({ product }: { product: Product }) {
   async function handleShare(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+
+    const url = `${window.location.origin}/products/${product.id}`;
+    const text = `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${formatInr(product.price)}\n\nCheck it out at Swastik Fashion!`;
+
+    const canShareFiles = typeof navigator.canShare === 'function';
+
+    if (navigator.share && canShareFiles && product.imageUrl) {
+      try {
+        const imgUrl = getFullImageUrl(product.imageUrl);
+        const res = await fetch(imgUrl);
+        const blob = await res.blob();
+        const ext = blob.type.includes('png') ? 'png' : 'jpg';
+        const file = new File([blob], `${product.name.replace(/\\s+/g, '_')}.${ext}`, { type: blob.type });
+
+        const shareData: ShareData = {
+          title: product.name,
+          text,
+          files: [file],
+        };
+
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          return;
+        }
+      } catch (err) {
+        console.error('File share failed, falling back:', err);
+      }
+    }
+
+    // Fallback: share link
     try {
       await navigator.share({
         title: product.name,
-        text: `Check out ${product.name} at Swastik Fashion!`,
-        url: `${window.location.origin}/products/${product.id}`,
+        text,
+        url,
       });
     } catch (err) {
       console.log('Share failed or was canceled', err);
