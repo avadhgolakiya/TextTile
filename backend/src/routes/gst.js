@@ -18,15 +18,19 @@ router.post('/verify-gst', async (req, res) => {
     const isPan = uppercaseGstin.length === 10;
     
     if (isPan) {
-      if (!PAN_REGEX.test(uppercaseGstin)) {
-        return res.status(200).json({ valid: false, message: 'Invalid PAN format' });
+      try {
+        if (!PAN_REGEX.test(uppercaseGstin)) {
+          return res.status(200).json({ valid: false, message: 'Invalid PAN format' });
+        }
+        return res.status(200).json({
+          valid: true,
+          businessName: 'PAN Verified',
+          tradeName: 'N/A',
+          status: 'Active',
+        });
+      } catch (panErr) {
+        return res.status(200).json({ valid: false, message: `PAN Error: ${panErr.message}` });
       }
-      return res.json({
-        valid: true,
-        businessName: 'PAN Verified',
-        tradeName: 'N/A',
-        status: 'Active',
-      });
     }
 
     if (!GSTIN_REGEX.test(uppercaseGstin)) {

@@ -63,10 +63,14 @@ export default function HomePage() {
       />
 
       <header className="lg:hidden">
-        <p className="text-xs uppercase tracking-widest text-text-secondary">
+        <p className="text-xs uppercase tracking-widest text-text-secondary mb-2">
           {t('todaysDrop')}
         </p>
-        <h1 className="font-serif text-3xl font-semibold">Swastik Fashion</h1>
+        <img
+          src="/logo.jpg"
+          alt="Swastik Fashion"
+          className="h-10 w-auto object-contain"
+        />
         <Link href="/search" className="mt-3 block text-sm text-maroon">
           {t('searchSarees')} →
         </Link>

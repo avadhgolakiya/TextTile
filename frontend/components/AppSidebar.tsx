@@ -32,13 +32,15 @@ export function AppSidebar({ isAdmin = false, isLoggedIn = false }: Props) {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-divider bg-surface lg:flex">
-      <div className="border-b border-divider px-6 py-7">
+      <div className="border-b border-divider px-6 py-7 flex flex-col gap-2">
+        <img
+          src="/logo.jpg"
+          alt="Swastik Fashion"
+          className="h-12 w-auto object-contain"
+        />
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">
           {t('wholesaleBuyer')}
         </p>
-        <h1 className="mt-1 font-serif text-2xl font-bold text-text-primary">
-          Swastik Fashion
-        </h1>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-6">

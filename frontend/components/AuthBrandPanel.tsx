@@ -6,9 +6,11 @@ export function AuthBrandPanel() {
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">
           Wholesale buyers
         </p>
-        <h1 className="mt-4 font-serif text-5xl font-bold leading-tight">
-          Swastik Fashion
-        </h1>
+        <img
+          src="/logo.jpg"
+          alt="Swastik Fashion"
+          className="mt-4 h-24 w-auto object-contain"
+        />
         <p className="mt-6 max-w-md text-lg leading-relaxed text-white/75">
           Browse today&apos;s drop, build your cart, and place wholesale orders
           directly with the shop via WhatsApp.
