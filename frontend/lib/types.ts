@@ -85,6 +85,12 @@ export type CategoryItem = {
   icon: string;
 };
 
+export type Category = {
+  key: string;
+  name: string;
+  icon: string;
+};
+
 export function productAllImages(product: Product): string[] {
   if (product.imageUrls.length > 0) return product.imageUrls;
   if (product.imageUrl) return [product.imageUrl];

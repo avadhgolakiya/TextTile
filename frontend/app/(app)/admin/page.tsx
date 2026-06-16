@@ -18,12 +18,13 @@ function getToken() {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'buyers' | 'banners' | 'system-admins'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'orders' | 'buyers' | 'banners' | 'system-admins'>('products');
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // States for lists
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [orderFilter, setOrderFilter] = useState<'all' | 'user' | 'manual'>('all');
   const [buyers, setBuyers] = useState<{ id: string; name: string; email?: string; phone: string; orders: number; isBlocked: boolean }[]>([]);
@@ -38,6 +39,9 @@ export default function AdminPage() {
 
   // States for product form modal
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false);
+  const [formCategory, setFormCategory] = useState<Partial<Category>>({});
+  const [isUploadingCategoryIcon, setIsUploadingCategoryIcon] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [formProduct, setFormProduct] = useState<Partial<Product> & { id: string }>({
     id: '',
@@ -113,6 +117,9 @@ export default function AdminPage() {
       if (tab === 'products') {
         const res = await productApi.fetchAllAdmin(token);
         setProducts(res.products);
+      } else if (tab === 'categories') {
+        const { categories: cats } = await categoryApi.fetchCategories();
+        setCategories(cats || []);
       } else if (tab === 'orders') {
         const res = await orderApi.fetchAllAdmin(token);
         setOrders(res.orders);
@@ -294,6 +301,38 @@ export default function AdminPage() {
     } catch (err) {
       toast.error(`Failed to save product: ${err}`);
     }
+  }
+
+  // --- Categories CRUD ---
+  async function saveCategoryForm(e: React.FormEvent) {
+    e.preventDefault();
+    const token = getToken();
+    try {
+      if (!formCategory.name) return;
+      await categoryApi.upsertCategory(token, formCategory.name, formCategory.icon);
+      setIsCategoryFormOpen(false);
+      loadTabData('categories');
+      toast.success('Category saved successfully');
+    } catch (err) {
+      toast.error(`Failed to save category: ${err}`);
+    }
+  }
+
+  async function handleDeleteCategory(key: string) {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    const token = getToken();
+    try {
+      await categoryApi.deleteCategory(token, key);
+      loadTabData('categories');
+      toast.success('Category deleted');
+    } catch (err) {
+      toast.error(`Failed to delete category: ${err}`);
+    }
+  }
+
+  function openEditCategory(c: Category) {
+    setFormCategory(c);
+    setIsCategoryFormOpen(true);
   }
 
   // --- Orders Tab CRUD Actions ---
@@ -508,8 +547,9 @@ export default function AdminPage() {
   }
 
   const tabs = [
-    { id: 'products', label: 'Products' },
-    { id: 'orders', label: 'Orders' },
+    { id: 'products', label: 'Products', icon: '🛍️' },
+    { id: 'categories', label: 'Categories', icon: '📁' },
+    { id: 'orders', label: 'Orders', icon: '📦' },
     { id: 'buyers', label: 'Buyers' },
     { id: 'banners', label: 'Slider' },
     ...(isSuperAdmin ? [{ id: 'system-admins', label: 'System Admins' }] : []),
@@ -674,6 +714,36 @@ export default function AdminPage() {
             )}
 
             {/* ORDERS TAB */}
+            {activeTab === 'categories' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold font-serif">Categories</h3>
+                  <button onClick={() => { setFormCategory({}); setIsCategoryFormOpen(true); }} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
+                    <span className="text-lg">+</span> Add Category
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categories.map((c) => (
+                    <div key={c.key} className="bg-white border border-divider rounded-lg p-4 flex justify-between items-center shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{c.icon || '📁'}</span>
+                        <span className="font-semibold">{c.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => openEditCategory(c)} className="p-2 text-maroon hover:text-maroon-dark transition text-lg" title="Edit">✏️</button>
+                        <button onClick={() => handleDeleteCategory(c.key)} className="p-2 text-red-500 hover:text-red-700 transition text-lg" title="Delete">🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                  {categories.length === 0 && (
+                    <div className="col-span-full py-8 text-center text-text-secondary border border-dashed border-divider rounded-lg">
+                      No categories found. Add your first category!
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {activeTab === 'orders' && (
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -958,6 +1028,57 @@ export default function AdminPage() {
       </div>
 
       {/* --- ADD/EDIT PRODUCT MODAL FORM --- */}
+      {/* Category Modal */}
+      {isCategoryFormOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-cream w-full max-w-md rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <header className="p-4 border-b border-divider flex justify-between items-center bg-surface">
+              <h3 className="font-bold font-serif text-lg text-text">
+                {formCategory.key ? 'Edit Category' : 'Add New Category'}
+              </h3>
+              <button
+                onClick={() => setIsCategoryFormOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition"
+              >
+                ✕
+              </button>
+            </header>
+
+            <form onSubmit={saveCategoryForm} className="p-6 overflow-y-auto space-y-4 flex-1">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Category Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sarees"
+                  className="input-field"
+                  value={formCategory.name || ''}
+                  onChange={(e) => setFormCategory({ ...formCategory, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Category Icon (Emoji or SVG)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 🥻"
+                  className="input-field"
+                  value={formCategory.icon || ''}
+                  onChange={(e) => setFormCategory({ ...formCategory, icon: e.target.value })}
+                />
+              </div>
+              <div className="pt-4 border-t border-divider flex justify-end gap-3">
+                <button type="button" onClick={() => setIsCategoryFormOpen(false)} className="px-5 py-2.5 rounded-lg font-bold text-text hover:bg-black/5 transition">
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary">
+                  Save Category
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {isFormOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 py-8 overflow-y-auto">
           <div className="bg-surface rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
@@ -986,18 +1107,17 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-text-secondary uppercase">Category</label>
-                  <input
-                    list="categories-list"
+                  <select
                     className="input-field py-3.5"
-                    placeholder="e.g. sarees, suits..."
+                    required
                     value={formProduct.categoryKey || ''}
                     onChange={(e) => setFormProduct({ ...formProduct, categoryKey: e.target.value })}
-                  />
-                  <datalist id="categories-list">
-                    {uniqueCategories.map((cat) => (
-                      <option key={cat} value={cat} />
+                  >
+                    <option value="" disabled>Select a Category</option>
+                    {categories.map((c) => (
+                      <option key={c.key} value={c.name}>{c.icon} {c.name}</option>
                     ))}
-                  </datalist>
+                  </select>
                 </div>
               </div>
 

@@ -1,4 +1,4 @@
-import type { Product, AppUser, OrderItem } from './types';
+import type { Product, AppUser, OrderItem, Category } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://texttile.onrender.com';
 
@@ -229,5 +229,21 @@ export const bannerApi = {
       method: 'PATCH',
       token,
       body: JSON.stringify({ orderedIds }),
+    }),
+};
+
+export const categoryApi = {
+  fetchCategories: () =>
+    apiFetch<{ categories: Category[] }>('/api/categories', { cache: 'no-store' }),
+  upsertCategory: (token: string, name: string, icon?: string) =>
+    apiFetch<{ ok: true; category: Category }>('/api/categories', {
+      method: 'POST',
+      token,
+      body: JSON.stringify({ name, icon }),
+    }),
+  deleteCategory: (token: string, key: string) =>
+    apiFetch<{ ok: true }>(`/api/categories/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+      token,
     }),
 };
