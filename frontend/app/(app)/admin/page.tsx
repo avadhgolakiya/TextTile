@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { productApi, orderApi, authApi, bannerApi } from '@/lib/api-client';
+import { productApi, orderApi, authApi, bannerApi, categoryApi } from '@/lib/api-client';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { toast } from '@/lib/toast';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import type { Product, OrderItem } from '@/lib/types';
+import type { Product, OrderItem, Category } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import Image from 'next/image';
 import { getFullImageUrl } from '@/lib/image';
