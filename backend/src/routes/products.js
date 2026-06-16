@@ -80,7 +80,7 @@ router.post('/', authMiddleware, async (req, res) => {
         $set: {
           name: p.name,
           subtitle: p.subtitle ?? '',
-          price: p.price != null ? Number(p.price) : 0,
+          price: p.price != null ? Number(p.price) : null,
           originalPrice: p.originalPrice ?? null,
           imageUrl: p.imageUrl ?? '',
           imageUrls: p.imageUrls ?? [],

@@ -2,7 +2,7 @@ export type Product = {
   id: string;
   name: string;
   subtitle: string;
-  price: number;
+  price?: number | null;
   originalPrice?: number | null;
   imageUrl: string;
   imageUrls: string[];
@@ -83,5 +83,5 @@ export function productAllImages(product: Product): string[] {
 }
 
 export function cartLineTotal(line: CartLine): number {
-  return line.product.price * line.quantity;
+  return (line.product.price || 0) * line.quantity;
 }

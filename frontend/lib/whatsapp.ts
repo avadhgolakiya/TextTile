@@ -25,7 +25,7 @@ export function buildCartMessage(options: {
 
   let runningTotal = 0;
   lines.forEach((line, index) => {
-    const lineTotal = line.product.price * line.quantity;
+    const lineTotal = (line.product.price || 0) * line.quantity;
     runningTotal += lineTotal;
 
     parts.push(`${index + 1}. *${line.product.name}*`);
