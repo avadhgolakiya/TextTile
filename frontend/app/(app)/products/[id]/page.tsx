@@ -273,11 +273,12 @@ export default function ProductDetailPage() {
     );
   }
 
-  const images = (product.imageUrls && product.imageUrls.length > 0
-    ? product.imageUrls
-    : product.imageUrl
-      ? [product.imageUrl]
-      : []).map((img) => getFullImageUrl(img));
+  const imagesSet = new Set<string>();
+  if (product.imageUrl) imagesSet.add(product.imageUrl);
+  if (product.imageUrls && product.imageUrls.length > 0) {
+    product.imageUrls.forEach((img) => imagesSet.add(img));
+  }
+  const images = Array.from(imagesSet).map((img) => getFullImageUrl(img));
 
 
   const discountPercent = product.originalPrice && product.price

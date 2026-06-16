@@ -201,12 +201,12 @@ export default function AdminPage() {
       price: p.price,
       originalPrice: p.originalPrice,
       imageUrl: p.imageUrl,
-      imageUrls: p.imageUrls || [],
       badge: p.badge,
       categoryKey: p.categoryKey || '',
+      imageUrls: Array.from(new Set([p.imageUrl, ...(p.imageUrls || [])])).filter(Boolean) as string[],
+      isVisible: p.isVisible !== false,
       sareeSet: p.sareeSet,
       stock: p.stock ?? 0,
-      isVisible: p.isVisible !== false,
     } as any);
     setIsFeatured(p.isFeatured || false);
     setIsSetProduct(!!p.sareeSet);
