@@ -4,12 +4,17 @@ import type { Product } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import { getFullImageUrl } from '@/lib/image';
 import { useSavedStore } from '@/lib/saved-store';
+import { useSelectionStore } from '@/lib/selection-store';
 import { toast } from '@/lib/toast';
 
 /** Port of lib/widgets/product_card.dart */
 export function ProductCard({ product }: { product: Product }) {
   const toggleSaved = useSavedStore((s) => s.toggle);
   const isSaved = useSavedStore((s) => s.isSaved(product.id));
+  
+  const isSelectionMode = useSelectionStore((s) => s.isSelectionMode);
+  const isSelected = useSelectionStore((s) => s.selectedIds.has(product.id));
+  const toggleSelection = useSelectionStore((s) => s.toggleProduct);
 
   async function handleDownload(e: React.MouseEvent) {
     e.preventDefault();
@@ -81,10 +86,72 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <div className="relative group">
-    <Link
-      href={`/products/${product.id}`}
-      className="card block overflow-hidden lg:hover:-translate-y-1 lg:hover:shadow-lg"
-    >
+    {isSelectionMode ? (
+      <div
+        onClick={() => toggleSelection(product)}
+        className={`card block overflow-hidden cursor-pointer transition-all ${
+          isSelected ? 'ring-2 ring-maroon shadow-md' : 'lg:hover:-translate-y-1 lg:hover:shadow-lg'
+        }`}
+      >
+        <div className="relative aspect-[3/4] bg-cream-deep">
+          {product.imageUrl ? (
+            <Image
+              src={getFullImageUrl(product.imageUrl)}
+              alt={product.name}
+              fill
+              className={`object-cover transition-opacity ${isSelected ? 'opacity-80' : ''}`}
+              sizes="(max-width: 768px) 50vw, 240px"
+            />
+          ) : null}
+          {product.badge ? (
+            <span className="absolute left-3 top-3 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-text-primary">
+              {product.badge}
+            </span>
+          ) : null}
+          {/* Checkbox overlay */}
+          <div className="absolute top-2 left-2 z-10 bg-white/80 backdrop-blur rounded-full p-0.5">
+            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+              isSelected ? 'bg-maroon border-maroon text-white' : 'border-gray-400 text-transparent'
+            }`}>
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-1 p-4 lg:p-5">
+          <h3 className="font-serif text-base font-semibold leading-snug lg:text-lg">
+            {product.name}
+          </h3>
+          {product.subtitle ? (
+            <p className="line-clamp-2 text-xs text-text-secondary">
+              {product.subtitle}
+            </p>
+          ) : null}
+          <div className="flex items-baseline gap-2 pt-1">
+            <span className="text-sm font-bold text-maroon">
+              {product.price ? formatInr(product.price) : 'Price on Request'}
+            </span>
+            {product.originalPrice ? (
+              <span className="text-xs text-text-secondary line-through">
+                {formatInr(product.originalPrice)}
+              </span>
+            ) : null}
+          </div>
+          {product.stock === 0 ? (
+            <p className="text-xs font-bold text-red-600">Out of Stock</p>
+          ) : (product.stock !== undefined && product.stock > 0 && product.stock <= 10) ? (
+            <p className="text-[10px] font-bold text-red-600 bg-red-50 inline-block px-2 py-0.5 rounded">
+              Only {product.stock} left!
+            </p>
+          ) : null}
+        </div>
+      </div>
+    ) : (
+      <Link
+        href={`/products/${product.id}`}
+        className="card block overflow-hidden lg:hover:-translate-y-1 lg:hover:shadow-lg"
+      >
       <div className="relative aspect-[3/4] bg-cream-deep">
         {product.imageUrl ? (
           <Image
@@ -129,6 +196,7 @@ export function ProductCard({ product }: { product: Product }) {
         ) : null}
       </div>
     </Link>
+    )}
     <button
       onClick={(e) => {
         e.preventDefault();

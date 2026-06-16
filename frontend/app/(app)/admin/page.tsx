@@ -733,6 +733,34 @@ export default function AdminPage() {
                         <span className="text-sm font-bold text-maroon">{formatInr(o.total)}</span>
                       </div>
 
+                      {/* Display Items */}
+                      {o.items && o.items.length > 0 && (
+                        <div className="bg-cream-deep p-3 rounded-lg border border-divider">
+                          <h5 className="text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider">Order Items</h5>
+                          <div className="space-y-2">
+                            {o.items.map((item, idx) => (
+                              <div key={idx} className="flex justify-between items-center text-sm">
+                                <div className="flex items-center gap-2">
+                                  {item.imageUrl && (
+                                    <div className="w-8 h-8 relative rounded overflow-hidden border border-divider shrink-0 bg-white">
+                                      <Image src={getFullImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-semibold">{item.name}</p>
+                                    <p className="text-xs text-text-secondary">Code: {item.code}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold">{formatInr(item.price)}</p>
+                                  <p className="text-xs text-text-secondary">Qty: {item.qty}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Status selectors */}
                       <div className="flex items-center gap-2 flex-wrap">
                         {['pending', 'processing', 'delivered'].map((st) => {

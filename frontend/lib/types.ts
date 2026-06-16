@@ -30,6 +30,14 @@ export type OrderSummary = {
 
 export type OrderStatus = 'pending' | 'processing' | 'inTransit' | 'delivered';
 
+export type OrderProductItem = {
+  name: string;
+  code: string;
+  qty: number;
+  price: number;
+  imageUrl?: string;
+};
+
 export type OrderItem = {
   id: string;
   dateLabel: string;
@@ -40,6 +48,7 @@ export type OrderItem = {
   status: OrderStatus;
   buyerName?: string;
   isManual?: boolean;
+  items?: OrderProductItem[];
 };
 
 export type AppUser = {

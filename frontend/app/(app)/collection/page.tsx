@@ -5,11 +5,16 @@ import { productApi } from '@/lib/api-client';
 import { DesktopTopBar } from '@/components/DesktopTopBar';
 import { ProductCard } from '@/components/ProductCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { MultiShareBar } from '@/components/MultiShareBar';
 import type { Product } from '@/lib/types';
 import { useTranslation } from '@/lib/language-store';
+import { useSelectionStore } from '@/lib/selection-store';
 
 export default function CollectionPage() {
   const { t } = useTranslation();
+  const isSelectionMode = useSelectionStore((s) => s.isSelectionMode);
+  const enterSelectionMode = useSelectionStore((s) => s.enterSelectionMode);
+  const exitSelectionMode = useSelectionStore((s) => s.exitSelectionMode);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState('');
@@ -127,6 +132,32 @@ export default function CollectionPage() {
 
         {/* Grid of products */}
         <div className="px-6 lg:px-0">
+          {/* Header row for grid */}
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="hidden lg:block font-serif text-2xl font-bold text-text-primary">
+              {selected}
+            </h2>
+            <div className="flex-1 lg:hidden"></div>
+            {!isSelectionMode ? (
+              <button
+                onClick={enterSelectionMode}
+                className="bg-surface border border-divider px-4 py-2 rounded-lg text-sm font-bold text-text-primary shadow-sm hover:bg-cream-deep transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Select Multiple
+              </button>
+            ) : (
+              <button
+                onClick={exitSelectionMode}
+                className="bg-cream-deep border border-divider px-4 py-2 rounded-lg text-sm font-bold text-text-secondary transition-colors"
+              >
+                Cancel Selection
+              </button>
+            )}
+          </div>
+
           {loading ? (
             <div className="py-20 flex justify-center">
               <LoadingSpinner label="Loading collection…" />
@@ -182,6 +213,7 @@ export default function CollectionPage() {
           )}
         </div>
       </div>
+      <MultiShareBar />
     </div>
   );
 }

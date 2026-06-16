@@ -12,10 +12,15 @@ import type { Product } from '@/lib/types';
 import { productApi, bannerApi } from '@/lib/api-client';
 import { useTranslation } from '@/lib/language-store';
 import { getFullImageUrl, isValidImageUrl } from '@/lib/image';
+import { MultiShareBar } from '@/components/MultiShareBar';
+import { useSelectionStore } from '@/lib/selection-store';
 
 /** Port of lib/features/home/home_screen.dart */
 export default function HomePage() {
   const { t } = useTranslation();
+  const isSelectionMode = useSelectionStore((s) => s.isSelectionMode);
+  const enterSelectionMode = useSelectionStore((s) => s.enterSelectionMode);
+  const exitSelectionMode = useSelectionStore((s) => s.exitSelectionMode);
   const [products, setProducts] = useState<Product[]>([]);
   const [banners, setBanners] = useState<{ image_url: string; redirect_url?: string }[]>([{ image_url: FALLBACK_BANNER }]);
   const [loading, setLoading] = useState(true);
@@ -107,14 +112,34 @@ export default function HomePage() {
       )}
 
       <section>
-        <div className="mb-4 flex items-end justify-between lg:mb-6">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-end justify-between lg:mb-6 gap-2">
           <h2 className="font-serif text-xl font-semibold lg:text-2xl">{t('featuredProducts')}</h2>
-          <Link
-            href="/collection"
-            className="hidden text-sm font-semibold text-maroon transition hover:text-maroon-dark lg:inline"
-          >
-            {t('viewFullCollection')} →
-          </Link>
+          <div className="flex items-center gap-4">
+            {!isSelectionMode ? (
+              <button
+                onClick={enterSelectionMode}
+                className="bg-surface border border-divider px-3 py-1.5 rounded-lg text-xs font-bold text-text-primary shadow-sm hover:bg-cream-deep transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Select Multiple
+              </button>
+            ) : (
+              <button
+                onClick={exitSelectionMode}
+                className="bg-cream-deep border border-divider px-3 py-1.5 rounded-lg text-xs font-bold text-text-secondary transition-colors"
+              >
+                Cancel Selection
+              </button>
+            )}
+            <Link
+              href="/collection"
+              className="hidden text-sm font-semibold text-maroon transition hover:text-maroon-dark lg:inline"
+            >
+              {t('viewFullCollection')} →
+            </Link>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5 items-start">
           {featuredProducts.map((product) => (
@@ -125,6 +150,7 @@ export default function HomePage() {
           <p className="text-sm text-text-secondary">{t('noFeaturedProducts')}</p>
         ) : null}
       </section>
+      <MultiShareBar />
     </div>
   );
 }

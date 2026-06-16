@@ -50,6 +50,7 @@ function mapOrder(doc) {
     status: doc.status ?? 'pending',
     buyerName: doc.buyerName,
     isManual: doc.isManual ?? false,
+    items,
   };
 }
 
