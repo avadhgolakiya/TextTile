@@ -5,7 +5,8 @@ import { toast } from '@/lib/toast';
 
 export function MultiShareBar() {
   const isSelectionMode = useSelectionStore((s) => s.isSelectionMode);
-  const selectedProducts = useSelectionStore((s) => Object.values(s.selectedProducts));
+  const selectedProductsMap = useSelectionStore((s) => s.selectedProducts);
+  const selectedProducts = Object.values(selectedProductsMap);
   const exitSelectionMode = useSelectionStore((s) => s.exitSelectionMode);
   const [isSharing, setIsSharing] = useState(false);
 
