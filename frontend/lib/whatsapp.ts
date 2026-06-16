@@ -36,15 +36,13 @@ export function buildCartMessage(options: {
     parts.push(
       `   ${line.product.sareeSet ? 'Sets' : 'Qty'}: ${line.quantity}`,
     );
-    if (line.product.imageUrl) {
-      parts.push(`   📷 Photo: ${getWhatsAppThumbnailUrl(line.product.imageUrl)}`);
-    }
+
     parts.push('');
   });
 
   parts.push(
     '━━━━━━━━━━━━━━━━━━━',
-    'thank you for shooping have a nice day 🙂',
+    'thank you for shooping have a nice day ',
   );
 
   return parts.join('\n');
@@ -156,12 +154,7 @@ export async function openWhatsAppSingleOrder(options: {
       ? [getFullImageUrl(product.imageUrl)]
       : [];
 
-  if (allImages.length > 0) {
-    parts.push('', `📷 *Photos (${allImages.length}):*`);
-    allImages.forEach((img: string, i: number) => {
-      parts.push(`  ${i + 1}. ${getWhatsAppThumbnailUrl(img)}`);
-    });
-  }
+
   parts.push('━━━━━━━━━━━━━━━━━━━', 'thank you for shooping have a nice day 🙂');
 
   const text = parts.join('\n');
