@@ -294,7 +294,7 @@ export default function AdminPage() {
         name: formProduct.name ? formProduct.name.charAt(0).toUpperCase() + formProduct.name.slice(1) : formProduct.name,
         price: formProduct.price ? Number(formProduct.price) : null,
         originalPrice: formProduct.originalPrice ? Number(formProduct.originalPrice) : null,
-        imageUrls: formProduct.imageUrl ? [formProduct.imageUrl] : [],
+        imageUrls: formProduct.imageUrls?.length ? formProduct.imageUrls : (formProduct.imageUrl ? [formProduct.imageUrl] : []),
         sareeSet: formProduct.sareeSet?.trim() || null,
         stock: Number(formProduct.stock) || 0,
       };
