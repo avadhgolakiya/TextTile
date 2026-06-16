@@ -35,7 +35,7 @@ export const productApi = {
       `/api/products?category=${encodeURIComponent(categoryKey)}`,
     ),
   fetchById: (id: string) =>
-    apiFetch<{ product: Product }>(`/api/products/${id}`),
+    apiFetch<{ product: Product }>(`/api/products/${encodeURIComponent(id)}`),
 
   // Admin CRUD operations
   fetchAllAdmin: (token: string) =>
@@ -47,24 +47,24 @@ export const productApi = {
       body: JSON.stringify({ product, isFeatured }),
     }),
   delete: (token: string, id: string) =>
-    apiFetch<{ ok: true }>(`/api/products/${id}`, {
+    apiFetch<{ ok: true }>(`/api/products/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       token,
     }),
   setVisibility: (token: string, id: string, visible: boolean) =>
-    apiFetch<{ ok: true }>(`/api/products/${id}/visibility`, {
+    apiFetch<{ ok: true }>(`/api/products/${encodeURIComponent(id)}/visibility`, {
       method: 'PATCH',
       token,
       body: JSON.stringify({ isVisible: visible }),
     }),
   setFeatured: (token: string, id: string, featured: boolean) =>
-    apiFetch<{ ok: true }>(`/api/products/${id}/featured`, {
+    apiFetch<{ ok: true }>(`/api/products/${encodeURIComponent(id)}/featured`, {
       method: 'PATCH',
       token,
       body: JSON.stringify({ isFeatured: featured }),
     }),
   notify: (token: string, id: string) =>
-    apiFetch<{ ok: true }>(`/api/products/${id}/notify`, {
+    apiFetch<{ ok: true }>(`/api/products/${encodeURIComponent(id)}/notify`, {
       method: 'POST',
       token,
     }),
@@ -125,7 +125,7 @@ export const orderApi = {
       body: JSON.stringify(body),
     }),
   updateStatus: (token: string, id: string, status: string) =>
-    apiFetch<{ ok: true }>(`/api/orders/${id}/status`, {
+    apiFetch<{ ok: true }>(`/api/orders/${encodeURIComponent(id)}/status`, {
       method: 'PATCH',
       token,
       body: JSON.stringify({ status }),
@@ -179,13 +179,13 @@ export const authApi = {
       { token },
     ),
   toggleBlockBuyer: (token: string, buyerId: string, isBlocked: boolean) =>
-    apiFetch<{ ok: boolean }>(`/api/auth/buyers/${buyerId}/block`, {
+    apiFetch<{ ok: boolean }>(`/api/auth/buyers/${encodeURIComponent(buyerId)}/block`, {
       method: 'PATCH',
       token,
       body: JSON.stringify({ isBlocked }),
     }),
   fetchBuyerIps: (token: string, buyerId: string) =>
-    apiFetch<{ ips: { id: string; ipAddress: string; detectedAt: string; source: string }[] }>(`/api/auth/buyers/${buyerId}/ips`, {
+    apiFetch<{ ips: { id: string; ipAddress: string; detectedAt: string; source: string }[] }>(`/api/auth/buyers/${encodeURIComponent(buyerId)}/ips`, {
       token,
     }),
   createAdmin: (token: string, payload: { name: string; email: string; password: string }) =>
@@ -197,7 +197,7 @@ export const authApi = {
   fetchAdmins: (token: string) =>
     apiFetch<{ admins: { id: string; email: string; name: string }[] }>('/api/auth/admins', { token }),
   fetchAdminActivity: (token: string, adminId: string) =>
-    apiFetch<{ logs: any[] }>(`/api/auth/admins/${adminId}/activity`, { token }),
+    apiFetch<{ logs: any[] }>(`/api/auth/admins/${encodeURIComponent(adminId)}/activity`, { token }),
 };
 
 export const notificationApi = {
@@ -223,7 +223,7 @@ export const bannerApi = {
       body: JSON.stringify({ imageUrl, redirectUrl, sortOrder }),
     }),
   delete: (token: string, id: string) =>
-    apiFetch<{ ok: true }>(`/api/banners/${id}`, { method: 'DELETE', token }),
+    apiFetch<{ ok: true }>(`/api/banners/${encodeURIComponent(id)}`, { method: 'DELETE', token }),
   reorder: (token: string, orderedIds: string[]) =>
     apiFetch<{ ok: true }>('/api/banners/reorder', {
       method: 'PATCH',
