@@ -103,6 +103,8 @@ export default function AdminPage() {
         setIsSuperAdmin(user.isSuperAdmin || false);
         // Load default tab data
         loadTabData('products');
+        // Pre-fetch categories for the Add Product dropdown
+        categoryApi.fetchCategories().then(res => setCategories(res.categories || [])).catch(console.error);
       })
       .catch((err) => {
         console.error(err);
