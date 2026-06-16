@@ -1116,7 +1116,7 @@ export default function AdminPage() {
                   >
                     <option value="" disabled>Select a Category</option>
                     {categories.map((c) => (
-                      <option key={c.key} value={c.name}>{c.icon} {c.name}</option>
+                      <option key={c.key} value={c.key}>{c.icon} {c.name}</option>
                     ))}
                   </select>
                 </div>

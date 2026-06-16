@@ -234,7 +234,7 @@ export const bannerApi = {
 
 export const categoryApi = {
   fetchCategories: () =>
-    apiFetch<{ categories: Category[] }>('/api/categories', { cache: 'no-store' }),
+    apiFetch<{ categories: Category[] }>(`/api/categories?t=${Date.now()}`, { cache: 'no-store' }),
   upsertCategory: (token: string, name: string, icon?: string) =>
     apiFetch<{ ok: true; category: Category }>('/api/categories', {
       method: 'POST',
