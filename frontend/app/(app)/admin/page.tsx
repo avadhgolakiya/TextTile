@@ -288,6 +288,7 @@ export default function AdminPage() {
     try {
       const payload = {
         ...formProduct,
+        name: formProduct.name ? formProduct.name.charAt(0).toUpperCase() + formProduct.name.slice(1) : formProduct.name,
         price: formProduct.price ? Number(formProduct.price) : null,
         originalPrice: formProduct.originalPrice ? Number(formProduct.originalPrice) : null,
         imageUrls: formProduct.imageUrl ? [formProduct.imageUrl] : [],
