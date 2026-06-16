@@ -66,13 +66,19 @@ router.get('/:id', async (req, res) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const p = req.body?.product;
+    const oldId = req.body?.oldId;
     if (!p?.id || !p?.name) {
       return res.status(400).json({ error: 'Invalid product payload' });
     }
 
     const productsColl = getCollection('products');
+
+    if (oldId && oldId !== p.id) {
+      await productsColl.deleteOne({ _id: oldId });
+    }
+
     const existingProduct = await productsColl.findOne({ _id: p.id });
-    const isNewProduct = !existingProduct;
+    const isNewProduct = !existingProduct && (!oldId || oldId === p.id);
 
     const result = await productsColl.updateOne(
       { _id: p.id },

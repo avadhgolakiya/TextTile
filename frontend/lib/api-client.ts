@@ -40,11 +40,11 @@ export const productApi = {
   // Admin CRUD operations
   fetchAllAdmin: (token: string) =>
     apiFetch<{ products: Product[] }>('/api/products?admin=true', { token }),
-  upsert: (token: string, product: Partial<Product> & { id: string }, isFeatured: boolean) =>
+  upsert: (token: string, product: Partial<Product> & { id: string }, isFeatured: boolean, oldId?: string) =>
     apiFetch<{ ok: true }>('/api/products', {
       method: 'POST',
       token,
-      body: JSON.stringify({ product, isFeatured }),
+      body: JSON.stringify({ product, isFeatured, oldId }),
     }),
   delete: (token: string, id: string) =>
     apiFetch<{ ok: true }>(`/api/products/${encodeURIComponent(id)}`, {

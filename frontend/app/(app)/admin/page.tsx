@@ -185,6 +185,7 @@ export default function AdminPage() {
   function openEditProduct(p: Product) {
     setFormProduct({
       id: p.id,
+      _oldId: p.id,
       name: p.name,
       subtitle: p.subtitle,
       price: p.price,
@@ -193,12 +194,11 @@ export default function AdminPage() {
       imageUrls: p.imageUrls || [],
       badge: p.badge,
       categoryKey: p.categoryKey || '',
-      isVisible: p.isVisible,
-      sareeSet: p.sareeSet || '',
+      sareeSet: p.sareeSet,
       stock: p.stock ?? 0,
-    });
-    // Check if featured
-    setIsFeatured(p.isFeatured ?? false);
+      isVisible: p.isVisible !== false,
+    } as any);
+    setIsFeatured(p.isFeatured || false);
     setIsSetProduct(!!p.sareeSet);
     setIsEditingMode(true);
     setIsFormOpen(true);
@@ -286,9 +286,8 @@ export default function AdminPage() {
         imageUrls: formProduct.imageUrl ? [formProduct.imageUrl] : [],
         sareeSet: formProduct.sareeSet?.trim() || null,
         stock: Number(formProduct.stock) || 0,
-        imageUrls: formProduct.imageUrls || [],
       };
-      await productApi.upsert(token, payload, isFeatured);
+      await productApi.upsert(token, payload, isFeatured, (formProduct as any)._oldId);
       setIsFormOpen(false);
       loadTabData('products');
       toast.success('Product saved successfully');
@@ -740,7 +739,7 @@ export default function AdminPage() {
                           <div className="space-y-2">
                             {o.items.map((item, idx) => (
                               <div key={idx} className="flex justify-between items-center text-sm">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setFormProduct({ ...item, _oldId: item.id } as any); setIsEditingMode(true); setIsFormOpen(true); }}>
                                   {item.imageUrl && (
                                     <div className="w-8 h-8 relative rounded overflow-hidden border border-divider shrink-0 bg-white">
                                       <Image src={getFullImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />
@@ -978,7 +977,7 @@ export default function AdminPage() {
                   <input
                     type="text"
                     required
-                    disabled={isEditingMode}
+                    disabled={false}
                     placeholder="e.g. banarasi-1"
                     className="input-field"
                     value={formProduct.id}
