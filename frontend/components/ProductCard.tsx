@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import type { Product } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import { getFullImageUrl } from '@/lib/image';
@@ -15,6 +16,14 @@ export function ProductCard({ product }: { product: Product }) {
   const isSelectionMode = useSelectionStore((s) => s.isSelectionMode);
   const isSelected = useSelectionStore((s) => s.selectedIds.has(product.id));
   const toggleSelection = useSelectionStore((s) => s.toggleProduct);
+
+  const [isClient, setIsClient] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+  }, []);
 
   async function handleDownload(e: React.MouseEvent) {
     e.preventDefault();
@@ -222,7 +231,7 @@ export function ProductCard({ product }: { product: Product }) {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
       </svg>
     </button>
-    {typeof navigator !== 'undefined' && navigator.share && (
+    {isClient && canShare && (
       <button
         onClick={handleShare}
         className="absolute top-[88px] right-2 w-9 h-9 rounded-full bg-surface/80 backdrop-blur-sm border border-divider shadow-sm flex items-center justify-center transition-all z-10 lg:opacity-0 lg:group-hover:opacity-100 text-text-secondary hover:text-maroon"
