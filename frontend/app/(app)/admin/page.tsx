@@ -38,6 +38,7 @@ export default function AdminPage() {
 
   // States for product form modal
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditingMode, setIsEditingMode] = useState(false);
   const [formProduct, setFormProduct] = useState<Partial<Product> & { id: string }>({
     id: '',
     name: '',
@@ -199,6 +200,7 @@ export default function AdminPage() {
     // Check if featured
     setIsFeatured(p.isFeatured ?? false);
     setIsSetProduct(!!p.sareeSet);
+    setIsEditingMode(true);
     setIsFormOpen(true);
   }
 
@@ -219,6 +221,7 @@ export default function AdminPage() {
     });
     setIsFeatured(false);
     setIsSetProduct(false);
+    setIsEditingMode(false);
     setIsFormOpen(true);
   }
 
@@ -933,7 +936,7 @@ export default function AdminPage() {
           <div className="bg-surface rounded-card shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
             <header className="px-6 py-4 border-b border-divider flex justify-between items-center shrink-0">
               <h3 className="font-serif text-xl font-bold">
-                {formProduct.name ? 'Edit Product' : 'Add New Product'}
+                {isEditingMode ? 'Edit Product' : 'Add New Product'}
               </h3>
               <button onClick={() => setIsFormOpen(false)} className="text-text-secondary text-lg hover:text-maroon p-1">
                 ✕
@@ -947,7 +950,7 @@ export default function AdminPage() {
                   <input
                     type="text"
                     required
-                    disabled={!!formProduct.name}
+                    disabled={isEditingMode}
                     placeholder="e.g. banarasi-1"
                     className="input-field"
                     value={formProduct.id}
