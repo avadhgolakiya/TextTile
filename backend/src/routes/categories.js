@@ -12,9 +12,9 @@ router.get('/', async (_req, res) => {
     if (docs.length === 0) {
       // Seed default categories
       const defaults = [
-        { _id: 'sarees', name: 'Sarees', icon: '🥻' },
-        { _id: 'suits', name: 'Suits', icon: '👗' },
-        { _id: 'lehenga', name: 'Lehenga', icon: '✨' },
+        { _id: 'sarees', key: 'sarees', name: 'Sarees', icon: '🥻' },
+        { _id: 'suits', key: 'suits', name: 'Suits', icon: '👗' },
+        { _id: 'lehenga', key: 'lehenga', name: 'Lehenga', icon: '✨' },
       ];
       await categoriesColl.insertMany(defaults);
       docs = defaults;
@@ -53,6 +53,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     await categoriesColl.insertOne({
       _id: key,
+      key: key,
       name: name.trim(),
       icon: icon || '✨',
       createdAt: new Date(),
