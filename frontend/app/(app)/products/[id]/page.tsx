@@ -203,8 +203,12 @@ export default function ProductDetailPage() {
         const shareData: ShareData = {
           title: product.name,
           text: `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price ? '₹' + product.price : 'On Request'}\n\nCheck it out at Swastik Fashion!`,
-          files,
+          files: files.length > 10 ? files.slice(0, 10) : files,
         };
+
+        if (files.length > 10) {
+          toast.error('Sharing is limited to 10 images. Sharing the first 10 items.');
+        }
 
         if (navigator.canShare(shareData)) {
           await navigator.share(shareData);
