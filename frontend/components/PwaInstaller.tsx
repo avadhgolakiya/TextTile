@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -16,6 +17,7 @@ export function PwaInstaller() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isIOSDevice, setIsIOSDevice] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     // 1. Register the service worker unconditionally on window load
@@ -88,6 +90,7 @@ export function PwaInstaller() {
   };
 
   if (!showInstallBanner) return null;
+  if (pathname?.startsWith('/shared')) return null;
 
   return (
     <div className="fixed bottom-24 left-4 right-4 z-[999] max-w-md animate-slide-up rounded-card border border-divider bg-cream-deep p-5 shadow-2xl backdrop-blur-md md:bottom-6 md:right-6 md:left-auto">

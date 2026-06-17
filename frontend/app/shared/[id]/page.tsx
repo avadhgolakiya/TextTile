@@ -42,11 +42,7 @@ export default function SharedCollectionPage() {
 
       {/* Hero Header — mobile only */}
       <div className="bg-gradient-to-br from-maroon-dark via-maroon to-[#8B1A2A] text-white px-6 py-10 rounded-b-[32px] shadow-md lg:hidden">
-        <img
-          src="/logo.jpg"
-          alt="Swastik Fashion"
-          className="h-8 w-auto object-contain mb-2"
-        />
+
         <h1 className="font-serif text-3xl font-bold mt-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gold">
           Shared Collection
         </h1>
