@@ -30,7 +30,7 @@ export function MultiShareBar() {
             if (product.imageUrl) {
               try {
                 const imgUrl = getFullImageUrl(product.imageUrl);
-                const res = await fetch(imgUrl);
+                const res = await fetch(imgUrl, { signal: AbortSignal.timeout(8000) });
                 const blob = await res.blob();
                 const ext = blob.type.includes('png') ? 'png' : 'jpg';
                 return new File([blob], `${product.name.replace(/\s+/g, '_')}_${product.id}.${ext}`, { type: blob.type });
