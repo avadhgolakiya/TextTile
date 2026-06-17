@@ -22,7 +22,7 @@ export function MultiShareBar() {
       
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://text-tile.vercel.app';
       const url = `${origin}/shared/${id}`;
-      const text = `✨ *Checkout these products from Swastik Fashion!*\n\nI've selected ${selectedProducts.length} items for you to see. Tap the link below to view the entire collection!`;
+      const text = `✨ *Checkout these products!*\n\nI've selected ${selectedProducts.length} items for you to see. Tap the link below to view the entire collection!`;
 
       // Try Web Share API first
       if (typeof navigator !== 'undefined' && navigator.share) {

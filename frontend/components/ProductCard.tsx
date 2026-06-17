@@ -54,7 +54,7 @@ export function ProductCard({ product }: { product: Product }) {
     e.stopPropagation();
 
     const url = `${window.location.origin}/products/${product.id}`;
-    const text = `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price ? formatInr(product.price) : 'On Request'}\n\nCheck it out at Swastik Fashion!`;
+    const text = `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price ? formatInr(product.price) : 'On Request'}\n\nCheck it out!`;
 
     const canShareFiles = typeof navigator.canShare === 'function';
 

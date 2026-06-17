@@ -202,7 +202,7 @@ export default function ProductDetailPage() {
 
         const shareData: ShareData = {
           title: product.name,
-          text: `✨ *${product.name}*\nCode: ${product.id}${product.price ? `\nPrice: ₹${product.price}` : ''}\n\nCheck it out at Swastik Fashion!`,
+          text: `✨ *${product.name}*\nCode: ${product.id}${product.price ? `\nPrice: ₹${product.price}` : ''}\n\nCheck it out!`,
           files,
         };
 
@@ -220,7 +220,7 @@ export default function ProductDetailPage() {
       try {
         await navigator.share({
           title: product.name,
-          text: `Check out ${product.name} at Swastik Fashion!`,
+          text: `Check out ${product.name}!`,
           url,
         });
       } catch (err) {
