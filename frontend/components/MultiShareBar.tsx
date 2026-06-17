@@ -45,11 +45,24 @@ export function MultiShareBar() {
           const resolvedFiles = await Promise.all(filePromises);
           const files = resolvedFiles.filter((f): f is File => f !== null);
 
-          const shareData: ShareData = {
+          let shareData: ShareData = {
             title: 'Shared Products',
             text,
             files: files.length > 0 ? files : undefined,
           };
+
+          // Android/iOS have hard limits on the number of files (usually 10)
+          // We iteratively remove files until the OS accepts the payload
+          if (typeof navigator.canShare === 'function' && shareData.files) {
+            while (shareData.files.length > 0 && !navigator.canShare(shareData)) {
+              shareData.files.pop();
+            }
+            if (shareData.files.length === 0) {
+              shareData.files = undefined;
+            } else if (shareData.files.length < files.length) {
+              toast.error(`Your device limits sharing to ${shareData.files.length} images. Sharing first ${shareData.files.length} images.`);
+            }
+          }
 
           if (navigator.canShare(shareData)) {
             await navigator.share(shareData);
