@@ -34,7 +34,8 @@ export function buildCartMessage(options: {
       parts.push(`   Details: ${line.product.subtitle}`);
     }
     parts.push(
-      `   ${line.product.sareeSet ? 'Sets' : 'Qty'}: ${line.quantity}`,
+      `   ${line.product.sareeSet ? 'Sets' : 'Qty'}: ${line.quantity}`
+    );
     if (line.product.imageUrl) {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://text-tile.vercel.app';
       parts.push(`   🔗 View Product: ${origin}/products/${encodeURIComponent(line.product.id)}`);
