@@ -25,7 +25,7 @@ export function buildCartMessage(options: {
 
   let runningTotal = 0;
   lines.forEach((line, index) => {
-    const lineTotal = (line.product.price || 0) * line.quantity;
+    const lineTotal = line.product.price * line.quantity;
     runningTotal += lineTotal;
 
     parts.push(`${index + 1}. *${line.product.name}*`);
@@ -35,7 +35,6 @@ export function buildCartMessage(options: {
     }
     parts.push(
       `   ${line.product.sareeSet ? 'Sets' : 'Qty'}: ${line.quantity}`,
-    );
     if (line.product.imageUrl) {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://text-tile.vercel.app';
       parts.push(`   🔗 View Product: ${origin}/products/${encodeURIComponent(line.product.id)}`);
@@ -101,8 +100,8 @@ export async function openWhatsAppCart(options: {
       line.product.imageUrls && line.product.imageUrls.length > 0
         ? line.product.imageUrls
         : line.product.imageUrl
-        ? [line.product.imageUrl]
-        : [];
+          ? [line.product.imageUrl]
+          : [];
     for (const url of urls) {
       const full = getFullImageUrl(url);
       if (!allImageUrls.includes(full)) allImageUrls.push(full);
@@ -155,8 +154,8 @@ export async function openWhatsAppSingleOrder(options: {
     imageUrls && imageUrls.length > 0
       ? imageUrls
       : product.imageUrl
-      ? [getFullImageUrl(product.imageUrl)]
-      : [];
+        ? [getFullImageUrl(product.imageUrl)]
+        : [];
 
   if (allImages.length > 0) {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://text-tile.vercel.app';

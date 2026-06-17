@@ -202,13 +202,9 @@ export default function ProductDetailPage() {
 
         const shareData: ShareData = {
           title: product.name,
-          text: `✨ *${product.name}*\nCode: ${product.id}\nPrice: ${product.price ? '₹' + product.price : 'On Request'}\n\nCheck it out at Swastik Fashion!`,
-          files: files.length > 10 ? files.slice(0, 10) : files,
+          text: `✨ *${product.name}*\nCode: ${product.id}${product.price ? `\nPrice: ₹${product.price}` : ''}\n\nCheck it out at Swastik Fashion!`,
+          files,
         };
-
-        if (files.length > 10) {
-          toast.error('Sharing is limited to 10 images. Sharing the first 10 items.');
-        }
 
         if (navigator.canShare(shareData)) {
           await navigator.share(shareData);
@@ -426,26 +422,28 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Prices */}
-          <div className="space-y-1">
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-bold text-maroon">
-                {product.price ? formatInr(product.price) : 'Price on Request'}
-              </span>
-              {product.originalPrice && (
-                <>
-                  <span className="text-lg text-text-secondary line-through">
-                    {formatInr(product.originalPrice)}
-                  </span>
-                  <span className="bg-peach border border-maroon/20 text-maroon text-xs px-2.5 py-1 rounded-full font-bold">
-                    {discountPercent}% {t('discountOff')}
-                  </span>
-                </>
-              )}
+          {product.price ? (
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-bold text-maroon">
+                  {formatInr(product.price)}
+                </span>
+                {product.originalPrice && (
+                  <>
+                    <span className="text-lg text-text-secondary line-through">
+                      {formatInr(product.originalPrice)}
+                    </span>
+                    <span className="bg-peach border border-maroon/20 text-maroon text-xs px-2.5 py-1 rounded-full font-bold">
+                      {discountPercent}% {t('discountOff')}
+                    </span>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-text-secondary">
+                {t('estimatedFor')} {quantity} {product.sareeSet ? 'Set(s)' : t('pcLabel')}: {formatInr(product.price * quantity)}
+              </p>
             </div>
-            <p className="text-xs text-text-secondary">
-              {t('estimatedFor')} {quantity} {product.sareeSet ? 'Set(s)' : t('pcLabel')}: {product.price ? formatInr(product.price * quantity) : 'Price on Request'}
-            </p>
-          </div>
+          ) : null}
 
           {setProducts.length > 0 && (
             <div className="space-y-2 bg-cream-deep/30 p-3 rounded-2xl border border-divider/50">

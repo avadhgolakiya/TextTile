@@ -11,7 +11,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(params.id)}`, {
       cache: 'no-store'
     });
-    
     if (!res.ok) return {};
     const { product } = await res.json();
     

@@ -44,12 +44,8 @@ export function MultiShareBar() {
           const shareData: ShareData = {
             title: 'Shared Products',
             text,
-            files: files.length > 0 ? files.slice(0, 10) : undefined,
+            files: files.length > 0 ? files : undefined,
           };
-
-          if (files.length > 10) {
-            toast.error('Sharing is limited to 10 images. Sharing the first 10 items.');
-          }
 
           if (navigator.canShare(shareData)) {
             await navigator.share(shareData);
