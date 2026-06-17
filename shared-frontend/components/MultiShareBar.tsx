@@ -20,8 +20,8 @@ export function MultiShareBar() {
       // Create collection on backend
       const { id } = await collectionApi.create(selectedProducts.map(p => p.id));
       
-      const sharedDomain = process.env.NEXT_PUBLIC_SHARED_DOMAIN || (typeof window !== 'undefined' ? window.location.origin : 'https://text-tile.vercel.app');
-      const url = `${sharedDomain}/${id}`;
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://text-tile.vercel.app';
+      const url = `${origin}/shared/${id}`;
       const text = `✨ *Checkout these products!*\n\nI've selected ${selectedProducts.length} items for you to see. Tap the link below to view the entire collection!`;
 
       // Try Web Share API first

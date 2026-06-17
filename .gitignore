@@ -65,6 +65,14 @@ frontend/.next/
 frontend/.env.local
 frontend/.env.production
 frontend/.env.development
+
+# Shared Frontend App
+shared-frontend/node_modules/
+shared-frontend/.next/
+shared-frontend/.env.local
+shared-frontend/.env.production
+shared-frontend/.env.development
+
 *.log
 
 
