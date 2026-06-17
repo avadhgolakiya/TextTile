@@ -11,6 +11,7 @@ import notificationRoutes from './routes/notifications.js';
 import gstRoutes from './routes/gst.js';
 import uploadRoutes from './routes/upload.js';
 import categoriesRoutes from './routes/categories.js';
+import collectionsRoutes from './routes/collections.js';
 
 const PORT = Number(process.env.PORT || 3333);
 
@@ -33,6 +34,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api', gstRoutes);
 app.use('/api/categories', categoriesRoutes);
+app.use('/api/collections', collectionsRoutes);
 
 connectDB()
   .then(() => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSelectionStore } from '@/lib/selection-store';
-import { getFullImageUrl } from '@/lib/image';
+import { collectionApi } from '@/lib/api-client';
 import { toast } from '@/lib/toast';
 
 export function MultiShareBar() {
@@ -17,81 +17,38 @@ export function MultiShareBar() {
     
     setIsSharing(true);
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const text = `✨ *Checkout these products from Swastik Fashion!*\n\n` +
-        selectedProducts.map(p => `- *${p.name}*\n  Code: ${p.id}\n  Link: ${origin}/products/${p.id}`).join('\n\n') +
-        `\n\nVisit our catalog to view more!`;
-
-      const canShareFiles = typeof navigator !== 'undefined' && typeof navigator.canShare === 'function';
+      // Create collection on backend
+      const { id } = await collectionApi.create(selectedProducts.map(p => p.id));
       
-      if (navigator.share && canShareFiles) {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://text-tile.vercel.app';
+      const url = `${origin}/shared/${id}`;
+      const text = `✨ *Checkout these products from Swastik Fashion!*\n\nI've selected ${selectedProducts.length} items for you to see. Tap the link below to view the entire collection!`;
+
+      // Try Web Share API first
+      if (typeof navigator !== 'undefined' && navigator.share) {
         try {
-          const filePromises = selectedProducts.map(async (product) => {
-            if (product.imageUrl) {
-              try {
-                const imgUrl = getFullImageUrl(product.imageUrl);
-                const res = await fetch(imgUrl, { signal: AbortSignal.timeout(8000) });
-                const blob = await res.blob();
-                const ext = blob.type.includes('png') ? 'png' : 'jpg';
-                return new File([blob], `${product.name.replace(/\s+/g, '_')}_${product.id}.${ext}`, { type: blob.type });
-              } catch (e) {
-                console.error('Failed to fetch image for', product.id, e);
-                return null;
-              }
-            }
-            return null;
-          });
-
-          const resolvedFiles = await Promise.all(filePromises);
-          const files = resolvedFiles.filter((f): f is File => f !== null);
-
-          let shareData: ShareData = {
-            title: 'Shared Products',
+          await navigator.share({
+            title: 'Shared Products Collection',
             text,
-            files: files.length > 0 ? files : undefined,
-          };
-
-          // Android/iOS have hard limits on the number of files (usually 10)
-          // We iteratively remove files until the OS accepts the payload
-          if (typeof navigator.canShare === 'function' && shareData.files) {
-            while (shareData.files.length > 0 && !navigator.canShare(shareData)) {
-              shareData.files.pop();
-            }
-            if (shareData.files.length === 0) {
-              shareData.files = undefined;
-            } else if (shareData.files.length < files.length) {
-              toast.error(`Your device limits sharing to ${shareData.files.length} images. Sharing first ${shareData.files.length} images.`);
-            }
-          }
-
-          if (navigator.canShare(shareData)) {
-            await navigator.share(shareData);
-            exitSelectionMode();
-            return;
-          }
+            url,
+          });
+          exitSelectionMode();
+          return;
         } catch (err: any) {
-          console.error('File share failed, falling back to text:', err);
+          console.error('Share failed:', err);
           if (err.name === 'AbortError') {
-            return; // User cancelled, don't fall back to text share
+            return; // User cancelled
           }
         }
       }
 
-      // Fallback: share text only
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({
-          title: 'Shared Products',
-          text,
-        });
-        exitSelectionMode();
-      } else {
-        // Desktop fallback: generate WhatsApp link
-        const waLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(waLink, '_blank', 'noopener,noreferrer');
-        exitSelectionMode();
-      }
+      // Desktop fallback: generate WhatsApp link
+      const waLink = `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`;
+      window.open(waLink, '_blank', 'noopener,noreferrer');
+      exitSelectionMode();
     } catch (err) {
-      console.log('Share failed or was canceled', err);
+      console.log('Share failed', err);
+      toast.error('Failed to create share link. Please try again.');
     } finally {
       setIsSharing(false);
     }

@@ -247,3 +247,14 @@ export const categoryApi = {
       token,
     }),
 };
+
+export const collectionApi = {
+  create: (productIds: string[]) =>
+    apiFetch<{ id: string }>('/api/collections', {
+      method: 'POST',
+      body: JSON.stringify({ productIds }),
+    }),
+  fetchById: (id: string) =>
+    apiFetch<{ products: Product[] }>(`/api/collections/${encodeURIComponent(id)}`),
+};
+
