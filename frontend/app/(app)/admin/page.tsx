@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [orderFilter, setOrderFilter] = useState<'all' | 'user' | 'manual'>('all');
   const [buyers, setBuyers] = useState<{ id: string; name: string; email?: string; phone: string; orders: number; isBlocked: boolean }[]>([]);
@@ -736,8 +737,19 @@ export default function AdminPage() {
                     <span className="text-lg">+</span> Add Category
                   </button>
                 </div>
+                
+                <input
+                  type="text"
+                  placeholder="Search categories by name..."
+                  className="input-field max-w-md"
+                  value={categorySearchQuery}
+                  onChange={(e) => setCategorySearchQuery(e.target.value)}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categories.map((c) => (
+                  {categories
+                    .filter((c) => !categorySearchQuery || c.name.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+                    .map((c) => (
                     <div key={c.key} className="bg-surface border border-divider rounded-lg p-4 flex justify-between items-center shadow-sm">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{c.icon || '📁'}</span>
