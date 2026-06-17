@@ -26,20 +26,24 @@ export function MultiShareBar() {
       
       if (navigator.share && canShareFiles) {
         try {
-          const files: File[] = [];
-          for (const product of selectedProducts) {
+          const filePromises = selectedProducts.map(async (product) => {
             if (product.imageUrl) {
               try {
                 const imgUrl = getFullImageUrl(product.imageUrl);
                 const res = await fetch(imgUrl);
                 const blob = await res.blob();
                 const ext = blob.type.includes('png') ? 'png' : 'jpg';
-                files.push(new File([blob], `${product.name.replace(/\\s+/g, '_')}_${product.id}.${ext}`, { type: blob.type }));
+                return new File([blob], `${product.name.replace(/\s+/g, '_')}_${product.id}.${ext}`, { type: blob.type });
               } catch (e) {
                 console.error('Failed to fetch image for', product.id, e);
+                return null;
               }
             }
-          }
+            return null;
+          });
+
+          const resolvedFiles = await Promise.all(filePromises);
+          const files = resolvedFiles.filter((f): f is File => f !== null);
 
           const shareData: ShareData = {
             title: 'Shared Products',
@@ -52,8 +56,11 @@ export function MultiShareBar() {
             exitSelectionMode();
             return;
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('File share failed, falling back to text:', err);
+          if (err.name === 'AbortError') {
+            return; // User cancelled, don't fall back to text share
+          }
         }
       }
 
