@@ -3,9 +3,14 @@ import type { Product } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import { getFullImageUrl } from '@/lib/image';
 
+import Link from 'next/link';
+
 export function ProductCard({ product }: { product: Product }) {
   return (
-    <div className="card block overflow-hidden lg:hover:-translate-y-1 lg:hover:shadow-lg border border-divider">
+    <Link
+      href={`/product/${product.id}`}
+      className="card block overflow-hidden lg:hover:-translate-y-1 lg:hover:shadow-lg border border-divider"
+    >
       <div className="relative aspect-[3/4] bg-cream-deep">
         {product.imageUrl ? (
           <Image
@@ -44,6 +49,6 @@ export function ProductCard({ product }: { product: Product }) {
           </p>
         ) : null}
       </div>
-    </div>
+    </Link>
   );
 }
