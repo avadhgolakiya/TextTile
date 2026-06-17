@@ -47,23 +47,6 @@ export function DesktopTopBar({ title, subtitle }: Props) {
 
       <div className="flex items-center gap-3">
         <ThemeToggle />
-        <Link
-          href="/search"
-          className="rounded-full border border-divider bg-surface px-5 py-2.5 text-sm font-medium text-text-secondary transition hover:border-gold hover:text-maroon"
-        >
-          {t('navSearch')}
-        </Link>
-        <Link
-          href="/cart"
-          className="relative rounded-full bg-maroon px-5 py-2.5 text-sm font-bold text-white transition hover:bg-maroon-dark"
-        >
-          {t('navCart')}
-          {totalQuantity > 0 ? (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-bold text-text-primary">
-              {totalQuantity}
-            </span>
-          ) : null}
-        </Link>
       </div>
     </header>
   );
