@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Product } from './types';
+import { toast } from '@/lib/toast';
 
 interface SelectionState {
   isSelectionMode: boolean;
@@ -32,6 +33,10 @@ export const useSelectionStore = create<SelectionState>((set) => ({
       newIds.delete(product.id);
       delete newProducts[product.id];
     } else {
+      if (newIds.size >= 10) {
+        toast.error('You can only select up to 10 products.');
+        return state;
+      }
       newIds.add(product.id);
       newProducts[product.id] = product;
     }
