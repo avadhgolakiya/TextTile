@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { productApi, authApi } from '@/lib/api-client';
+import { productApi, authApi, orderApi } from '@/lib/api-client';
 import { useCartStore } from '@/lib/cart-store';
 import { formatInr } from '@/lib/formatting/inr';
 import { openWhatsAppSingleOrder } from '@/lib/whatsapp';
@@ -17,6 +17,20 @@ import { getFullImageUrl } from '@/lib/image';
 function getToken() {
   if (typeof document === 'undefined') return '';
   return document.cookie.split('; ').find((row) => row.startsWith('token='))?.split('=')[1] ?? '';
+}
+
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 }
 
 export default function ProductDetailPage() {
@@ -122,7 +136,7 @@ export default function ProductDetailPage() {
     }
   }, [id]);
 
-  async function handleWhatsAppOrder() {
+  async function handleBuyNow() {
     if (!product || isOrdering) return;
 
     const token = getToken();
@@ -138,16 +152,74 @@ export default function ProductDetailPage() {
 
     setIsOrdering(true);
     try {
-      await openWhatsAppSingleOrder({
-        product,
-        quantity,
-        buyerName,
-        buyerPhone: buyerPhone || null,
-        buyerAddress: buyerAddress || null,
-        note,
-        imageUrls: images,
+      const orderLines = [{
+        productId: product.id,
+        quantity: quantity,
+      }];
+      
+      const total = (product.price || 0) * quantity;
+      
+      const { orderId, razorpayOrderId, amount } = await orderApi.create(token, {
+        buyerName: buyerName.trim(),
+        buyerPhone: buyerPhone.trim() || undefined,
+        lines: orderLines,
+        total: total,
       });
-    } finally {
+
+      const res = await loadRazorpayScript();
+      if (!res) {
+        alert('Razorpay SDK failed to load. Are you online?');
+        setIsOrdering(false);
+        return;
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: amount,
+        currency: 'INR',
+        name: 'Saarika',
+        description: 'Order Payment',
+        order_id: razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            await orderApi.verifyPayment(token, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId,
+            });
+            router.push('/orders');
+          } catch (err) {
+            console.error('Payment verification failed:', err);
+            alert('Payment verification failed!');
+            setIsOrdering(false);
+          }
+        },
+        prefill: {
+          name: buyerName,
+          contact: buyerPhone,
+        },
+        theme: {
+          color: '#8B0000', // maroon
+        },
+        modal: {
+          ondismiss: function () {
+            setIsOrdering(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        console.error('Payment failed:', response.error);
+        alert(response.error.description);
+        setIsOrdering(false);
+      });
+      rzp.open();
+
+    } catch (err) {
+      console.error('Failed to init payment:', err);
+      alert('Failed to place order.');
       setIsOrdering(false);
     }
   }
@@ -161,7 +233,7 @@ export default function ProductDetailPage() {
       const token = getToken();
       await authApi.updateAddress(token, buyerAddress);
       setIsAddressModalOpen(false);
-      handleWhatsAppOrder();
+      handleBuyNow();
     } catch (err) {
       console.error(err);
     } finally {
@@ -513,11 +585,11 @@ export default function ProductDetailPage() {
 
           {/* Action CTAs */}
           <div className="flex flex-col gap-3 pt-2">
-            {/* WhatsApp CTA */}
+            {/* Buy Now CTA */}
             <button
-              onClick={handleWhatsAppOrder}
+              onClick={handleBuyNow}
               disabled={product.stock === 0 || isOrdering}
-              className={`w-full h-14 ${product.stock === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : isOrdering ? 'bg-gradient-to-r from-[#1B8C4D] to-[#25D366] text-white opacity-80 cursor-wait' : 'bg-gradient-to-r from-[#1B8C4D] to-[#25D366] text-white hover:shadow-lg'} rounded-[18px] font-bold text-base shadow-md transition flex items-center justify-center gap-2`}
+              className={`w-full h-14 ${product.stock === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : isOrdering ? 'bg-[#1b1f23] text-white opacity-80 cursor-wait' : 'bg-[#1b1f23] text-white hover:shadow-lg'} rounded-[18px] font-bold text-base shadow-md transition flex items-center justify-center gap-2`}
             >
               {isOrdering ? (
                 <>
@@ -525,14 +597,14 @@ export default function ProductDetailPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
                   </svg>
-                  Preparing photos…
+                  Processing payment...
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
-                  {product.stock === 0 ? 'Out of Stock' : t('whatsappOrder')}
+                  {product.stock === 0 ? 'Out of Stock' : 'Buy Now with Razorpay'}
                 </>
               )}
             </button>
@@ -566,7 +638,7 @@ export default function ProductDetailPage() {
             </div>
 
             <p className="text-sm text-text-secondary">
-              Please provide a shipping address before completing your order via WhatsApp.
+              Please provide a shipping address before proceeding to payment.
             </p>
 
             <form onSubmit={handleSaveAddress} className="space-y-4">
