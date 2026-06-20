@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: 255 248 242;
+  --cream-deep: 245 237 224;
+  --maroon: 123 20 40;
+  --maroon-dark: 78 10 21;
+  --gold: 191 155 69;
+  --peach: 253 232 223;
+  --text-primary: 30 13 7;
+  --text-secondary: 122 104 96;
+  --divider: 237 229 220;
+  --surface: 255 255 255;
+}
+
+.dark {
+  --cream: 18 18 18;
+  --cream-deep: 26 26 26;
+  --maroon: 161 43 66;
+  --maroon-dark: 123 20 40;
+  --gold: 212 175 55;
+  --peach: 42 21 25;
+  --text-primary: 245 245 245;
+  --text-secondary: 163 163 163;
+  --divider: 51 51 51;
+  --surface: 26 26 26;
+}
+
+body {
+  @apply bg-cream text-text-primary font-sans antialiased;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-maroon px-7 py-4 text-sm font-bold text-white transition hover:bg-maroon-dark;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-full border-[1.4px] border-maroon px-6 py-3.5 text-sm font-semibold text-maroon;
+  }
+
+  .input-field {
+    @apply w-full rounded-input border border-divider bg-surface px-5 py-4 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold;
+  }
+
+  .card {
+    @apply rounded-card bg-surface shadow-sm;
+  }
+}
+
+/* Desktop-only enhancements (≥1024px) — mobile styles untouched */
+@media (min-width: 1024px) {
+  .btn-primary {
+    @apply cursor-pointer px-8 py-4 text-base shadow-sm hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  .btn-outline {
+    @apply cursor-pointer hover:bg-peach;
+  }
+
+  .input-field {
+    @apply px-6 py-4 text-base hover:border-gold;
+  }
+
+  .card {
+    @apply transition duration-200 hover:shadow-md;
+  }
+
+  .desktop-page {
+    @apply max-w-none;
+  }
+
+  .desktop-split {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .desktop-two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+}

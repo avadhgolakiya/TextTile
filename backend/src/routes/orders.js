@@ -4,6 +4,13 @@ import { authMiddleware } from '../lib/auth.js';
 import { logActivity } from '../lib/activity.js';
 import { notifyLowStock } from '../lib/notifications.js';
 import { ObjectId } from 'mongodb';
+import Razorpay from 'razorpay';
+import crypto from 'crypto';
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'dummy',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy',
+});
 
 const router = Router();
 
@@ -119,7 +126,7 @@ router.post('/', authMiddleware, async (req, res) => {
     });
 
     const ordersColl = getCollection('orders');
-    await ordersColl.insertOne({
+    const insertResult = await ordersColl.insertOne({
       buyerId: req.userId,
       buyerName,
       buyerPhone: buyerPhone || null,
@@ -148,7 +155,52 @@ router.post('/', authMiddleware, async (req, res) => {
       }
     }
 
-    return res.status(201).json({ ok: true });
+    let rzpOrder = null;
+    try {
+      const amountInPaise = Math.round(total * 100);
+      rzpOrder = await razorpay.orders.create({
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt: insertResult.insertedId.toString(),
+      });
+    } catch (rzpErr) {
+      console.error('Razorpay order creation failed:', rzpErr);
+      return res.status(500).json({ error: 'Failed to create payment order' });
+    }
+
+    return res.status(201).json({ 
+      ok: true,
+      orderId: insertResult.insertedId.toString(),
+      razorpayOrderId: rzpOrder.id,
+      amount: rzpOrder.amount
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/** Verify Payment */
+router.post('/verify-payment', authMiddleware, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'dummy')
+      .update(body.toString())
+      .digest('hex');
+
+    if (expectedSignature === razorpay_signature) {
+      const ordersColl = getCollection('orders');
+      await ordersColl.updateOne(
+        { _id: new ObjectId(orderId) },
+        { $set: { status: 'paid', updatedAt: new Date() } }
+      );
+      return res.json({ ok: true });
+    } else {
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error' });

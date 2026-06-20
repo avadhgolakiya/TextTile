@@ -18,6 +18,20 @@ function getToken() {
   return document.cookie.split('; ').find((row) => row.startsWith('token='))?.split('=')[1] ?? '';
 }
 
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 /** Port of lib/features/cart/cart_screen.dart */
 export default function CartPage() {
   const router = useRouter();
@@ -68,33 +82,86 @@ export default function CartPage() {
 
     try {
       const token = getToken();
-      if (token) {
-        const orderLines = lines.map((line) => ({
-          productId: line.product.id,
-          quantity: line.quantity,
-        }));
-        await orderApi.create(token, {
-          buyerName: buyerName.trim(),
-          buyerPhone: buyerPhone.trim() || undefined,
-          lines: orderLines,
-          total: summary.total,
-        });
+      if (!token) {
+        setSubmitting(false);
+        setIsOrdering(false);
+        return;
       }
+
+      const orderLines = lines.map((line) => ({
+        productId: line.product.id,
+        quantity: line.quantity,
+      }));
+      
+      const { orderId, razorpayOrderId, amount } = await orderApi.create(token, {
+        buyerName: buyerName.trim(),
+        buyerPhone: buyerPhone.trim() || undefined,
+        lines: orderLines,
+        total: summary.total,
+      });
+
+      const res = await loadRazorpayScript();
+      if (!res) {
+        alert('Razorpay SDK failed to load. Are you online?');
+        setSubmitting(false);
+        setIsOrdering(false);
+        return;
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: amount,
+        currency: 'INR',
+        name: 'Saarika',
+        description: 'Order Payment',
+        order_id: razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            await orderApi.verifyPayment(token, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId,
+            });
+            clear();
+            router.push('/orders');
+          } catch (err) {
+            console.error('Payment verification failed:', err);
+            alert('Payment verification failed!');
+            setIsOrdering(false);
+            setSubmitting(false);
+          }
+        },
+        prefill: {
+          name: buyerName,
+          contact: buyerPhone,
+        },
+        theme: {
+          color: '#8B0000', // maroon
+        },
+        modal: {
+          ondismiss: function () {
+            setIsOrdering(false);
+            setSubmitting(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        console.error('Payment failed:', response.error);
+        alert(response.error.description);
+        setIsOrdering(false);
+        setSubmitting(false);
+      });
+      rzp.open();
+
     } catch (err) {
-      console.error('Failed to save order to database:', err);
+      console.error('Failed to save order to database or init payment:', err);
+      alert('Failed to place order.');
+      setSubmitting(false);
+      setIsOrdering(false);
     }
-
-    await openWhatsAppCart({
-      lines,
-      buyerName: buyerName.trim(),
-      buyerPhone: buyerPhone.trim() || null,
-      buyerAddress: buyerAddress.trim() || null,
-    });
-
-    clear();
-    setSubmitting(false);
-    setIsOrdering(false);
-    router.push('/orders');
   }
 
   async function handleSaveAddress(e: React.FormEvent) {
@@ -232,7 +299,7 @@ export default function CartPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
                 </svg>
-                Preparing photos…
+                Processing payment...
               </>
             ) : submitting ? t('placingOrder') : t('placeOrder')}
           </button>
@@ -256,7 +323,7 @@ export default function CartPage() {
             </div>
             
             <p className="text-sm text-text-secondary">
-              Please provide a shipping address before completing your order via WhatsApp.
+              Please provide a shipping address before proceeding to payment.
             </p>
             
             <form onSubmit={handleSaveAddress} className="space-y-4">

@@ -75,4 +75,13 @@ shared-frontend/.env.development
 
 *.log
 
+# PHP Backend
+php-backend/vendor/
+php-backend/.env
 
+# Frontend PHP
+frontend-php/node_modules/
+frontend-php/.next/
+frontend-php/.env.local
+frontend-php/.env.production
+frontend-php/.env.development

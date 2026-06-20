@@ -99,7 +99,21 @@ export const orderApi = {
       total: number;
     },
   ) =>
-    apiFetch<{ ok: true }>('/api/orders', {
+    apiFetch<{ ok: true; orderId: string; razorpayOrderId: string; amount: number }>('/api/orders', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  verifyPayment: (
+    token: string,
+    body: {
+      razorpay_order_id: string;
+      razorpay_payment_id: string;
+      razorpay_signature: string;
+      orderId: string;
+    }
+  ) =>
+    apiFetch<{ ok: true }>('/api/orders/verify-payment', {
       method: 'POST',
       token,
       body: JSON.stringify(body),
