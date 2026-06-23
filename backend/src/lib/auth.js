@@ -43,7 +43,7 @@ export function mapUser(doc) {
     address: doc.address || null,
     isAdmin: doc.isAdmin ?? false,
     isBlocked: doc.isBlocked ?? false,
-    isSuperAdmin: doc.email === 'admin@example.com',
+    isSuperAdmin: doc.isSuperAdmin === true || doc.email === 'admin@example.com' || doc.email === 'admin@admin.com',
   };
 }
 
