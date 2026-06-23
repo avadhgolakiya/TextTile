@@ -18,16 +18,16 @@ export function Footer() {
               Sign up for our newsletter and receive updates on new drops, exclusive wholesale deals, and more.
             </p>
           </div>
-          <form className="flex max-w-md w-full gap-2">
+          <form className="flex flex-col sm:flex-row max-w-md w-full gap-3">
             <input
               type="email"
               placeholder="Enter your email address"
-              className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-gold transition"
+              className="flex-1 min-w-0 w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-gold transition"
               required
             />
             <button
               type="submit"
-              className="bg-gold hover:bg-gold-muted text-maroon-dark font-bold px-6 py-3 rounded-xl transition duration-200 text-sm"
+              className="w-full sm:w-auto whitespace-nowrap bg-gold hover:bg-gold-muted text-maroon-dark font-bold px-6 py-3 rounded-xl transition duration-200 text-sm"
             >
               Subscribe
             </button>
