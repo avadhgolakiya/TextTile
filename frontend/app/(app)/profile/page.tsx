@@ -33,7 +33,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const token = getToken();
     if (!token) {
-      setLoading(false);
+      router.replace('/login');
       return;
     }
     
@@ -42,17 +42,20 @@ export default function ProfilePage() {
       orderApi.fetchMine(token)
     ])
       .then(([userRes, ordersRes]) => {
+        if (!userRes?.user) throw new Error('User not found');
         setUser(userRes.user);
-        setOrderCount(ordersRes.orders.length);
-        const spent = ordersRes.orders.reduce((sum, o) => sum + o.total, 0);
+        setOrderCount(ordersRes?.orders?.length || 0);
+        const spent = (ordersRes?.orders || []).reduce((sum, o) => sum + (o.total || 0), 0);
         setTotalSpent(spent);
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
-        setLoading(false);
+        console.error('Profile load error:', err);
+        // Clear invalid token and redirect to login
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        router.replace('/login');
       });
-  }, []);
+  }, [router]);
 
   function handleLogout() {
     clearCart();
@@ -370,6 +373,34 @@ export default function ProfilePage() {
                     <div className="text-sm text-text-secondary">+91 88495 02490</div>
                   </div>
                   <span className="text-green-600 font-bold">→</span>
+                </a>
+
+                <a
+                  href="https://www.instagram.com/swastik_g8?igsh=MWN0MHRlbTZycWY4YQ=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-2xl border border-divider bg-cream-deep hover:border-pink-500 hover:bg-pink-50 transition"
+                >
+                  <span className="text-2xl">📸</span>
+                  <div className="flex-1">
+                    <div className="font-bold text-text-primary">Instagram</div>
+                    <div className="text-sm text-text-secondary">@swastik_g8</div>
+                  </div>
+                  <span className="text-pink-600 font-bold">→</span>
+                </a>
+
+                <a
+                  href="https://share.google/C00MjcrEKySH3xSko"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-2xl border border-divider bg-cream-deep hover:border-blue-500 hover:bg-blue-50 transition"
+                >
+                  <span className="text-2xl">📍</span>
+                  <div className="flex-1">
+                    <div className="font-bold text-text-primary">Store Location</div>
+                    <div className="text-sm text-text-secondary">Surat, Gujarat</div>
+                  </div>
+                  <span className="text-blue-600 font-bold">→</span>
                 </a>
               </div>
             </div>
