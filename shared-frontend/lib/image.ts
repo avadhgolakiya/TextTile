@@ -31,3 +31,15 @@ export function getWhatsAppThumbnailUrl(url?: string | null): string {
   
   return fullUrl;
 }
+
+export function isVideoUrl(url?: string | null): boolean {
+  if (!url) return false;
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return (
+    cleanUrl.endsWith('.mp4') ||
+    cleanUrl.endsWith('.webm') ||
+    cleanUrl.endsWith('.ogg') ||
+    cleanUrl.endsWith('.mov') ||
+    cleanUrl.includes('/video/upload/')
+  );
+}

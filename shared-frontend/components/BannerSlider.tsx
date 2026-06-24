@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { isValidImageUrl } from '@/lib/image';
+import { isValidImageUrl, isVideoUrl, getFullImageUrl } from '@/lib/image';
 import { FALLBACK_BANNER } from '@/lib/constants/sample-data';
 
 type Props = {
@@ -94,23 +94,45 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
             >
               {banner.redirect_url ? (
                 <a href={banner.redirect_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative cursor-pointer">
-                  <Image
-                    src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
-                    alt={`Promo banner ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    priority={index === 0}
-                  />
+                  {isVideoUrl(banner.image_url) ? (
+                    <video
+                      src={getFullImageUrl(banner.image_url)}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
+                      alt={`Promo banner ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      priority={index === 0}
+                    />
+                  )}
                 </a>
               ) : (
                 <div className="w-full h-full relative">
-                  <Image
-                    src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
-                    alt={`Promo banner ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    priority={index === 0}
-                  />
+                  {isVideoUrl(banner.image_url) ? (
+                    <video
+                      src={getFullImageUrl(banner.image_url)}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
+                      alt={`Promo banner ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      priority={index === 0}
+                    />
+                  )}
                 </div>
               )}
             </div>

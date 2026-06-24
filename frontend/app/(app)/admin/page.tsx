@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product, OrderItem, Category } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import Image from 'next/image';
-import { getFullImageUrl } from '@/lib/image';
+import { getFullImageUrl, isVideoUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -959,9 +959,9 @@ export default function AdminPage() {
             {activeTab === 'banners' && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-serif text-xl font-bold">Slider Images</h3>
+                  <h3 className="font-serif text-xl font-bold">Slider Banners</h3>
                   <button onClick={() => { setNewBannerUrl(''); setNewRedirectUrl(''); setIsBannerModalOpen(true); }} className="btn-primary py-2 px-5 text-xs">
-                    + Add Image
+                    + Add Slide
                   </button>
                 </div>
 
@@ -982,7 +982,11 @@ export default function AdminPage() {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" /></svg>
                         </div>
                         <div className="relative w-28 h-16 rounded-lg overflow-hidden bg-cream-deep shrink-0 border border-divider">
-                          <Image src={getFullImageUrl(b.image_url)} alt="Banner" fill className="object-cover" />
+                          {isVideoUrl(b.image_url) ? (
+                            <video src={getFullImageUrl(b.image_url)} muted className="w-full h-full object-cover" />
+                          ) : (
+                            <Image src={getFullImageUrl(b.image_url)} alt="Banner" fill className="object-cover" />
+                          )}
                         </div>
                         <p className="text-xs text-text-secondary truncate flex-1 leading-relaxed">
                           {b.image_url}
@@ -1493,7 +1497,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4">
           <div className="bg-surface rounded-card shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="font-serif text-lg font-bold">Add Slider Image</h3>
+              <h3 className="font-serif text-lg font-bold">Add Slider Slide</h3>
               <button onClick={() => setIsBannerModalOpen(false)} className="text-text-secondary hover:text-maroon text-lg p-1">
                 ✕
               </button>
@@ -1501,24 +1505,33 @@ export default function AdminPage() {
 
             <form onSubmit={addBanner} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-text-secondary uppercase block">Image Upload</label>
+                <label className="text-xs font-bold text-text-secondary uppercase block">File Upload (Image/Video)</label>
                 
                 <div className="border-[1.4px] border-dashed border-divider rounded-2xl p-4 bg-cream/40 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden group">
                   {newBannerUrl ? (
                     <div className="relative w-full h-[150px] flex flex-col items-center justify-center">
                       <div className="relative w-full h-full rounded-lg overflow-hidden border border-divider">
-                        <img
-                          src={getFullImageUrl(newBannerUrl)}
-                          alt="Slider preview"
-                          className="w-full h-full object-cover"
-                        />
+                        {isVideoUrl(newBannerUrl) ? (
+                          <video
+                            src={getFullImageUrl(newBannerUrl)}
+                            controls
+                            muted
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <img
+                            src={getFullImageUrl(newBannerUrl)}
+                            alt="Slider preview"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                       </div>
                       <button
                         type="button"
                         onClick={() => setNewBannerUrl('')}
                         className="absolute bottom-2 text-xs font-semibold text-red-600 hover:text-red-800 bg-surface shadow-sm border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition z-10"
                       >
-                        Remove Image
+                        Remove File
                       </button>
                     </div>
                   ) : (
@@ -1531,7 +1544,7 @@ export default function AdminPage() {
                       ) : (
                         <div className="text-center space-y-1">
                           <span className="text-3xl block mb-1">🖼️</span>
-                          <p className="text-xs font-semibold">Drag & drop or click to upload</p>
+                          <p className="text-xs font-semibold">Drag & drop or click to upload (Image/Video)</p>
                         </div>
                       )}
                     </div>
@@ -1540,7 +1553,7 @@ export default function AdminPage() {
                   {!newBannerUrl && !uploadingImage && (
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,video/*"
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                       onChange={uploadBannerImage}
                     />
