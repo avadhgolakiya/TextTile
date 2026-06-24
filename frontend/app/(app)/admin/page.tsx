@@ -506,8 +506,18 @@ export default function AdminPage() {
   async function uploadBannerImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File is too large. Max limit is 5MB.');
+    
+    const isVideo = file.type.startsWith('video/') || 
+                    file.name.toLowerCase().endsWith('.mp4') || 
+                    file.name.toLowerCase().endsWith('.webm') || 
+                    file.name.toLowerCase().endsWith('.mov') || 
+                    file.name.toLowerCase().endsWith('.ogg');
+    
+    const limit = isVideo ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
+    const limitMsg = isVideo ? '100MB' : '5MB';
+
+    if (file.size > limit) {
+      toast.error(`File is too large. Max limit for ${isVideo ? 'videos' : 'images'} is ${limitMsg}.`);
       return;
     }
     setUploadingImage(true);

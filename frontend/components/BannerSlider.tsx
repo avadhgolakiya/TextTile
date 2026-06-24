@@ -33,7 +33,15 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
   const startAutoplay = () => {
     stopAutoplay();
     if (list.length <= 1) return;
-    autoplayTimerRef.current = setInterval(nextSlide, 3000);
+    
+    // Check if the currently active slide is a video
+    const currentBanner = list[currentIndex];
+    const isCurrentVideo = currentBanner ? isVideoUrl(currentBanner.image_url) : false;
+    
+    // Only schedule auto-advance if the current slide is not a video
+    if (!isCurrentVideo) {
+      autoplayTimerRef.current = setInterval(nextSlide, 3000);
+    }
   };
 
   const stopAutoplay = () => {
@@ -46,7 +54,7 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
   useEffect(() => {
     startAutoplay();
     return () => stopAutoplay();
-  }, [list.length]);
+  }, [currentIndex, list.length]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -95,14 +103,18 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
               {banner.redirect_url ? (
                 <a href={banner.redirect_url} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative cursor-pointer">
                   {isVideoUrl(banner.image_url) ? (
-                    <video
-                      src={getFullImageUrl(banner.image_url)}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
+                    active ? (
+                      <video
+                        src={getFullImageUrl(banner.image_url)}
+                        autoPlay
+                        muted
+                        playsInline
+                        onEnded={nextSlide}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-cream-deep" />
+                    )
                   ) : (
                     <Image
                       src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
@@ -116,14 +128,18 @@ export function BannerSlider({ banners, isAdmin = false }: Props) {
               ) : (
                 <div className="w-full h-full relative">
                   {isVideoUrl(banner.image_url) ? (
-                    <video
-                      src={getFullImageUrl(banner.image_url)}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
+                    active ? (
+                      <video
+                        src={getFullImageUrl(banner.image_url)}
+                        autoPlay
+                        muted
+                        playsInline
+                        onEnded={nextSlide}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-cream-deep" />
+                    )
                   ) : (
                     <Image
                       src={isValidImageUrl(banner.image_url) ? banner.image_url : FALLBACK_BANNER}
