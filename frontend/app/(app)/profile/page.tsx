@@ -447,7 +447,7 @@ export default function ProfilePage() {
                 >
                   <span className="text-2xl">📍</span>
                   <div className="flex-1">
-                    <div className="font-bold text-text-primary">Store Location</div>
+                    <div className="font-bold text-text-primary">Shop Location</div>
                     <div className="text-sm text-text-secondary">Surat, Gujarat</div>
                   </div>
                   <span className="text-blue-600 font-bold">→</span>
