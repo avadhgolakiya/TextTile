@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { AppUser } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import { useTranslation } from '@/lib/language-store';
+import { toast } from '@/lib/toast';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -28,6 +29,15 @@ export default function ProfilePage() {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [newAddress, setNewAddress] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  // Password change states
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
   const clearCart = useCartStore((s) => s.clear);
 
   useEffect(() => {
@@ -82,6 +92,34 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordError(null);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('passwordsDoNotMatch'));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError(t('passwordTooShort'));
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      const token = getToken();
+      await authApi.changePassword(token, oldPassword, newPassword);
+      toast.success(t('passwordChangedSuccess'));
+      setIsPasswordModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      setPasswordError(err.message || 'Failed to change password. Please verify old password.');
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center">
@@ -120,6 +158,18 @@ export default function ProfilePage() {
       subtitle: `${t('preferencesSubtitle')} (${currentLangLabel})`, 
       icon: '⚙️', 
       action: () => setLangModalOpen(true) 
+    },
+    { 
+      title: t('changePassword'), 
+      subtitle: t('changePasswordSubtitle'), 
+      icon: '🔒',
+      action: () => {
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordError(null);
+        setIsPasswordModalOpen(true);
+      }
     },
     { 
       title: t('helpSupport'), 
@@ -404,6 +454,83 @@ export default function ProfilePage() {
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-surface rounded-[24px] border border-divider shadow-xl overflow-hidden p-6 space-y-6 animate-scaleIn">
+            <div className="flex justify-between items-center">
+              <h3 className="font-serif text-xl font-bold text-text-primary">
+                {t('changePassword')}
+              </h3>
+              <button
+                onClick={() => setIsPasswordModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-cream-deep hover:bg-divider transition text-text-secondary font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-text-secondary uppercase mb-2 block">
+                  {t('oldPassword')}
+                </label>
+                <input
+                  type="password"
+                  className="input-field"
+                  placeholder="Enter old password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-text-secondary uppercase mb-2 block">
+                  {t('newPassword')}
+                </label>
+                <input
+                  type="password"
+                  className="input-field"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-text-secondary uppercase mb-2 block">
+                  {t('confirmPassword')}
+                </label>
+                <input
+                  type="password"
+                  className="input-field"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {passwordError && (
+                <div className="text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
+                  ⚠️ {passwordError}
+                </div>
+              )}
+              
+              <button
+                type="submit"
+                disabled={isSavingPassword || !oldPassword || !newPassword || !confirmPassword}
+                className="btn-primary w-full h-12"
+              >
+                {isSavingPassword ? 'Updating...' : t('changePassword')}
+              </button>
+            </form>
           </div>
         </div>
       )}

@@ -169,6 +169,12 @@ export const authApi = {
       token,
       body: JSON.stringify({ address }),
     }),
+  changePassword: (token: string, oldPassword: string, newPassword: string) =>
+    apiFetch<{ ok: true }>('/api/auth/me/password', {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({ oldPassword, newPassword }),
+    }),
   checkIp: () =>
     apiFetch<{ blocked: boolean }>('/api/auth/check-ip', { cache: 'no-store' }),
 

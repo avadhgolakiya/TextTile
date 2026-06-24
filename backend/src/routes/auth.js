@@ -118,6 +118,44 @@ router.patch('/me/address', authMiddleware, async (req, res) => {
   }
 });
 
+router.patch('/me/password', authMiddleware, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body || {};
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ error: 'Old password and new password are required' });
+    }
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+    }
+
+    const usersColl = getCollection('users');
+    const userDoc = await usersColl.findOne({ _id: new ObjectId(req.userId) });
+    if (!userDoc) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify old password
+    const isCorrect = await bcrypt.compare(String(oldPassword), userDoc.passwordHash);
+    if (!isCorrect) {
+      return res.status(400).json({ error: 'Incorrect old password' });
+    }
+
+    // Hash new password
+    const newHash = await bcrypt.hash(String(newPassword), 10);
+    await usersColl.updateOne(
+      { _id: new ObjectId(req.userId) },
+      { $set: { passwordHash: newHash, updatedAt: new Date() } }
+    );
+
+    await logActivity(req, 'changed_password', { email: userDoc.email });
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.get('/buyers', authMiddleware, async (req, res) => {
   try {
     const usersColl = getCollection('users');

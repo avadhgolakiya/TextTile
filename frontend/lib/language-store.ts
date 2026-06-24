@@ -88,6 +88,14 @@ export const translations = {
     paymentMethodsSubtitle: 'UPI • Bank',
     accountSummary: 'Account summary',
     accountSummaryDesc: 'Manage your wholesale profile, saved items, and order history from one place.',
+    changePassword: 'Change Password',
+    changePasswordSubtitle: 'Update your security credentials',
+    oldPassword: 'Old Password',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm Password',
+    passwordsDoNotMatch: 'New passwords do not match',
+    passwordChangedSuccess: 'Password changed successfully!',
+    passwordTooShort: 'Password must be at least 6 characters',
     
     // Cart Page
     shoppingCart: 'Shopping Cart',
@@ -203,6 +211,14 @@ export const translations = {
     paymentMethodsSubtitle: 'यूपीआई • बैंक',
     accountSummary: 'खाता विवरण',
     accountSummaryDesc: 'एक ही स्थान से अपनी थोक प्रोफ़ाइल, सहेजे गए आइटम और ऑर्डर इतिहास प्रबंधित करें।',
+    changePassword: 'पासवर्ड बदलें',
+    changePasswordSubtitle: 'अपनी सुरक्षा क्रेडेंशियल अपडेट करें',
+    oldPassword: 'पुराना पासवर्ड',
+    newPassword: 'नया पासवर्ड',
+    confirmPassword: 'पासवर्ड की पुष्टि करें',
+    passwordsDoNotMatch: 'नए पासवर्ड मेल नहीं खाते',
+    passwordChangedSuccess: 'पासवर्ड सफलतापूर्वक बदल गया!',
+    passwordTooShort: 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
     
     // Cart Page
     shoppingCart: 'शॉपिंग कार्ट',
@@ -318,6 +334,14 @@ export const translations = {
     paymentMethodsSubtitle: 'યુપીઆઈ • બેંક',
     accountSummary: 'એકાઉન્ટ વિગત',
     accountSummaryDesc: 'એક જ જગ્યાએથી તમારી જથ્થાબંધ પ્રોફાઇલ, સાચવેલી વસ્તુઓ અને ઓર્ડર હિસ્ટ્રી સંચાલિત કરો.',
+    changePassword: 'પાસવર્ડ બદલો',
+    changePasswordSubtitle: 'તમારી સુરક્ષા ઓળખપત્ર અપડેટ કરો',
+    oldPassword: 'જૂનો પાસવર્ડ',
+    newPassword: 'નવો પાસવર્ડ',
+    confirmPassword: 'પાસવર્ડની ખાતરી કરો',
+    passwordsDoNotMatch: 'નવા પાસવર્ડ મેળ ખાતા નથી',
+    passwordChangedSuccess: 'પાસવર્ડ સફળતાપૂર્વક બદલાઈ ગયો!',
+    passwordTooShort: 'પાસવર્ડ ઓછામાં ઓછો 6 અક્ષરોનો હોવો જોઈએ',
     
     // Cart Page
     shoppingCart: 'શોપિંગ કાર્ટ',
