@@ -594,6 +594,18 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDeleteAdmin(adminId: string, adminName: string) {
+    if (!confirm(`Are you sure you want to delete the admin "${adminName}"?`)) return;
+    const token = getToken();
+    try {
+      await authApi.deleteAdmin(token, adminId);
+      toast.success('Admin deleted successfully');
+      loadTabData('system-admins');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete admin');
+    }
+  }
+
   const tabs = [
     { id: 'products', label: 'Products', icon: '🛍️' },
     { id: 'categories', label: 'Categories', icon: '📁' },
@@ -1097,9 +1109,24 @@ export default function AdminPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-text-secondary">
-                        <span className="text-xs font-semibold">View Activity</span>
-                        <span>➡️</span>
+                      <div className="flex items-center gap-4">
+                        {admin.email !== 'admin@example.com' && admin.email !== 'admin@admin.com' && admin.email !== 'swastik@example.com' && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAdmin(admin.id, admin.name);
+                            }}
+                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition"
+                            title="Delete Admin"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                        <div className="flex items-center gap-2 text-text-secondary">
+                          <span className="text-xs font-semibold">View Activity</span>
+                          <span>➡️</span>
+                        </div>
                       </div>
                     </div>
                   ))}

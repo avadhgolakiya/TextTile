@@ -204,6 +204,11 @@ export const authApi = {
     apiFetch<{ admins: { id: string; email: string; name: string }[] }>('/api/auth/admins', { token }),
   fetchAdminActivity: (token: string, adminId: string) =>
     apiFetch<{ logs: any[] }>(`/api/auth/admins/${encodeURIComponent(adminId)}/activity`, { token }),
+  deleteAdmin: (token: string, adminId: string) =>
+    apiFetch<{ ok: true }>(`/api/auth/admins/${encodeURIComponent(adminId)}`, {
+      method: 'DELETE',
+      token,
+    }),
 };
 
 export const notificationApi = {

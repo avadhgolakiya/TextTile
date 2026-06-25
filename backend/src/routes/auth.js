@@ -326,6 +326,39 @@ router.get('/admins/:id/activity', authMiddleware, async (req, res) => {
   }
 });
 
+router.delete('/admins/:id', authMiddleware, async (req, res) => {
+  try {
+    const usersColl = getCollection('users');
+    const caller = await usersColl.findOne({ _id: new ObjectId(req.userId) });
+    const mappedCaller = mapUser(caller);
+    if (!mappedCaller || !mappedCaller.isSuperAdmin) {
+      return res.status(403).json({ error: 'Super Admin access required.' });
+    }
+
+    const { id } = req.params;
+    const adminToDelete = await usersColl.findOne({ _id: new ObjectId(id) });
+    if (!adminToDelete) {
+      return res.status(404).json({ error: 'Admin account not found.' });
+    }
+
+    const isSuper = adminToDelete.isSuperAdmin === true ||
+                    adminToDelete.email === 'admin@example.com' ||
+                    adminToDelete.email === 'admin@admin.com' ||
+                    adminToDelete.email === 'swastik@example.com';
+    if (isSuper) {
+      return res.status(400).json({ error: 'Cannot delete Super Admin accounts.' });
+    }
+
+    await usersColl.deleteOne({ _id: new ObjectId(id) });
+    await logActivity(req, 'deleted_admin', { deletedAdminEmail: adminToDelete.email, deletedAdminId: id });
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.get('/check-ip', async (req, res) => {
   try {
     const ip = req.query.ip || getClientIp(req);
