@@ -8,8 +8,8 @@ import { BannerSlider } from '@/components/BannerSlider';
 import { FALLBACK_BANNER } from '@/lib/constants/sample-data';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Product } from '@/lib/types';
-import { productApi, bannerApi } from '@/lib/api-client';
+import type { Product, Category } from '@/lib/types';
+import { productApi, bannerApi, categoryApi } from '@/lib/api-client';
 import { useTranslation } from '@/lib/language-store';
 import { getFullImageUrl, isValidImageUrl } from '@/lib/image';
 import { MultiShareBar } from '@/components/MultiShareBar';
@@ -23,32 +23,56 @@ export default function HomePage() {
   const exitSelectionMode = useSelectionStore((s) => s.exitSelectionMode);
   const [products, setProducts] = useState<Product[]>([]);
   const [banners, setBanners] = useState<{ image_url: string; redirect_url?: string }[]>([{ image_url: FALLBACK_BANNER }]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       productApi.fetchAll().then((res) => res.products).catch(() => []),
-      bannerApi.fetchUrls().then((res) => res.banners.length ? res.banners : [{ image_url: FALLBACK_BANNER }]).catch(() => [{ image_url: FALLBACK_BANNER }])
-    ]).then(([prodRes, bannerRes]) => {
+      bannerApi.fetchUrls().then((res) => res.banners.length ? res.banners : [{ image_url: FALLBACK_BANNER }]).catch(() => [{ image_url: FALLBACK_BANNER }]),
+      categoryApi.fetchCategories().then((res) => res.categories || []).catch(() => [])
+    ]).then(([prodRes, bannerRes, catRes]) => {
       setProducts(prodRes);
       setBanners(bannerRes);
+      setCategories(catRes);
       setLoading(false);
     });
   }, []);
 
   const categoriesWithImages: { name: string; imageUrl: string }[] = [];
-  const seenCategories = new Set<string>();
 
-  products.forEach((p) => {
-    const cat = p.categoryKey?.trim();
-    if (cat && !seenCategories.has(cat.toLowerCase())) {
-      seenCategories.add(cat.toLowerCase());
+  if (categories.length > 0) {
+    categories.forEach((cat) => {
+      let imageUrl = '';
+      if (isValidImageUrl(cat.icon)) {
+        imageUrl = cat.icon;
+      } else {
+        const matchingProduct = products.find(
+          (p) =>
+            p.categoryKey?.toLowerCase() === cat.key.toLowerCase() ||
+            p.categoryKey?.toLowerCase() === cat.name.toLowerCase()
+        );
+        imageUrl = matchingProduct?.imageUrl || FALLBACK_BANNER;
+      }
       categoriesWithImages.push({
-        name: cat,
-        imageUrl: p.imageUrl || FALLBACK_BANNER
+        name: cat.name,
+        imageUrl: imageUrl,
       });
-    }
-  });
+    });
+  } else {
+    // Old fallback behavior: group by products
+    const seenCategories = new Set<string>();
+    products.forEach((p) => {
+      const cat = p.categoryKey?.trim();
+      if (cat && !seenCategories.has(cat.toLowerCase())) {
+        seenCategories.add(cat.toLowerCase());
+        categoriesWithImages.push({
+          name: cat,
+          imageUrl: p.imageUrl || FALLBACK_BANNER
+        });
+      }
+    });
+  }
 
   const featuredProducts = products.filter(p => p.isFeatured);
 

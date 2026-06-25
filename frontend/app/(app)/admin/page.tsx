@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import type { Product, OrderItem, Category } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import Image from 'next/image';
-import { getFullImageUrl, isVideoUrl } from '@/lib/image';
+import { getFullImageUrl, isVideoUrl, isValidImageUrl } from '@/lib/image';
 
 function getToken() {
   if (typeof document === 'undefined') return '';
@@ -70,6 +70,8 @@ export default function AdminPage() {
   // States for file uploading
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadingCategoryIcon, setUploadingCategoryIcon] = useState(false);
+  const [categoryUploadError, setCategoryUploadError] = useState<string | null>(null);
 
   // States for manual order form
   const [isManualOrderOpen, setIsManualOrderOpen] = useState(false);
@@ -320,6 +322,37 @@ export default function AdminPage() {
       toast.success('Category saved successfully');
     } catch (err) {
       toast.error(`Failed to save category: ${err}`);
+    }
+  }
+
+  async function handleCategoryIconUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setCategoryUploadError('File is too large. Max limit is 5MB.');
+      toast.error('File too large');
+      return;
+    }
+
+    setUploadingCategoryIcon(true);
+    setCategoryUploadError(null);
+
+    const token = getToken();
+    try {
+      const res = await productApi.uploadImage(token, file);
+      setFormCategory((prev) => ({
+        ...prev,
+        icon: res.imageUrl,
+      }));
+      toast.success('Category icon uploaded successfully');
+    } catch (err: any) {
+      console.error(err);
+      setCategoryUploadError(err.message || 'Upload failed');
+      toast.error('Failed to upload category icon');
+    } finally {
+      setUploadingCategoryIcon(false);
+      e.target.value = '';
     }
   }
 
@@ -762,7 +795,18 @@ export default function AdminPage() {
                     .map((c) => (
                     <div key={c.key} className="bg-surface border border-divider rounded-lg p-4 flex justify-between items-center shadow-sm">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{c.icon || '📁'}</span>
+                        {c.icon && isValidImageUrl(c.icon) ? (
+                          <div className="w-10 h-10 rounded-full overflow-hidden border border-divider relative shrink-0">
+                            <Image
+                              src={getFullImageUrl(c.icon)}
+                              alt={c.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-2xl shrink-0">{c.icon || '📁'}</span>
+                        )}
                         <span className="font-semibold">{c.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1096,15 +1140,69 @@ export default function AdminPage() {
                   onChange={(e) => setFormCategory({ ...formCategory, name: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-text-secondary uppercase">Category Icon (Emoji or SVG)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 🥻"
-                  className="input-field"
-                  value={formCategory.icon || ''}
-                  onChange={(e) => setFormCategory({ ...formCategory, icon: e.target.value })}
-                />
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-text-secondary uppercase block">Category Icon</label>
+                
+                {/* Upload Image Box */}
+                <div className="border-[1.4px] border-dashed border-divider rounded-2xl p-4 bg-cream/40 flex flex-col items-center justify-center min-h-[120px] relative overflow-hidden group hover:border-maroon transition">
+                  {formCategory.icon && isValidImageUrl(formCategory.icon) ? (
+                    <div className="relative w-20 h-20 rounded-full overflow-hidden border border-divider">
+                      <img
+                        src={getFullImageUrl(formCategory.icon)}
+                        alt="Category Icon Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormCategory({ ...formCategory, icon: '' })}
+                        className="absolute inset-0 bg-black/40 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition font-bold text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-text-secondary py-2">
+                      {uploadingCategoryIcon ? (
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-divider border-t-maroon" />
+                          <p className="text-xs">Uploading file...</p>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-1">
+                          <span className="text-3xl block mb-1">🖼️</span>
+                          <p className="text-xs font-semibold text-text-primary">Click to upload image</p>
+                          <p className="text-[10px] text-text-secondary">PNG, JPG, WEBP up to 5MB</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Hidden File Input */}
+                  {!uploadingCategoryIcon && !(formCategory.icon && isValidImageUrl(formCategory.icon)) && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      onChange={handleCategoryIconUpload}
+                    />
+                  )}
+                </div>
+
+                {categoryUploadError && (
+                  <p className="text-xs text-red-500 font-semibold">{categoryUploadError}</p>
+                )}
+
+                {/* Paste URL or Emoji option */}
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-text-secondary block">Or enter Emoji / SVG / Image URL:</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. 🥻 or SVG string or image URL"
+                    className="input-field py-3 text-xs"
+                    value={formCategory.icon || ''}
+                    onChange={(e) => setFormCategory({ ...formCategory, icon: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="pt-4 border-t border-divider flex justify-end gap-3">
                 <button type="button" onClick={() => setIsCategoryFormOpen(false)} className="px-5 py-2.5 rounded-lg font-bold text-text hover:bg-black/5 transition">
