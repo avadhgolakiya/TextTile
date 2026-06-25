@@ -1,83 +1,63 @@
-'use client';
+import type { Metadata } from 'next';
+import SharedCollectionClient from './SharedCollectionClient';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { collectionApi } from '@/lib/api-client';
-import { DesktopTopBar } from '@/components/DesktopTopBar';
-import { ProductCard } from '@/components/ProductCard';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import type { Product } from '@/lib/types';
-import { useTranslation } from '@/lib/language-store';
+type Props = {
+  params: { id: string };
+};
 
-export default function SharedCollectionPage() {
-  const params = useParams();
-  const id = params.id as string;
-  const { t } = useTranslation();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const id = params.id;
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://texttile.onrender.com';
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/collections/${encodeURIComponent(id)}`, {
+      next: { revalidate: 60 }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const products = data.products || [];
+      if (products.length > 0) {
+        const firstProduct = products[0];
+        const imageUrl = firstProduct.imageUrl;
+        let fullImageUrl = imageUrl;
+        
+        if (imageUrl && !imageUrl.startsWith('http')) {
+          const uploadsIdx = imageUrl.indexOf('/uploads/');
+          if (uploadsIdx !== -1) {
+            const filename = imageUrl.substring(uploadsIdx + '/uploads/'.length);
+            fullImageUrl = `${API_BASE}/uploads/${filename}`;
+          } else {
+            fullImageUrl = `${API_BASE}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+          }
+        }
+        
+        return {
+          title: `Shared Products Collection`,
+          description: `Check out these ${products.length} products from Swastik Fashion!`,
+          openGraph: {
+            title: `Shared Products Collection`,
+            description: `Check out these ${products.length} products from Swastik Fashion!`,
+            images: fullImageUrl ? [{ url: fullImageUrl }] : [],
+          },
+          twitter: {
+            card: 'summary_large_image',
+            title: `Shared Products Collection`,
+            description: `Check out these ${products.length} products from Swastik Fashion!`,
+            images: fullImageUrl ? [fullImageUrl] : [],
+          }
+        };
+      }
+    }
+  } catch (err) {
+    console.error('Error generating metadata:', err);
+  }
+  
+  return {
+    title: 'Shared Collection',
+    description: 'Carefully selected items from Swastik Fashion',
+  };
+}
 
-  useEffect(() => {
-    if (!id) return;
-    
-    collectionApi
-      .fetchById(id)
-      .then(({ products }) => {
-        setProducts(products);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError('Shared collection not found or has expired.');
-        setLoading(false);
-      });
-  }, [id]);
-
-  return (
-    <div className="min-h-screen bg-cream pb-12 lg:bg-transparent lg:pb-0">
-      <DesktopTopBar
-        title="Shared Collection"
-        subtitle={`${products.length} items`}
-      />
-
-      {/* Hero Header — mobile only */}
-      <div className="bg-gradient-to-br from-maroon-dark via-maroon to-[#8B1A2A] text-white px-6 py-10 rounded-b-[32px] shadow-md lg:hidden">
-
-        <h1 className="font-serif text-3xl font-bold mt-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-gold">
-          Shared Collection
-        </h1>
-        <p className="text-sm text-white/60 mt-1">
-          {products.length} carefully selected items
-        </p>
-      </div>
-
-      <div className="px-6 lg:px-0 mt-6 lg:mt-0">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="hidden lg:block font-serif text-2xl font-bold text-text-primary">
-            Shared Products
-          </h2>
-        </div>
-
-        {loading ? (
-          <div className="py-20 flex justify-center">
-            <LoadingSpinner label="Loading collection…" />
-          </div>
-        ) : error ? (
-          <div className="py-20 text-center text-text-secondary">
-            <p className="text-lg font-serif">{error}</p>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="py-20 text-center text-text-secondary">
-            <p className="text-lg font-serif">{t('noProducts')}</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5 items-start">
-            {products.map((p, idx) => (
-              <ProductCard key={`${p.id}-${idx}`} product={p} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+export default function Page({ params }: Props) {
+  return <SharedCollectionClient id={params.id} />;
 }
