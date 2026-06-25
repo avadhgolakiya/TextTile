@@ -250,7 +250,8 @@ router.post('/admins', authMiddleware, async (req, res) => {
 
     const usersColl = getCollection('users');
     const caller = await usersColl.findOne({ _id: new ObjectId(req.userId) });
-    if (!caller || caller.email !== 'admin@example.com') {
+    const mappedCaller = mapUser(caller);
+    if (!mappedCaller || !mappedCaller.isSuperAdmin) {
       return res.status(403).json({ error: 'Super Admin access required.' });
     }
 
@@ -287,7 +288,8 @@ router.get('/admins', authMiddleware, async (req, res) => {
   try {
     const usersColl = getCollection('users');
     const caller = await usersColl.findOne({ _id: new ObjectId(req.userId) });
-    if (!caller || caller.email !== 'admin@example.com') {
+    const mappedCaller = mapUser(caller);
+    if (!mappedCaller || !mappedCaller.isSuperAdmin) {
       return res.status(403).json({ error: 'Super Admin access required.' });
     }
 
@@ -309,7 +311,8 @@ router.get('/admins/:id/activity', authMiddleware, async (req, res) => {
   try {
     const usersColl = getCollection('users');
     const caller = await usersColl.findOne({ _id: new ObjectId(req.userId) });
-    if (!caller || caller.email !== 'admin@example.com') {
+    const mappedCaller = mapUser(caller);
+    if (!mappedCaller || !mappedCaller.isSuperAdmin) {
       return res.status(403).json({ error: 'Super Admin access required.' });
     }
 
