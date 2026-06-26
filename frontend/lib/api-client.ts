@@ -27,12 +27,29 @@ async function apiFetch<T>(
 }
 
 export const productApi = {
-  fetchAll: () => apiFetch<{ products: Product[] }>('/api/products'),
+  fetchAll: (page: number = 1, limit: number = 10) =>
+    apiFetch<{
+      products: Product[];
+      pagination?: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>(`/api/products?page=${page}&limit=${limit}`),
   fetchFeatured: () =>
     apiFetch<{ products: Product[] }>('/api/products/featured'),
-  fetchByCategory: (categoryKey: string) =>
-    apiFetch<{ products: Product[] }>(
-      `/api/products?category=${encodeURIComponent(categoryKey)}`,
+  fetchByCategory: (categoryKey: string, page: number = 1, limit: number = 10) =>
+    apiFetch<{
+      products: Product[];
+      pagination?: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>(
+      `/api/products?category=${encodeURIComponent(categoryKey)}&page=${page}&limit=${limit}`,
     ),
   fetchById: (id: string) =>
     apiFetch<{ product: Product }>(`/api/products/${encodeURIComponent(id)}`),

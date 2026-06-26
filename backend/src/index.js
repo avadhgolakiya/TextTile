@@ -36,8 +36,11 @@ app.use('/api', gstRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/collections', collectionsRoutes);
 
+import { connectRedis } from './lib/redis.js';
+
 connectDB()
-  .then(() => {
+  .then(async () => {
+    await connectRedis();
     app.listen(PORT, () => {
       console.log(`Saarika API listening on http://127.0.0.1:${PORT}`);
     });

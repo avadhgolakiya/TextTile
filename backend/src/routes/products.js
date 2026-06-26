@@ -3,6 +3,7 @@ import { getCollection } from '../db.js';
 import { authMiddleware, mapProduct } from '../lib/auth.js';
 import { notifyNewProduct, notifyLowStock } from '../lib/notifications.js';
 import { logActivity } from '../lib/activity.js';
+import { getCache, setCache, clearProductsCache } from '../lib/redis.js';
 
 const router = Router();
 
@@ -11,6 +12,9 @@ router.get('/', async (req, res) => {
   try {
     const category = req.query.category;
     const admin = req.query.admin === 'true';
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 10);
+    const skip = (page - 1) * limit;
     const filter = {};
 
     if (!admin) {
@@ -21,13 +25,40 @@ router.get('/', async (req, res) => {
       filter.categoryKey = { $regex: new RegExp(`^${String(category).trim()}$`, 'i') };
     }
 
+    // Check Redis cache first
+    const cacheKey = `products:${category || ''}:${admin}:${page}:${limit}`;
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      try {
+        return res.json(JSON.parse(cachedData));
+      } catch (parseErr) {
+        console.error('Error parsing products cache:', parseErr);
+      }
+    }
+
     const productsColl = getCollection('products');
+    const total = await productsColl.countDocuments(filter);
     const docs = await productsColl
       .find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .toArray();
 
-    return res.json({ products: docs.map(mapProduct) });
+    const responseData = {
+      products: docs.map(mapProduct),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    };
+
+    // Save to cache for 5 minutes (300 seconds)
+    await setCache(cacheKey, JSON.stringify(responseData), 300);
+
+    return res.json(responseData);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error' });
@@ -36,12 +67,26 @@ router.get('/', async (req, res) => {
 
 router.get('/featured', async (_req, res) => {
   try {
+    // Check Redis cache
+    const cacheKey = 'products:featured';
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      try {
+        return res.json(JSON.parse(cachedData));
+      } catch (parseErr) {
+        console.error('Error parsing featured products cache:', parseErr);
+      }
+    }
+
     const productsColl = getCollection('products');
     const docs = await productsColl
       .find({ isFeatured: true, isVisible: true })
       .sort({ createdAt: -1 })
       .toArray();
-    return res.json({ products: docs.map(mapProduct) });
+
+    const responseData = { products: docs.map(mapProduct) };
+    await setCache(cacheKey, JSON.stringify(responseData), 300);
+    return res.json(responseData);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error' });
@@ -50,12 +95,26 @@ router.get('/featured', async (_req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
+    const productId = req.params.id;
+    const cacheKey = `products:id:${productId}`;
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      try {
+        return res.json(JSON.parse(cachedData));
+      } catch (parseErr) {
+        console.error('Error parsing product detail cache:', parseErr);
+      }
+    }
+
     const productsColl = getCollection('products');
-    const doc = await productsColl.findOne({ _id: req.params.id, isVisible: true });
+    const doc = await productsColl.findOne({ _id: productId, isVisible: true });
     if (!doc) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    return res.json({ product: mapProduct(doc) });
+
+    const responseData = { product: mapProduct(doc) };
+    await setCache(cacheKey, JSON.stringify(responseData), 300);
+    return res.json(responseData);
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error' });
@@ -121,6 +180,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     await logActivity(req, isNewProduct ? 'created_product' : 'updated_product', { productId: p.id, name: p.name });
+    await clearProductsCache();
 
     return res.json({ ok: true, isNew: isNewProduct });
   } catch (e) {
@@ -136,6 +196,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     await productsColl.deleteOne({ _id: req.params.id });
     
     await logActivity(req, 'deleted_product', { productId: req.params.id, name: doc?.name });
+    await clearProductsCache();
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);
@@ -153,6 +214,7 @@ router.patch('/:id/visibility', authMiddleware, async (req, res) => {
     );
     
     await logActivity(req, 'updated_product_visibility', { productId: req.params.id, isVisible });
+    await clearProductsCache();
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);
@@ -170,6 +232,7 @@ router.patch('/:id/featured', authMiddleware, async (req, res) => {
     );
     
     await logActivity(req, 'updated_product_featured', { productId: req.params.id, isFeatured });
+    await clearProductsCache();
     return res.json({ ok: true });
   } catch (e) {
     console.error(e);
