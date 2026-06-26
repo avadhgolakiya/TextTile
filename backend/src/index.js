@@ -16,7 +16,29 @@ import collectionsRoutes from './routes/collections.js';
 const PORT = Number(process.env.PORT || 3333);
 
 const app = express();
-app.use(cors({ origin: true }));
+
+const allowedOrigins = [
+  'https://swastikfashion.com',
+  'https://www.swastikfashion.com',
+  'https://text-tile-afdz.vercel.app',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const isAllowed = allowedOrigins.includes(origin) || 
+      origin.endsWith('.swastikfashion.com') || 
+      origin.endsWith('.vercel.app');
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 
 app.use(globalIpBlocker);
