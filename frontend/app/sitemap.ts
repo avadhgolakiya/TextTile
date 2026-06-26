@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://texttile.onrender.com';
+  const API_BASE = process.env.API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://texttile.onrender.com';
   const DOMAIN = 'https://swastikfashion.com';
 
   const routes = [

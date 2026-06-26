@@ -7,7 +7,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = params.id;
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://texttile.onrender.com';
+  const API_BASE = process.env.API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'https://texttile.onrender.com';
   
   try {
     const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {

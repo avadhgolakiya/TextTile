@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
   if (path !== '/blocked') {
     try {
       const ip = request.ip || request.headers.get('x-forwarded-for') || '127.0.0.1';
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:3333';
+      const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:3333';
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
       
