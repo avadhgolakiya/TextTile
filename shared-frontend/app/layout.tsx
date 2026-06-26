@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Shared Collection',
   },
+  verification: {
+    google: 'Zvv_VSBHeZvtnX_jl2Df_V3CMM8-Kug9k70xzP2M-CQ',
+  },
 };
 
 export default function RootLayout({
