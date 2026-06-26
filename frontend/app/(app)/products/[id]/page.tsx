@@ -11,7 +11,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   try {
     const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, {
-      next: { revalidate: 60 }
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(5000),
     });
     if (res.ok) {
       const { product } = await res.json();
