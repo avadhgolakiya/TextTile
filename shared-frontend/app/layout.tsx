@@ -18,6 +18,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://swastikfashion.com'),
   title: 'Shared Collection',
   description: 'View this shared product collection.',
   appleWebApp: {

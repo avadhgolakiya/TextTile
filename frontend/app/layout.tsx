@@ -18,6 +18,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://swastikfashion.com'),
   title: 'Swastik Fashion — Wholesale Sarees',
   description: 'Wholesale buyer app for Swastik Fashion',
   appleWebApp: {
