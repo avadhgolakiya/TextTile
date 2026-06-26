@@ -39,8 +39,8 @@ app.use('/api/collections', collectionsRoutes);
 import { connectRedis } from './lib/redis.js';
 
 connectDB()
-  .then(async () => {
-    await connectRedis();
+  .then(() => {
+    connectRedis(); // Connect in background, don't block Express startup
     app.listen(PORT, () => {
       console.log(`Saarika API listening on http://127.0.0.1:${PORT}`);
     });
