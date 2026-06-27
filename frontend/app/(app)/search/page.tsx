@@ -20,7 +20,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     productApi
-      .fetchAll()
+      .fetchAll(1, 1000)
       .then(({ products }) => {
         setAllProducts(products);
         setLoading(false);

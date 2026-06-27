@@ -14,22 +14,53 @@ function ProductsContent() {
   const category = searchParams.get('category') || '';
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const LIMIT = 10;
 
   useEffect(() => {
+    // Reset when category changes
+    setPage(1);
+    setProducts([]);
+    setTotalPages(1);
+  }, [category]);
+
+  useEffect(() => {
+    if (page === 1) {
+      setLoading(true);
+    }
     const fetchCall = category
-      ? productApi.fetchByCategory(category)
-      : productApi.fetchAll();
+      ? productApi.fetchByCategory(category, page, LIMIT)
+      : productApi.fetchAll(page, LIMIT);
 
     fetchCall
-      .then(({ products }) => {
-        setProducts(products);
+      .then(({ products: newProducts, pagination }) => {
+        setProducts((prev) => {
+          if (page === 1) {
+            return newProducts || [];
+          } else {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const filteredNew = (newProducts || []).filter((p) => !existingIds.has(p.id));
+            return [...prev, ...filteredNew];
+          }
+        });
+        if (pagination) {
+          setTotalPages(pagination.totalPages);
+          if (page < pagination.totalPages) {
+            setTimeout(() => {
+              setPage((p) => p + 1);
+            }, 100);
+          }
+        } else {
+          setTotalPages(1);
+        }
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
       });
-  }, [category]);
+  }, [category, page]);
 
   const displayTitle = category
     ? category.charAt(0).toUpperCase() + category.slice(1)
@@ -120,6 +151,13 @@ function ProductsContent() {
                     <ProductCard key={p.id} product={p} />
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Auto-loading loader at bottom */}
+            {page < totalPages && (
+              <div className="mt-8 flex justify-center py-4">
+                <LoadingSpinner label="Loading more products..." />
               </div>
             )}
           </div>

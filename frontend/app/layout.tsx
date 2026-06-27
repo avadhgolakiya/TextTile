@@ -18,16 +18,54 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  title: {
+    default: 'Swastik Fashion – Wholesale Sarees & Ethnic Wear',
+    template: '%s | Swastik Fashion',
+  },
+  description:
+    'Swastik Fashion is a leading wholesale supplier of sarees, lehengas, salwar suits & ethnic wear. Buy in bulk at best prices.',
+  keywords: [
+    'swastik fashion',
+    'swastikfashion',
+    'wholesale sarees',
+    'wholesale ethnic wear',
+    'saree wholesale supplier',
+    'lehenga wholesale',
+    'salwar suit wholesale',
+    'indian ethnic wear bulk',
+    'swastik fashion sarees',
+  ],
   metadataBase: new URL('https://swastikfashion.com'),
-  title: 'Swastik Fashion — Wholesale Sarees',
-  description: 'Wholesale buyer app for Swastik Fashion',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Swastik Fashion – Wholesale Sarees & Ethnic Wear',
+    description: 'Leading wholesale supplier of sarees & ethnic wear.',
+    url: 'https://swastikfashion.com',
+    siteName: 'Swastik Fashion',
+    locale: 'en_IN',
+    type: 'website',
+    images: [
+      {
+        url: '/logo.png',
+        width: 1200,
+        height: 630,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Swastik Fashion – Wholesale Sarees & Ethnic Wear',
+    description: 'Leading wholesale supplier of sarees & ethnic wear.',
+    images: ['/logo.png'],
+  },
+  robots: { index: true, follow: true },
+  verification: {
+    google: 'Zvv_VSBHeZvtnX_jl2Df_V3CMM8-Kug9k70xzP2M-CQ',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Swastik Fashion',
-  },
-  verification: {
-    google: 'Zvv_VSBHeZvtnX_jl2Df_V3CMM8-Kug9k70xzP2M-CQ',
   },
 };
 

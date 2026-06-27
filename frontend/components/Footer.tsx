@@ -41,16 +41,8 @@ export function Footer() {
           <div>
             <h4 className="text-gold font-bold mb-4 uppercase tracking-wider text-xs">About Us</h4>
             <ul className="space-y-3 text-sm text-white/70">
-              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Our Story</a></li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => setShowContactModal(true)}
-                  className="hover:text-gold transition text-left focus:outline-none"
-                >
-                  Contact Us
-                </button>
-              </li>
+              <li><Link href="/about" className="hover:text-gold transition">Our Story</Link></li>
+              <li><Link href="/contact" className="hover:text-gold transition">Contact Us</Link></li>
               <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Careers</a></li>
               <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Press</a></li>
             </ul>
@@ -59,18 +51,18 @@ export function Footer() {
             <h4 className="text-gold font-bold mb-4 uppercase tracking-wider text-xs">Help & Support</h4>
             <ul className="space-y-3 text-sm text-white/70">
               <li><Link href="/profile" className="hover:text-gold transition">Track Order</Link></li>
-              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Returns & Exchanges</a></li>
-              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Shipping Info</a></li>
-              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">FAQs</a></li>
+              <li><Link href="/refund" className="hover:text-gold transition">Returns & Exchanges</Link></li>
+              <li><Link href="/shipping" className="hover:text-gold transition">Shipping Info</Link></li>
+              <li><Link href="/faq" className="hover:text-gold transition">FAQs</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-gold font-bold mb-4 uppercase tracking-wider text-xs">Policies</h4>
             <ul className="space-y-3 text-sm text-white/70">
-              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Terms & Conditions</a></li>
+              <li><Link href="/terms" className="hover:text-gold transition">Terms & Conditions</Link></li>
               <li><Link href="/privacy" className="hover:text-gold transition">Privacy Policy</Link></li>
-              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Shipping Policy</a></li>
-              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-gold transition">Refund Policy</a></li>
+              <li><Link href="/shipping" className="hover:text-gold transition">Shipping Policy</Link></li>
+              <li><Link href="/refund" className="hover:text-gold transition">Refund Policy</Link></li>
             </ul>
           </div>
           <div>

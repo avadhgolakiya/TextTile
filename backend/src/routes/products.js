@@ -12,6 +12,8 @@ router.get('/', async (req, res) => {
   try {
     const category = req.query.category;
     const admin = req.query.admin === 'true';
+    const shouldPaginate = !admin || !!(req.query.page || req.query.limit);
+
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.max(1, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
@@ -26,7 +28,7 @@ router.get('/', async (req, res) => {
     }
 
     // Check Redis cache first
-    const cacheKey = `products:${category || ''}:${admin}:${page}:${limit}`;
+    const cacheKey = `products:${category || ''}:${admin}:${page}:${limit}:${shouldPaginate}`;
     const cachedData = await getCache(cacheKey);
     if (cachedData) {
       try {
@@ -38,22 +40,25 @@ router.get('/', async (req, res) => {
 
     const productsColl = getCollection('products');
     const total = await productsColl.countDocuments(filter);
-    const docs = await productsColl
-      .find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    
+    let queryBuilder = productsColl.find(filter).sort({ createdAt: -1 });
+    if (shouldPaginate) {
+      queryBuilder = queryBuilder.skip(skip).limit(limit);
+    }
+    const docs = await queryBuilder.toArray();
 
     const responseData = {
       products: docs.map(mapProduct),
-      pagination: {
+    };
+
+    if (shouldPaginate) {
+      responseData.pagination = {
         total,
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-      }
-    };
+      };
+    }
 
     // Save to cache for 5 minutes (300 seconds)
     await setCache(cacheKey, JSON.stringify(responseData), 300);

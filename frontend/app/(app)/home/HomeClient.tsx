@@ -14,6 +14,7 @@ import { useTranslation } from '@/lib/language-store';
 import { getFullImageUrl, isValidImageUrl } from '@/lib/image';
 import { MultiShareBar } from '@/components/MultiShareBar';
 import { useSelectionStore } from '@/lib/selection-store';
+import { OrganizationJsonLd } from 'next-seo';
 
 /** Port of lib/features/home/home_screen.dart */
 export default function HomePage() {
@@ -28,7 +29,7 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      productApi.fetchAll().then((res) => res.products).catch(() => []),
+      productApi.fetchFeatured().then((res) => res.products).catch(() => []),
       bannerApi.fetchUrls().then((res) => res.banners.length ? res.banners : [{ image_url: FALLBACK_BANNER }]).catch(() => [{ image_url: FALLBACK_BANNER }]),
       categoryApi.fetchCategories().then((res) => res.categories || []).catch(() => [])
     ]).then(([prodRes, bannerRes, catRes]) => {
@@ -74,7 +75,7 @@ export default function HomePage() {
     });
   }
 
-  const featuredProducts = products.filter(p => p.isFeatured);
+  const featuredProducts = products;
 
   if (loading) {
     return (
@@ -86,6 +87,31 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8 px-4 pt-6 lg:space-y-10 lg:px-0 lg:pt-0">
+      {/* Search Engine Optimization H1 (Google compliance) */}
+      <h1 className="sr-only">Swastik Fashion - Premium Clothing Store in India</h1>
+
+      {/* Organization Structured Data (JSON-LD) via next-seo */}
+      <OrganizationJsonLd
+        type="Organization"
+        name="Swastik Fashion"
+        url="https://swastikfashion.com"
+        logo="https://swastikfashion.com/logo.png"
+        contactPoint={[
+          {
+            telephone: '+91-8849502490',
+            contactType: 'customer service',
+            areaServed: 'IN',
+            availableLanguage: ['English', 'Hindi', 'Gujarati'],
+          },
+          {
+            telephone: '+91-99228238292',
+            contactType: 'sales support',
+            areaServed: 'IN',
+            availableLanguage: ['English', 'Hindi', 'Gujarati'],
+          }
+        ]}
+      />
+
       <DesktopTopBar
         title={t('todaysDrop')}
         subtitle="Swastik Fashion wholesale"
@@ -174,6 +200,17 @@ export default function HomePage() {
           <p className="text-sm text-text-secondary">{t('noFeaturedProducts')}</p>
         ) : null}
       </section>
+
+      {/* Brand Introduction Section (Natural Keyword Integration for SEO) */}
+      <section className="border border-divider/60 bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-3xl p-6 md:p-8 space-y-4">
+        <h2 className="font-serif text-xl font-semibold text-maroon dark:text-gold lg:text-2xl">
+          Official Swastik Fashion Online Store
+        </h2>
+        <p className="text-sm md:text-base text-text-secondary leading-relaxed font-normal">
+          Welcome to <strong className="text-text-primary">Swastik Fashion</strong>, your trusted online fashion destination for premium men&apos;s clothing, women&apos;s wear, kids fashion, ethnic wear, western outfits and affordable fashion accessories across India. We provide high-quality garments at competitive prices. As a leading manufacturer and wholesale publisher, we serve retail outlets and online shoppers looking for the latest designer clothing directly from Swastik Fashion India.
+        </p>
+      </section>
+
       <MultiShareBar />
     </div>
   );

@@ -50,17 +50,32 @@ export default function CollectionPage() {
   // 2. Fetch Products whenever selected category or page changes
   useEffect(() => {
     if (!selected) return;
-    setLoading(true);
+    if (page === 1) {
+      setLoading(true);
+    }
     productApi
       .fetchByCategory(selected, page, LIMIT)
-      .then(({ products, pagination }) => {
-        setProducts(products || []);
+      .then(({ products: newProducts, pagination }) => {
+        setProducts((prev) => {
+          if (page === 1) {
+            return newProducts || [];
+          } else {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const filteredNew = (newProducts || []).filter((p) => !existingIds.has(p.id));
+            return [...prev, ...filteredNew];
+          }
+        });
         if (pagination) {
           setTotalPages(pagination.totalPages);
           setTotalItems(pagination.total);
+          if (page < pagination.totalPages) {
+            setTimeout(() => {
+              setPage((p) => p + 1);
+            }, 100);
+          }
         } else {
           setTotalPages(1);
-          setTotalItems(products?.length || 0);
+          setTotalItems(newProducts?.length || 0);
         }
         setLoading(false);
       })
@@ -73,6 +88,8 @@ export default function CollectionPage() {
   const handleCategoryChange = (catName: string) => {
     setSelected(catName);
     setPage(1);
+    setProducts([]);
+    setTotalPages(1);
   };
 
   const filters = categories
@@ -225,26 +242,10 @@ export default function CollectionPage() {
                 </div>
               )}
 
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="mt-8 flex items-center justify-center gap-4 border-t border-divider pt-6">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-4 py-2 text-sm font-semibold rounded-xl bg-surface border border-divider text-text-secondary disabled:opacity-40 hover:bg-cream-deep transition disabled:hover:bg-surface cursor-pointer"
-                  >
-                    ← Previous
-                  </button>
-                  <span className="text-sm font-semibold text-text-secondary">
-                    Page {page} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
-                    className="px-4 py-2 text-sm font-semibold rounded-xl bg-surface border border-divider text-text-secondary disabled:opacity-40 hover:bg-cream-deep transition disabled:hover:bg-surface cursor-pointer"
-                  >
-                    Next →
-                  </button>
+              {/* Auto-loading loader at bottom */}
+              {page < totalPages && (
+                <div className="mt-8 flex justify-center py-4">
+                  <LoadingSpinner label="Loading more products..." />
                 </div>
               )}
             </div>

@@ -318,7 +318,7 @@ export default function ProductDetailPage() {
               <div className="relative w-full aspect-[9/16] transition-transform duration-300">
                 <img
                   src={images[activeImageIdx]}
-                  alt={product.name}
+                  alt={`Buy ${product.name} online from Swastik Fashion`}
                   className="absolute inset-0 w-full h-full object-contain"
                 />
                 {images.length > 1 && (
@@ -366,7 +366,7 @@ export default function ProductDetailPage() {
                   className={`relative w-16 h-20 rounded-md overflow-hidden shrink-0 border-2 transition duration-200 ${i === activeImageIdx ? 'border-maroon scale-95 shadow' : 'border-divider'
                     }`}
                 >
-                  <Image src={img} alt={`Thumbnail ${i}`} fill className="object-cover" />
+                  <Image src={img} alt={`${product.name} thumbnail view ${i + 1} — Swastik Fashion`} fill className="object-cover" />
                 </button>
               ))}
             </div>
@@ -463,7 +463,7 @@ export default function ProductDetailPage() {
                     <div className="relative w-12 h-14 rounded-lg overflow-hidden border border-divider group-hover:border-maroon transition duration-200 shadow-sm group-hover:scale-105">
                       <Image
                         src={getFullImageUrl(p.imageUrl)}
-                        alt={p.name}
+                        alt={`Other color of ${product.name}: ${p.name} by Swastik Fashion`}
                         fill
                         className="object-cover"
                       />
