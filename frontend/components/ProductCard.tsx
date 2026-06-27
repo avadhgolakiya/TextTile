@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { Product } from '@/lib/types';
+import { type Product, productAllImages } from '@/lib/types';
 import { formatInr } from '@/lib/formatting/inr';
 import { getFullImageUrl } from '@/lib/image';
 import { useSavedStore } from '@/lib/saved-store';
@@ -31,24 +31,37 @@ export function ProductCard({ product }: { product: Product }) {
   async function handleDownload(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (!product.imageUrl) return;
+    
+    const images = productAllImages(product);
+    if (images.length === 0) return;
+    
     try {
-      const activeImgUrl = getFullImageUrl(product.imageUrl);
-      const res = await fetch(activeImgUrl);
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const ext = blob.type.includes('png') ? 'png' : 'jpg';
-      link.download = `${product.name.replace(/\\s+/g, '_')}_1.${ext}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success('Image downloaded!');
+      toast.success(`Downloading ${images.length} image${images.length > 1 ? 's' : ''}...`);
+      
+      for (let i = 0; i < images.length; i++) {
+        const imgUrl = getFullImageUrl(images[i]);
+        const res = await fetch(imgUrl);
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const ext = blob.type.includes('png') ? 'png' : 'jpg';
+        link.download = `${product.name.replace(/\\s+/g, '_')}_${i + 1}.${ext}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        // Add a small delay between downloads to prevent browser from blocking them
+        if (i < images.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      }
+      
+      toast.success('Images downloaded!');
     } catch (err) {
       console.error('Download failed:', err);
-      toast.error('Failed to download image');
+      toast.error('Failed to download images');
     }
   }
 
