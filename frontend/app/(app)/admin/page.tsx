@@ -316,7 +316,14 @@ export default function AdminPage() {
     const token = getToken();
     try {
       if (!formCategory.name) return;
-      await categoryApi.upsertCategory(token, formCategory.name, formCategory.icon);
+      await categoryApi.upsertCategory(
+        token,
+        formCategory.name,
+        formCategory.icon,
+        formCategory.key,
+        formCategory.product,
+        formCategory.description
+      );
       setIsCategoryFormOpen(false);
       loadTabData('categories');
       toast.success('Category saved successfully');
@@ -819,9 +826,18 @@ export default function AdminPage() {
                         ) : (
                           <span className="text-2xl shrink-0">{c.icon || '📁'}</span>
                         )}
-                        <span className="font-semibold">{c.name}</span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-semibold truncate">{c.name}</span>
+                          {(c.product || c.description) && (
+                            <span className="text-[10px] text-text-secondary mt-0.5 truncate">
+                              {c.product && `Prod: ${c.product}`}
+                              {c.product && c.description && ' | '}
+                              {c.description && `Desc: ${c.description}`}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <button onClick={() => openEditCategory(c)} className="p-2 text-maroon hover:text-maroon-dark transition text-lg" title="Edit">✏️</button>
                         <button onClick={() => handleDeleteCategory(c.key)} className="p-2 text-red-500 hover:text-red-700 transition text-lg" title="Delete">🗑️</button>
                       </div>
@@ -1167,6 +1183,28 @@ export default function AdminPage() {
                   onChange={(e) => setFormCategory({ ...formCategory, name: e.target.value })}
                 />
               </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Default Product Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Pure Silk Saree"
+                  className="input-field"
+                  value={formCategory.product || ''}
+                  onChange={(e) => setFormCategory({ ...formCategory, product: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase">Default Description/Subtitle</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Pure georgette with zari work, light weight"
+                  className="input-field"
+                  value={formCategory.description || ''}
+                  onChange={(e) => setFormCategory({ ...formCategory, description: e.target.value })}
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-text-secondary uppercase block">Category Icon</label>
                 
@@ -1276,7 +1314,16 @@ export default function AdminPage() {
                     className="input-field py-3.5"
                     required
                     value={formProduct.categoryKey || ''}
-                    onChange={(e) => setFormProduct({ ...formProduct, categoryKey: e.target.value })}
+                    onChange={(e) => {
+                      const catKey = e.target.value;
+                      const selectedCat = categories.find((c) => c.key === catKey);
+                      setFormProduct((prev) => ({
+                        ...prev,
+                        categoryKey: catKey,
+                        name: selectedCat?.product || prev.name,
+                        subtitle: selectedCat?.description || prev.subtitle,
+                      }));
+                    }}
                   >
                     <option value="" disabled>Select a Category</option>
                     {categories.map((c) => (

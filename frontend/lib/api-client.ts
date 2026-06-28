@@ -263,11 +263,11 @@ export const bannerApi = {
 export const categoryApi = {
   fetchCategories: () =>
     apiFetch<{ categories: Category[] }>(`/api/categories?t=${Date.now()}`, { cache: 'no-store' }),
-  upsertCategory: (token: string, name: string, icon?: string) =>
+  upsertCategory: (token: string, name: string, icon?: string, key?: string, product?: string, description?: string) =>
     apiFetch<{ ok: true; category: Category }>('/api/categories', {
       method: 'POST',
       token,
-      body: JSON.stringify({ name, icon }),
+      body: JSON.stringify({ name, icon, key, product, description }),
     }),
   deleteCategory: (token: string, key: string) =>
     apiFetch<{ ok: true }>(`/api/categories/${encodeURIComponent(key)}`, {

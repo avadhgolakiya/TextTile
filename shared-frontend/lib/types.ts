@@ -89,6 +89,8 @@ export type Category = {
   key: string;
   name: string;
   icon: string;
+  product?: string;
+  description?: string;
 };
 
 export function productAllImages(product: Product): string[] {
