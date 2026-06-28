@@ -100,14 +100,10 @@ export default function HomePage() {
           {
             telephone: '+91-8849502490',
             contactType: 'customer service',
-            areaServed: 'IN',
-            availableLanguage: ['English', 'Hindi', 'Gujarati'],
           },
           {
             telephone: '+91-99228238292',
             contactType: 'sales support',
-            areaServed: 'IN',
-            availableLanguage: ['English', 'Hindi', 'Gujarati'],
           }
         ]}
       />

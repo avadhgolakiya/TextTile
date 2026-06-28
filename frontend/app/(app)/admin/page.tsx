@@ -917,7 +917,7 @@ export default function AdminPage() {
                           <div className="space-y-2">
                             {o.items.map((item, idx) => (
                               <div key={idx} className="flex justify-between items-center text-sm">
-                                <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setFormProduct({ ...item, _oldId: item.id } as any); setIsEditingMode(true); setIsFormOpen(true); }}>
+                                <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setFormProduct({ ...item, _oldId: (item as any).id || item.code } as any); setIsEditingMode(true); setIsFormOpen(true); }}>
                                   {item.imageUrl && (
                                     <div className="w-8 h-8 relative rounded overflow-hidden border border-divider shrink-0 bg-white">
                                       <Image src={getFullImageUrl(item.imageUrl)} alt={item.name} fill className="object-cover" />

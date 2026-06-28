@@ -75,6 +75,33 @@ export default function ContactUsPage() {
             </div>
           </div>
 
+            {/* shop */}
+          <div className="card p-6 space-y-4 border border-divider">
+            <div>
+              <div className="text-xs uppercase tracking-widest text-text-secondary">Operations & Support</div>
+              <h2 className="font-serif text-2xl font-bold text-text-primary mt-1">Swastik Fashion</h2>
+            </div>
+            <div className="pt-2">
+              <span className="block font-semibold text-text-primary text-sm mb-3">📞 +91 79841 43368</span>
+              <div className="flex gap-2">
+                <a
+                  href="tel:+917984143368"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 px-4 bg-maroon text-white hover:bg-maroon-dark text-xs font-bold rounded-xl text-center transition"
+                >
+                  Call Now
+                </a>
+                <a
+                  href="https://wa.me/917984143368"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 px-4 bg-green-600 text-white hover:bg-green-700 text-xs font-bold rounded-xl text-center transition"
+                >
+                  WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* Manager 2 */}
           <div className="card p-6 space-y-4 border border-divider">
             <div>
@@ -104,6 +131,8 @@ export default function ContactUsPage() {
           </div>
         </div>
 
+
+
         {/* Corporate Address & Details */}
         <div className="card p-6 md:p-10 space-y-6">
           <h2 className="font-serif text-xl font-bold text-maroon">Office & Showroom Details</h2>
@@ -114,8 +143,8 @@ export default function ContactUsPage() {
                 <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider block">📍 Store Address</span>
                 <p className="text-text-primary text-sm md:text-base leading-relaxed mt-1">
                   <strong>Swastik Fashion</strong><br />
-                  Surat & Ahmedabad Textile Markets,<br />
-                  Gujarat, India.
+                  G -10 , Legned Market Ring Road<br />
+                  Surat, Gujarat, India.
                 </p>
               </div>
 
@@ -141,7 +170,7 @@ export default function ContactUsPage() {
 
               <div className="pt-2">
                 <a
-                  href="https://maps.google.com"
+                  href="https://share.google/OTcX2TUhHvXXJeicO"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-xl bg-cream-deep hover:bg-divider border border-divider px-4 py-2.5 text-xs font-bold text-text-primary transition"

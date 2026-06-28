@@ -3,7 +3,7 @@ export const ShopContact = {
   businessName: 'Swastik Fashion',
   whatsappOrderDigits: '917984143368',
   instagram: 'https://www.instagram.com/swastik_g8?igsh=MWN0MHRlbTZycWY4YQ==',
-  locationUrl: 'https://share.google/C00MjcrEKySH3xSko',
+  locationUrl: 'https://share.google/OTcX2TUhHvXXJeicO',
   instagramHandle: '@swastik_g8',
 } as const;
 
