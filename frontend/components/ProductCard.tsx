@@ -10,7 +10,7 @@ import { useSelectionStore } from '@/lib/selection-store';
 import { toast } from '@/lib/toast';
 
 /** Port of lib/widgets/product_card.dart */
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product } : { product: Product }) {
   const toggleSaved = useSavedStore((s) => s.toggle);
   const isSaved = useSavedStore((s) => s.isSaved(product.id));
   

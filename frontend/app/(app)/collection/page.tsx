@@ -38,8 +38,7 @@ export default function CollectionPage() {
         if (catParam) {
           setSelected(catParam);
         } else if (catsList.length > 0) {
-          const firstCat = catsList[0].name;
-          setSelected(firstCat.charAt(0).toUpperCase() + firstCat.slice(1));
+          setSelected(catsList[0].key);
         }
       })
       .catch((err) => {
@@ -85,16 +84,14 @@ export default function CollectionPage() {
       });
   }, [selected, page]);
 
-  const handleCategoryChange = (catName: string) => {
-    setSelected(catName);
+  const handleCategoryChange = (catKey: string) => {
+    setSelected(catKey);
     setPage(1);
     setProducts([]);
     setTotalPages(1);
   };
 
-  const filters = categories
-    .map((cat) => cat.name.charAt(0).toUpperCase() + cat.name.slice(1))
-    .sort();
+  const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
 
   // Group products by set
   const groupedProducts: { [setName: string]: Product[] } = {};
@@ -143,19 +140,19 @@ export default function CollectionPage() {
             {t('filterByType')}
           </h3>
           <div className="flex gap-2 overflow-x-auto scrollbar-none lg:flex-col lg:overflow-visible lg:gap-2">
-            {filters.map((f) => {
-              const active = f.toLowerCase() === selected.toLowerCase();
+            {sortedCategories.map((cat) => {
+              const active = cat.key === selected;
               return (
                 <button
-                  key={f}
-                  onClick={() => handleCategoryChange(f)}
+                  key={cat.key}
+                  onClick={() => handleCategoryChange(cat.key)}
                   className={`shrink-0 rounded-full px-5 py-2 text-sm font-semibold border transition duration-200 lg:w-full lg:rounded-2xl lg:px-4 lg:py-3 lg:text-left ${
                     active
                       ? 'bg-gradient-to-r from-maroon-dark to-maroon text-white border-transparent shadow-sm'
                       : 'bg-surface text-text-secondary border-divider hover:bg-cream-deep lg:hover:border-gold'
                   }`}
                 >
-                  {f}
+                  {cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}
                 </button>
               );
             })}
@@ -167,7 +164,7 @@ export default function CollectionPage() {
           {/* Header row for grid */}
           <div className="mb-4 flex items-center justify-between">
             <h2 className="hidden lg:block font-serif text-2xl font-bold text-text-primary">
-              {selected}
+              {categories.find(c => c.key === selected)?.name || selected}
             </h2>
             <div className="flex-1 lg:hidden"></div>
             {!isSelectionMode ? (
