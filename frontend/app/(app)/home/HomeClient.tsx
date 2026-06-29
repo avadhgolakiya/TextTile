@@ -40,7 +40,7 @@ export default function HomePage() {
     });
   }, []);
 
-  const categoriesWithImages: { name: string; imageUrl: string }[] = [];
+  const categoriesWithImages: { key: string; name: string; imageUrl: string }[] = [];
 
   if (categories.length > 0) {
     categories.forEach((cat) => {
@@ -56,6 +56,7 @@ export default function HomePage() {
         imageUrl = matchingProduct?.imageUrl || FALLBACK_BANNER;
       }
       categoriesWithImages.push({
+        key: cat.key,
         name: cat.name,
         imageUrl: imageUrl,
       });
@@ -68,6 +69,7 @@ export default function HomePage() {
       if (cat && !seenCategories.has(cat.toLowerCase())) {
         seenCategories.add(cat.toLowerCase());
         categoriesWithImages.push({
+          key: cat.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           name: cat,
           imageUrl: p.imageUrl || FALLBACK_BANNER
         });
@@ -136,8 +138,8 @@ export default function HomePage() {
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
             {categoriesWithImages.map((cat) => (
               <Link
-                key={cat.name}
-                href={`/collection?category=${encodeURIComponent(cat.name)}`}
+                key={cat.key}
+                href={`/collection?category=${encodeURIComponent(cat.key)}`}
                 className="flex flex-col items-center gap-2 shrink-0 group w-[72px] lg:w-24"
               >
                 <div className="w-[72px] h-[72px] lg:w-24 lg:h-24 rounded-full overflow-hidden border border-divider group-hover:border-maroon transition duration-300 shadow-sm relative">
