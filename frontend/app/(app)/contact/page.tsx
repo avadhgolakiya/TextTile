@@ -143,7 +143,7 @@ export default function ContactUsPage() {
                 <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider block">📍 Store Address</span>
                 <p className="text-text-primary text-sm md:text-base leading-relaxed mt-1">
                   <strong>Swastik Fashion</strong><br />
-                  G -10 , Legned Market Ring Road<br />
+                  G -8 , Legned Market Ring Road<br />
                   Surat, Gujarat, India.
                 </p>
               </div>
@@ -170,7 +170,7 @@ export default function ContactUsPage() {
 
               <div className="pt-2">
                 <a
-                  href="https://share.google/OTcX2TUhHvXXJeicO"
+                  href="https://maps.app.goo.gl/STRPJ6WxdPrga8zw5?g_st=awb"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-xl bg-cream-deep hover:bg-divider border border-divider px-4 py-2.5 text-xs font-bold text-text-primary transition"

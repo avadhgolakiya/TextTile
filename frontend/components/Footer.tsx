@@ -80,7 +80,7 @@ export function Footer() {
               </li>
               <li>
                 <a href={ShopContact.locationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-gold transition">
-                  <span>📍</span> Store Location
+                  <span>📍</span> Shop Location
                 </a>
               </li>
             </ul>
