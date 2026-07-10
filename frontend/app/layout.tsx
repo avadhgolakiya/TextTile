@@ -95,11 +95,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${playfair.variable} ${poppins.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ErrorBoundary>
-            {children}
-            <Toaster />
-            <PwaInstaller />
-          </ErrorBoundary>
+          <div className="flex h-screen w-screen flex-col items-center justify-center">
+            <div
+              className="h-16 w-16 animate-spin rounded-full border-4 border-divider border-t-maroon"
+              aria-hidden
+            />
+            <p className="mt-4 text-lg font-medium text-text-secondary">Loading...</p>
+          </div>
         </ThemeProvider>
       </body>
     </html>
