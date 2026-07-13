@@ -1,11 +1,3 @@
 export function LoadingSpinner({ label = 'Loading…' }: { label?: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16">
-      <div
-        className="h-10 w-10 animate-spin rounded-full border-2 border-divider border-t-maroon"
-        aria-hidden
-      />
-      <p className="text-sm text-text-secondary">{label}</p>
-    </div>
-  );
+  return null;
 }
